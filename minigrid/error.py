@@ -1,0 +1,20 @@
+"""Application-defined errors."""
+import tornado.web
+
+
+class MinigridHTTPError(tornado.web.HTTPError):
+    """Base class for application HTTP errors."""
+    def __init__(self, reason, status_code, template_name):
+        self.reason = reason
+        self.status_code = status_code
+        self.template_name = template_name
+        self.log_message = None
+
+
+class LoginError(MinigridHTTPError):
+    """Error during login."""
+    def __init__(self,
+                 status_code=400,
+                 template_name='index.html',
+                 *, reason):
+        super().__init__(reason, status_code, template_name)

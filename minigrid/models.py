@@ -39,4 +39,7 @@ def pk():
 class User(Base):
     __tablename__ = 'user'
     user_id = pk()
-    something = sa.Column(pg.TEXT, nullable=False, unique=True)
+    email = sa.Column(
+        pg.TEXT, sa.CheckConstraint("email ~ '.*@.*'"),
+        nullable=False, unique=True,
+    )
