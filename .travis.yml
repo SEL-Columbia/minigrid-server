@@ -1,0 +1,24 @@
+language: python
+python:
+  - "3.5"
+cache: pip
+addons:
+  postgresql: "9.4"
+  firefox: "49.0"
+
+before_install:
+  - pip install coveralls flake8 coverage beautifulsoup4 selenium
+
+before_script:
+  - python3 -m flake8 .
+  - psql -c 'create database minigrid;' -U postgres
+
+script:
+  - xvfb-run --server-args="-screen 0, 1280x1280x16" tests/python/coverage_run.sh
+
+after_success:
+  - coveralls
+
+notifications:
+  email:
+    on_failure: change
