@@ -15,26 +15,29 @@ from minigrid import models  # noqa
 from minigrid.options import options  # noqa
 
 
-def _create_session():
+def createdb():
+    """Create the schema and tables and return a Session."""
     engine = models.create_engine()
     models.Base.metadata.create_all(engine)
     return sessionmaker(bind=engine, autocommit=True)()
 
 
 def create_user(*, email):
-    session = _create_session()
+    """Create a user with the given e-mail."""
+    session = createdb()
     with session.begin():
         session.add(models.User(email=email))
     print('Created user with e-mail ' + email)
 
 
 def killdb():
-    answer = input('You definitely want to kill the schema {}? y/N ')
+    """Drop the schema."""
+    answer = input('You definitely want to kill the schema minigrid_dev? y/N ')
     if not answer.lower().startswith('y'):
         print('Not dropping the schema')
         return
     engine = models.create_engine()
-    engine.execute('DROP SCHEMA {} CASCADE'.format(options.db_schema))
+    engine.execute('DROP SCHEMA minigrid_dev CASCADE')
     print('Dropped schema')
 
 
