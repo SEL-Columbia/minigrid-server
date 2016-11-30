@@ -19,6 +19,7 @@ from minigrid.options import application_settings, options  # noqa
 
 class Application(tornado.web.Application):
     """Application class for the minigrid server."""
+
     def __init__(self, session=None, **kwargs):
         """Create the Application, with URLs, settings, and a db session."""
         settings = {**application_settings(), **kwargs}
@@ -35,6 +36,7 @@ class Application(tornado.web.Application):
 
 
 def main():
+    """Start the Tornado application."""
     AsyncIOMainLoop().install()
     Application().listen(options.minigrid_port)
     print('Listening on port {}'.format(options.minigrid_port))

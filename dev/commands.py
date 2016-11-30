@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Commands useful during development."""
 import argparse
 import os
 import sys
@@ -43,6 +44,7 @@ def killdb():
 
 
 def main():
+    """Choose the command to run."""
     parser = argparse.ArgumentParser()
     parser.add_argument('command_name')
     parser.add_argument('--kwarg', action='append')

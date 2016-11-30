@@ -1,5 +1,6 @@
 fakeredis==0.8.1
-flake8==3.2.0
+flake8==3.2.1
+pydocstyle==1.1.1
 coverage==4.2
 beautifulsoup4==4.5.1
 selenium==3.0.1

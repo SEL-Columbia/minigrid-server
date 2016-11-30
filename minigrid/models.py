@@ -37,6 +37,8 @@ def pk():
 
 
 class User(Base):
+    """The model for a registered user."""
+
     __tablename__ = 'user'
     user_id = pk()
     email = sa.Column(

@@ -12,6 +12,7 @@ before_install:
 
 before_script:
   - python3 -m flake8 .
+  - python3 -m pydocstyle .
   - psql -c 'create database minigrid;' -U postgres
 
 script:

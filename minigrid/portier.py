@@ -21,11 +21,50 @@ redis_kv = redis.StrictRedis.from_url(options.redis_url)
 
 
 def b64dec(string):
+    """Decode unpadded URL-safe Base64 strings.
+
+    Base64 values in JWTs and JWKs have their padding '=' characters stripped
+    during serialization. Before decoding, we must re-append padding characters
+    so that the encoded value's final length is evenly divisible by 4.
+
+    Taken from
+    github.com/portier/demo-rp/blob/6aee99fe126eceda527cae1f6da3f02a68401b6e
+    /server.py#L176-L184
+    """
     padding = '=' * ((4 - len(string) % 4) % 4)
     return urlsafe_b64decode(string + padding)
 
 
 async def get_verified_email(token):
+    """Validate an Identity Token (JWT) and return its subject (email address).
+
+    In Portier, the subject field contains the user's verified email address.
+
+    This functions checks the authenticity of the JWT with the following steps:
+
+    1. Verify that the JWT has a valid signature from a trusted broker.
+    2. Validate that all claims are present and conform to expectations:
+
+        * ``aud`` (audience) must match this website's origin.
+        * ``iss`` (issuer) must match the broker's origin.
+        * ``exp`` (expires) must be in the future.
+        * ``iat`` (issued at) must be in the past.
+        * ``sub`` (subject) must be an email address.
+        * ``nonce`` (cryptographic nonce) must not have been seen previously.
+
+    3. If present, verify that the ``nbf`` (not before) claim is in the past.
+
+    Timestamps are allowed a few minutes of leeway to account for clock skew.
+
+    This demo relies on the `PyJWT`_ library to check signatures and validate
+    all claims except for ``sub`` and ``nonce``. Those are checked separately.
+
+    .. _PyJWT: https://github.com/jpadilla/pyjwt
+
+    Taken from
+    github.com/portier/demo-rp/blob/6aee99fe126eceda527cae1f6da3f02a68401b6e
+    /server.py#L240-L296
+    """
     keys = await discover_keys('https://broker.portier.io')
     raw_header, _, _ = token.partition('.')
     header = json_decode(b64dec(raw_header))
@@ -54,12 +93,41 @@ async def get_verified_email(token):
 
 
 def jwk_to_rsa(key):
+    """Convert a deserialized JWK into an RSA Public Key instance.
+
+    Taken from
+    github.com/portier/demo-rp/blob/6aee99fe126eceda527cae1f6da3f02a68401b6e
+    /server.py#L233-L237
+    """
     e = int.from_bytes(b64dec(key['e']), 'big')
     n = int.from_bytes(b64dec(key['n']), 'big')
     return rsa.RSAPublicNumbers(e, n).public_key(default_backend())
 
 
 async def discover_keys(broker):
+    """Discover and return a Broker's public keys.
+
+    Returns a dict mapping from Key ID strings to Public Key instances.
+
+    Portier brokers implement the `OpenID Connect Discovery`_ specification.
+    This function follows that specification to discover the broker's current
+    cryptographic public keys:
+
+    1. Fetch the Discovery Document from ``/.well-known/openid-configuration``.
+    2. Parse it as JSON and read the ``jwks_uri`` property.
+    3. Fetch the URL referenced by ``jwks_uri`` to retrieve a `JWK Set`_.
+    4. Parse the JWK Set as JSON and extract keys from the ``keys`` property.
+
+    Portier currently only supports keys with the ``RS256`` algorithm type.
+
+    .. _OpenID Connect Discovery:
+        https://openid.net/specs/openid-connect-discovery-1_0.html
+    .. _JWK Set: https://tools.ietf.org/html/rfc7517#section-5
+
+    Taken from
+    github.com/portier/demo-rp/blob/6aee99fe126eceda527cae1f6da3f02a68401b6e
+    /server.py#L187-L206
+    """
     cache_key = 'jwks:' + broker
     raw_jwks = redis_kv.get(cache_key)
     if not raw_jwks:

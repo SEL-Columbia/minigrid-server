@@ -15,6 +15,7 @@ from minigrid.portier import get_verified_email, redis_kv
 
 class BaseHandler(tornado.web.RequestHandler):
     """The base class for all handlers."""
+
     @property
     def session(self):
         """The database session. Use session.begin() for transactions."""
@@ -41,11 +42,14 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 class MainHandler(BaseHandler):
+    """Handlers for the site index."""
+
     def get(self):
+        """Render the homepage."""
         self.render('index.html', reason=None)
 
     def post(self):
-        """This is the login URL endpoint."""
+        """Send login information to the portier broker."""
         nonce = uuid4().hex
         redis_kv.setex(nonce, timedelta(minutes=15), '')
         query_args = urlencode({
@@ -61,15 +65,18 @@ class MainHandler(BaseHandler):
 
 
 class VerifyLoginHandler(BaseHandler):
-    def check_xsrf_cookie(self):
-        """OpenID doesn't reply with _xsrf header.
+    """Handlers for portier verification."""
 
+    def check_xsrf_cookie(self):
+        """Disable XSRF check.
+
+        OpenID doesn't reply with _xsrf header.
         https://github.com/portier/demo-rp/issues/10
         """
         pass
 
     async def post(self):
-        """This endpoint verifies the response from the portier broker."""
+        """Verify the response from the portier broker."""
         if 'error' in self.request.arguments:
             error = self.get_argument('error')
             description = self.get_argument('error_description')
@@ -94,7 +101,10 @@ class VerifyLoginHandler(BaseHandler):
 
 
 class LogoutHandler(BaseHandler):
+    """Handlers for logging out."""
+
     def get(self):
+        """Render the (technically unnecessary) logout page."""
         self.render('logout.html')
 
     def post(self):
