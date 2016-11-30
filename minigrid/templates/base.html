@@ -7,7 +7,7 @@
       <p>Hi {{ current_user.email }}.</p>
       <form action="/logout" method="POST">
 	{% module xsrf_form_html() %}
-	<input type="submit" value="Log out" />
+	<input type="submit" value="Log Out" />
       </form>
     </div>
     {% end %}

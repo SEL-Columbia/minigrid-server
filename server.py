@@ -8,31 +8,23 @@ import tornado.ioloop
 from tornado.platform.asyncio import AsyncIOMainLoop
 import tornado.web
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
     from minigrid.options import parse_command_line
     parse_command_line()
 
 from minigrid import models  # noqa
 from minigrid.handlers import application_urls  # noqa
-import minigrid.options  # noqa
-from minigrid.options import options  # noqa
-
-
-def settings():
-    """Get the Application settings from minigrid.options."""
-    result = minigrid.options.application_settings()
-    if result['cookie_secret'] is None:
-        result['cookie_secret'] = minigrid.options.get_cookie_secret()
-    if result['debug']:
-        logging.info('Debug mode is on')
-    return result
+from minigrid.options import application_settings, options  # noqa
 
 
 class Application(tornado.web.Application):
     """Application class for the minigrid server."""
-    def __init__(self, session=None):
+    def __init__(self, session=None, **kwargs):
         """Create the Application, with URLs, settings, and a db session."""
-        super().__init__(application_urls, **settings())
+        settings = {**application_settings(), **kwargs}
+        if settings['debug']:
+            logging.info('Debug mode is on')
+        super().__init__(application_urls, **settings)
         if session is None:
             engine = models.create_engine()
             models.Base.metadata.create_all(engine)
@@ -42,9 +34,13 @@ class Application(tornado.web.Application):
             self.session = session
 
 
-if __name__ == '__main__':
+def main():
     AsyncIOMainLoop().install()
     Application().listen(options.minigrid_port)
     print('Listening on port {}'.format(options.minigrid_port))
     logging.info('Application started')
     get_event_loop().run_forever()
+
+
+if __name__ == '__main__':  # pragma: nocover
+    main()

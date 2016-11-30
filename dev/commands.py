@@ -11,8 +11,9 @@ sys.path.insert(1, os.path.join(sys.path[0], '..'))
 if __name__ == '__main__':
     from minigrid.options import parse_command_line
     parse_command_line()
-from minigrid import models  # noqa
 from minigrid.options import options  # noqa
+options.db_schema = 'minigrid_dev'
+from minigrid import models  # noqa
 
 
 def createdb():

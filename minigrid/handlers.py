@@ -94,6 +94,9 @@ class VerifyLoginHandler(BaseHandler):
 
 
 class LogoutHandler(BaseHandler):
+    def get(self):
+        self.render('logout.html')
+
     def post(self):
         """Delete the user cookie, which is httponly."""
         self.clear_cookie('user')

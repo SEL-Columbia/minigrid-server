@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  {% if not current_user %}
+    <form action="/logout" method="POST">
+      {% module xsrf_form_html() %}
+      <input type="submit" value="Log Out" />
+    </form>
+  {% end %}
+{% end %}
