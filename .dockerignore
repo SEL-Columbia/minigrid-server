@@ -1,0 +1,11 @@
+COOKIE_SECRET
+log/*.log
+log/*.log.*
+**/*.swp
+.*
+**/__pycache__
+dev
+htmlcov
+venv
+tests
+*.ini

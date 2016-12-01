@@ -9,16 +9,9 @@ from sqlalchemy.orm import sessionmaker
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 
-if __name__ == '__main__':
-    from minigrid.options import parse_command_line
-    parse_command_line()
-from minigrid.options import options  # noqa
-options.db_schema = 'minigrid_dev'
-from minigrid import models  # noqa
-
-
 def createdb():
     """Create the schema and tables and return a Session."""
+    from minigrid import models
     engine = models.create_engine()
     models.Base.metadata.create_all(engine)
     return sessionmaker(bind=engine, autocommit=True)()
@@ -26,6 +19,7 @@ def createdb():
 
 def create_user(*, email):
     """Create a user with the given e-mail."""
+    from minigrid import models
     session = createdb()
     with session.begin():
         session.add(models.User(email=email))
@@ -34,6 +28,7 @@ def create_user(*, email):
 
 def killdb():
     """Drop the schema."""
+    from minigrid import models
     answer = input('You definitely want to kill the schema minigrid_dev? y/N ')
     if not answer.lower().startswith('y'):
         print('Not dropping the schema')
@@ -48,7 +43,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('command_name')
     parser.add_argument('--kwarg', action='append')
-    args = parser.parse_args()
+    args, others = parser.parse_known_args()
+    from minigrid.options import parse_command_line
+    parse_command_line([None] + others)
+    from minigrid.options import options
+    if 'db_schema' not in others:
+        options.db_schema = 'minigrid_dev'
     try:
         command = globals()[args.command_name]
         if args.kwarg:
