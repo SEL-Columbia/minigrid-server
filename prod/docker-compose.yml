@@ -17,5 +17,10 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /tmp:/tmp
+      - /var/www
     depends_on:
       - minigrid
