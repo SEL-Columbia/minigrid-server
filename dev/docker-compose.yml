@@ -1,6 +1,6 @@
 version: '2'
 services:
-  server:
+  minigrid:
     build:
       context: ../
       dockerfile: prod/Dockerfile

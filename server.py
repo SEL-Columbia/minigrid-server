@@ -1,7 +1,9 @@
 """Minigrid access web server."""
 from asyncio import get_event_loop
 import logging
+from time import sleep
 
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
 import tornado.ioloop
@@ -28,7 +30,13 @@ class Application(tornado.web.Application):
         super().__init__(application_urls, **settings)
         if session is None:
             engine = models.create_engine()
-            models.Base.metadata.create_all(engine)
+            try:
+                models.Base.metadata.create_all(engine)
+            except OperationalError:
+                logging.error(
+                    'Database connection failed... trying again in 5 seconds.')
+                sleep(5)
+                models.Base.metadata.create_all(engine)
             Session = sessionmaker(bind=engine, autocommit=True)
             self.session = Session()
         else:
