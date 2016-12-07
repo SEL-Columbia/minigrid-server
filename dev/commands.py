@@ -9,18 +9,19 @@ from sqlalchemy.orm import sessionmaker
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 
-def createdb():
+def createdb(ensure=True):
     """Create the schema and tables and return a Session."""
     from minigrid import models
     engine = models.create_engine()
-    models.Base.metadata.create_all(engine)
+    if ensure:
+        models.Base.metadata.create_all(engine)
     return sessionmaker(bind=engine, autocommit=True)()
 
 
 def create_user(*, email):
     """Create a user with the given e-mail."""
     from minigrid import models
-    session = createdb()
+    session = createdb(ensure=False)
     with session.begin():
         session.add(models.User(email=email))
     print('Created user with e-mail ' + email)
@@ -47,7 +48,7 @@ def main():
     from minigrid.options import parse_command_line
     parse_command_line([None] + others)
     from minigrid.options import options
-    if 'db_schema' not in others:
+    if not any(other.startswith('--db_schema=') for other in others):
         options.db_schema = 'minigrid_dev'
     try:
         command = globals()[args.command_name]
