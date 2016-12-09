@@ -134,6 +134,7 @@ if [ -f /etc/redhat-release ] ; then
 fi
 $DOCKER_COMPOSE up -d
 MINIGRID_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _minigrid_ | cut -d' ' -f1)
+sleep 1
 docker exec $MINIGRID_CONTAINER_NAME ""prod/create_initial_user.py --db-host=db $ADMIN_EMAIL""
 NGINX_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _nginx_ | cut -d' ' -f1)
 
