@@ -46,7 +46,13 @@ class MainHandler(BaseHandler):
 
     def get(self):
         """Render the homepage."""
-        self.render('index.html', reason=None)
+        if self.current_user:
+            minigrids = (
+                self.session
+                .query(models.Minigrid).order_by(models.Minigrid.name))
+            self.render('index-minigrid-list.html', minigrids=minigrids)
+            return
+        self.render('index-logged-out.html', reason=None)
 
     def post(self):
         """Send login information to the portier broker."""

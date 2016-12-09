@@ -2,6 +2,7 @@
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql import func
 
 from minigrid.options import options
@@ -36,6 +37,25 @@ def pk():
         pg.UUID, primary_key=True, server_default=func.uuid_generate_v4())
 
 
+def update_time():
+    """Return a timestamp column set to CURRENT_TIMESTAMP by default."""
+    return sa.Column(
+        pg.TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=current_timestamp(),
+    )
+
+
+def json_column(column_name, default=None):
+    """Return a JSONB column that is a dictionary at the top level."""
+    return sa.Column(
+        pg.json.JSONB,
+        sa.CheckConstraint("{} @> '{{}}'".format(column_name)),
+        nullable=False,
+        server_default=default,
+    )
+
+
 class User(Base):
     """The model for a registered user."""
 
@@ -45,3 +65,23 @@ class User(Base):
         pg.TEXT, sa.CheckConstraint("email ~ '.*@.*'"),
         nullable=False, unique=True,
     )
+
+
+class Minigrid(Base):
+    """The model for a minigrid."""
+
+    __tablename__ = 'minigrid'
+    minigrid_id = pk()
+    name = sa.Column(
+        pg.TEXT, sa.CheckConstraint("name != ''"),
+        nullable=False, unique=True)
+    day_tariff = sa.Column(
+        pg.NUMERIC,
+        sa.CheckConstraint('day_tariff > 0'), nullable=False)
+    day_tariff_update_time = update_time()
+    night_tariff = sa.Column(
+        pg.NUMERIC,
+        sa.CheckConstraint('night_tariff > 0'), nullable=False)
+    night_tariff_update_time = update_time()
+    error_code = json_column('error_code', default='{}')
+    status = json_column('error_code', default='{}')

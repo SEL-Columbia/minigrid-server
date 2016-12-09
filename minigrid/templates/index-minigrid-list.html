@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  <p>Minigrids:</p>
+  <ul>
+    {% for grid in minigrids %}
+      <li>{{ grid.name }}</li>
+    {% end %}
+  </ul>
+{% end %}
