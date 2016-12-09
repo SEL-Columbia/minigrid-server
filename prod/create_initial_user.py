@@ -19,7 +19,7 @@ def main():
     parse_command_line([None] + others)
     from minigrid.options import options
     if not any(other.startswith('--db_schema=') for other in others):
-        options.db_schema = 'minigrid_dev'
+        options.db_schema = 'minigrid'
     from minigrid import models
     engine = models.create_engine()
     session = sessionmaker(bind=engine, autocommit=True)()
