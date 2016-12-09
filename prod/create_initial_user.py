@@ -3,8 +3,10 @@
 import argparse
 import os
 import sys
+from time import sleep
 
 from sqlalchemy import func
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
@@ -23,7 +25,12 @@ def main():
     from minigrid import models
     engine = models.create_engine()
     session = sessionmaker(bind=engine, autocommit=True)()
-    users = session.query(func.count(models.User.user_id)).scalar()
+    try:
+        users = session.query(func.count(models.User.user_id)).scalar()
+    except OperationalError:
+        print('Database connection failed... trying again in 5 seconds.')
+        sleep(5)
+        users = session.query(func.count(models.User.user_id)).scalar()
     if users:
         print('At least one user already exists. Log in as that user.')
         sys.exit(1)
