@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Minigrid Server installer for version 0.0.7
+# Minigrid Server installer for version 0.1.0
 set -e
 
 # Do you have docker installed?
@@ -106,13 +106,20 @@ $SUDO openssl dhparam -out /etc/letsencrypt/live/$LETSENCRYPT_DIR/dhparam.pem 20
 
 # Download the configuration files
 printf "========================================\n"
-printf " Downloading configuration files        \n"
+printf " Generating configuration               \n"
 printf "========================================\n"
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.0.7/prod/docker-compose.yml > docker-compose.yml
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.0.7/prod/nginx.conf > nginx.conf
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.1.0/prod/docker-compose.yml > docker-compose.yml
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.1.0/prod/nginx.conf > nginx.conf
 
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g docker-compose.yml
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g nginx.conf
+
+printf "\n"
+printf "Please enter an e-mail address for the  \n"
+printf "administrator. This will be the only    \n"
+printf "account that can log in at first.       \n"
+printf "Administrator e-mail address:\n>>> "
+read ADMIN_EMAIL
 
 # Bring up the server
 printf "========================================\n"
@@ -126,7 +133,9 @@ if [ -f /etc/redhat-release ] ; then
   chcon -Rt svirt_sandbox_file_t .
 fi
 $DOCKER_COMPOSE up -d
-NGINX_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep nginx | cut -d' ' -f1)
+MINIGRID_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _minigrid_ | cut -d' ' -f1)
+docker exec $MINIGRID_CONTAINER_NAME "prod/create_initial_user.py $ADMIN_EMAIL"
+NGINX_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _nginx_ | cut -d' ' -f1)
 
 # Let's Encrypt auto-renew (for now this is a cron job).
 printf "========================================\n"

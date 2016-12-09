@@ -15,6 +15,7 @@ def createdb(ensure=True):
     engine = models.create_engine()
     if ensure:
         models.Base.metadata.create_all(engine)
+        print('Created schema {}'.format(models.Base.metadata.schema))
     return sessionmaker(bind=engine, autocommit=True)()
 
 
