@@ -146,6 +146,6 @@ CRON_CMD="mkdir -p /tmp/letsencrypt && "\
 "if [ -f /tmp/renewed ] ; then docker restart $NGINX_CONTAINER_NAME ; fi ; "\
 "rm -f /tmp/renewed"
 # https://certbot.eff.org/#ubuntuxenial-nginx recommends running this twice a day on random minute within the hour
-CRON_JOB="00 01,13 * * * sleep \$(expr \$RANDOM \% 59); $CRON_CMD"
+CRON_JOB="00 01,13 * * * sleep \$(expr \$RANDOM \% 59 \* 60); $CRON_CMD"
 crontab -l | fgrep -i -v "$CRON_CMD" | { cat; echo "$CRON_JOB"; } | crontab -
 crontab -l
