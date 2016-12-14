@@ -1,5 +1,8 @@
 from unittest.mock import patch
 from urllib.parse import urlparse, parse_qs
+import uuid
+
+from bs4 import BeautifulSoup as inconvenient_soup
 
 from tornado.testing import ExpectLog
 
@@ -10,16 +13,20 @@ from minigrid.portier import redis_kv
 from server import Application
 
 
+BeautifulSoup = lambda x: inconvenient_soup(x, 'html.parser')
+
+
 class TestIndex(HTTPTest):
     def setUp(self):
         super().setUp()
         with self.session.begin():
             self.user = models.User(email='a@a.com')
             self.session.add(self.user)
-            self.session.add_all((
+            self.minigrids = (
                 models.Minigrid(name='a', day_tariff=1, night_tariff=2),
                 models.Minigrid(name='b', day_tariff=10, night_tariff=20),
-            ))
+            )
+            self.session.add_all(self.minigrids)
 
     def test_get_not_logged_in(self):
         response = self.fetch('/')
@@ -35,6 +42,57 @@ class TestIndex(HTTPTest):
         self.assertResponseCode(response, 200)
         self.assertNotIn('Log In', response.body.decode())
         self.assertIn('Log Out', response.body.decode())
+        body = BeautifulSoup(response.body)
+        minigrids = body.ul.findAll('li')
+        self.assertEqual(len(minigrids), 2)
+        self.assertEqual(
+            minigrids[0].a['href'],
+            '/minigrid/' + self.minigrids[0].minigrid_id,
+        )
+        self.assertEqual(minigrids[0].a.text, self.minigrids[0].name)
+
+
+class TestMinigridView(HTTPTest):
+    def setUp(self):
+        super().setUp()
+        with self.session.begin():
+            self.user = models.User(email='a@a.com')
+            self.session.add(self.user)
+            self.minigrids = (
+                models.Minigrid(name='a', day_tariff=1, night_tariff=2),
+                models.Minigrid(name='b', day_tariff=10, night_tariff=20),
+            )
+            self.session.add_all(self.minigrids)
+
+    def test_get_not_logged_in(self):
+        response = self.fetch(
+            '/minigrid/' + self.minigrids[0].minigrid_id,
+            follow_redirects=False,
+        )
+        self.assertEqual(response.code, 302)
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_malformed_id(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '404'):
+            response = self.fetch('/minigrid/' + 'nope')
+        self.assertEqual(response.code, 404)
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_nonexistent_id(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '404'):
+            response = self.fetch('/minigrid/' + str(uuid.uuid4()))
+        self.assertEqual(response.code, 404)
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_success(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch('/minigrid/' + self.minigrids[0].minigrid_id)
+        self.assertEqual(response.code, 200)
+        body = BeautifulSoup(response.body)
+        self.assertIn('Minigrid Name: a', body.h1)
+        self.assertIn('Day tariff: 1', body.findAll('p')[2])
 
 
 class TestXSRF(HTTPTest):
