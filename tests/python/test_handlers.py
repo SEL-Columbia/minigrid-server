@@ -13,7 +13,8 @@ from minigrid.portier import redis_kv
 from server import Application
 
 
-BeautifulSoup = lambda x: inconvenient_soup(x, 'html.parser')
+def BeautifulSoup(page):
+    return inconvenient_soup(page, 'html.parser')
 
 
 class TestIndex(HTTPTest):
