@@ -3,6 +3,7 @@ from datetime import timedelta
 from urllib.parse import urlencode
 from uuid import uuid4
 
+from sqlalchemy.exc import DataError
 from sqlalchemy.orm.exc import NoResultFound
 
 import tornado.web
@@ -70,6 +71,24 @@ class MainHandler(BaseHandler):
         self.redirect('https://broker.portier.io/auth?' + query_args)
 
 
+class MinigridHandler(BaseHandler):
+    """Handlers for a minigrid view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the view for a minigrid record."""
+        try:
+            minigrid = (
+                self.session
+                .query(models.Minigrid)
+                .filter_by(minigrid_id=minigrid_id)
+                .one()
+            )
+        except (NoResultFound, DataError):
+            raise tornado.web.HTTPError(404)
+        self.render('minigrid.html', minigrid=minigrid)
+
+
 class VerifyLoginHandler(BaseHandler):
     """Handlers for portier verification."""
 
@@ -121,6 +140,7 @@ class LogoutHandler(BaseHandler):
 
 application_urls = [
     (r'/', MainHandler),
+    (r'/minigrid/(.+)?', MinigridHandler),
     (r'/verify/?', VerifyLoginHandler),
     (r'/logout/?', LogoutHandler),
 ]

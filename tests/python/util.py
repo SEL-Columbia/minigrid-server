@@ -37,6 +37,7 @@ Session = sessionmaker()
 
 class Test(unittest.TestCase):
     def setUp(self):
+        shutil.rmtree(path('../tests/python/tmp'), ignore_errors=True)
         os.mkdir(path('../tests/python/tmp'))
         models.Base.metadata.create_all(engine)
         self.connection = engine.connect()

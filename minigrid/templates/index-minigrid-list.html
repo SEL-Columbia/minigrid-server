@@ -4,7 +4,7 @@
   <p>Minigrids:</p>
   <ul>
     {% for grid in minigrids %}
-      <li>{{ grid.name }}</li>
+      <li><a href="/minigrid/{{ grid.minigrid_id }}">{{ grid.name }}</a></li>
     {% end %}
   </ul>
 {% end %}

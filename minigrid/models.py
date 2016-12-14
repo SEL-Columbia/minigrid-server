@@ -84,4 +84,4 @@ class Minigrid(Base):
         sa.CheckConstraint('night_tariff > 0'), nullable=False)
     night_tariff_update_time = update_time()
     error_code = json_column('error_code', default='{}')
-    status = json_column('error_code', default='{}')
+    status = json_column('status', default='{}')

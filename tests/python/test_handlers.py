@@ -11,10 +11,30 @@ from server import Application
 
 
 class TestIndex(HTTPTest):
-    def test_get(self):
+    def setUp(self):
+        super().setUp()
+        with self.session.begin():
+            self.user = models.User(email='a@a.com')
+            self.session.add(self.user)
+            self.session.add_all((
+                models.Minigrid(name='a', day_tariff=1, night_tariff=2),
+                models.Minigrid(name='b', day_tariff=10, night_tariff=20),
+            ))
+
+    def test_get_not_logged_in(self):
         response = self.fetch('/')
         self.assertResponseCode(response, 200)
         self.assertNotIn('user', response.headers['Set-Cookie'])
+        self.assertIn('Log In', response.body.decode())
+        self.assertNotIn('Log Out', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_logged_in(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch('/')
+        self.assertResponseCode(response, 200)
+        self.assertNotIn('Log In', response.body.decode())
+        self.assertIn('Log Out', response.body.decode())
 
 
 class TestXSRF(HTTPTest):
