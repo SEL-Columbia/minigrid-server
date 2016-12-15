@@ -3,7 +3,7 @@ from datetime import timedelta
 from urllib.parse import urlencode
 from uuid import uuid4
 
-from sqlalchemy.exc import DataError
+from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 import tornado.web
@@ -69,6 +69,31 @@ class MainHandler(BaseHandler):
             'redirect_uri': options.minigrid_website_url + '/verify',
         })
         self.redirect('https://broker.portier.io/auth?' + query_args)
+
+
+class UsersHandler(BaseHandler):
+    """Handlers for user management."""
+
+    def _render_users(self, reason=None):
+        users = self.session.query(models.User).order_by('email')
+        self.render('users.html', users=users, reason=reason)
+
+    @tornado.web.authenticated
+    def get(self):
+        """Render the view for user management."""
+        self._render_users()
+
+    @tornado.web.authenticated
+    def post(self):
+        """Create a new user model."""
+        email = self.get_argument('email')
+        reason = None
+        try:
+            with self.session.begin():
+                self.session.add(models.User(email=email))
+        except IntegrityError:
+            reason = 'Account for {} already exists'.format(email)
+        self._render_users(reason=reason)
 
 
 class MinigridHandler(BaseHandler):
@@ -141,6 +166,7 @@ class LogoutHandler(BaseHandler):
 application_urls = [
     (r'/', MainHandler),
     (r'/minigrid/(.+)?', MinigridHandler),
+    (r'/users/?', UsersHandler),
     (r'/verify/?', VerifyLoginHandler),
     (r'/logout/?', LogoutHandler),
 ]

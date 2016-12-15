@@ -1,10 +1,14 @@
 {% extends 'base.html' %}
 
 {% block body %}
+  <p><a href="/users">Manage users &raquo;</a></p>
   <p>Minigrids:</p>
   <ul>
     {% for grid in minigrids %}
-      <li><a href="/minigrid/{{ grid.minigrid_id }}">{{ grid.name }}</a></li>
+    <li>
+      <p><a href="/minigrid/{{ grid.minigrid_id }}">{{ grid.name }} &raquo;</a></p>
+      <p>Status: {{ grid.status }}</p>
+    </li>
     {% end %}
   </ul>
 {% end %}

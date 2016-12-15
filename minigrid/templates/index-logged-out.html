@@ -2,7 +2,7 @@
 
 {% block body %}
   {% if reason is not None %}
-  <p>Login unsuccessful: {{ reason }}</p>
+  <p><strong>Login unsuccessful: {{ reason }}</strong></p>
   {% end %}
   <form action="/" method="POST">
     {% module xsrf_form_html() %}
