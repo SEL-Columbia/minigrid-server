@@ -50,7 +50,7 @@ class TestIndex(HTTPTest):
             minigrids[0].a['href'],
             '/minigrid/' + self.minigrids[0].minigrid_id,
         )
-        self.assertEqual(minigrids[0].a.text, self.minigrids[0].name)
+        self.assertEqual(minigrids[0].a.text, self.minigrids[0].name + ' »')
 
 
 class TestMinigridView(HTTPTest):
