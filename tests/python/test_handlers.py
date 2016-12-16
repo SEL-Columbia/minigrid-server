@@ -134,7 +134,7 @@ class TestUsersView(HTTPTest):
     @patch('minigrid.handlers.BaseHandler.get_current_user')
     def test_post_invalid_email(self, get_current_user):
         get_current_user.return_value = self.users[0]
-        response = self.fetch('/users?email=notanemail', method='POST', body='')
+        response = self.fetch('/users?email=notemail', method='POST', body='')
         self.assertIn('Could not create user account', response.body.decode())
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
