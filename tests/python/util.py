@@ -42,7 +42,7 @@ class Test(unittest.TestCase):
         models.Base.metadata.create_all(engine)
         self.connection = engine.connect()
         self.transaction = self.connection.begin()
-        self.session = Session(bind=self.connection, autocommit=True)
+        self.session = Session(bind=self.connection)
         super().setUp()
 
     def tearDown(self):

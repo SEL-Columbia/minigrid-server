@@ -37,7 +37,7 @@ class Application(tornado.web.Application):
                     'Database connection failed... trying again in 5 seconds.')
                 sleep(5)
                 models.Base.metadata.create_all(engine)
-            Session = sessionmaker(bind=engine, autocommit=True)
+            Session = sessionmaker(bind=engine)
             self.session = Session()
         else:
             self.session = session

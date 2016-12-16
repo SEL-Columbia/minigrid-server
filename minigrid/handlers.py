@@ -19,7 +19,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
     @property
     def session(self):
-        """The database session. Use session.begin() for transactions."""
+        """The db session. Use session.begin_nested() for transactions."""
         return self.application.session
 
     def get_current_user(self):
@@ -89,7 +89,7 @@ class UsersHandler(BaseHandler):
         email = self.get_argument('email')
         reason = None
         try:
-            with self.session.begin():
+            with self.session.begin_nested():
                 self.session.add(models.User(email=email))
         except IntegrityError:
             reason = 'Account for {} already exists'.format(email)

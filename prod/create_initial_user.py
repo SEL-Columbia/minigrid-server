@@ -24,7 +24,7 @@ def main():
         options.db_schema = 'minigrid'
     from minigrid import models
     engine = models.create_engine()
-    session = sessionmaker(bind=engine, autocommit=True)()
+    session = sessionmaker(bind=engine)()
     try:
         users = session.query(func.count(models.User.user_id)).scalar()
     except OperationalError:
@@ -34,7 +34,7 @@ def main():
     if users:
         print('At least one user already exists. Log in as that user.')
         sys.exit(1)
-    with session.begin():
+    with session.begin_nested():
         session.add(models.User(email=args.email))
     print('Created initial user with e-mail', args.email)
 

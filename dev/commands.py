@@ -16,14 +16,14 @@ def createdb(ensure=True):
     if ensure:
         models.Base.metadata.create_all(engine)
         print('Created schema {}'.format(models.Base.metadata.schema))
-    return sessionmaker(bind=engine, autocommit=True)()
+    return sessionmaker(bind=engine)()
 
 
 def create_user(*, email):
     """Create a user with the given e-mail."""
     from minigrid import models
     session = createdb(ensure=False)
-    with session.begin():
+    with session.begin_nested():
         session.add(models.User(email=email))
     print('Created user with e-mail ' + email)
 

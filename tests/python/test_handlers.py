@@ -20,7 +20,7 @@ def BeautifulSoup(page):
 class TestIndex(HTTPTest):
     def setUp(self):
         super().setUp()
-        with self.session.begin():
+        with self.session.begin_nested():
             self.user = models.User(email='a@a.com')
             self.session.add(self.user)
             self.minigrids = (
@@ -56,7 +56,7 @@ class TestIndex(HTTPTest):
 class TestMinigridView(HTTPTest):
     def setUp(self):
         super().setUp()
-        with self.session.begin():
+        with self.session.begin_nested():
             self.user = models.User(email='a@a.com')
             self.session.add(self.user)
             self.minigrids = (
@@ -118,7 +118,7 @@ class TestXSRF(HTTPTest):
 
 class TestAuthentication(HTTPTest):
     def create_user(self, email='a@a.com'):
-        with self.session.begin():
+        with self.session.begin_nested():
             self.session.add(models.User(email=email))
 
     def test_login_missing_email(self):
