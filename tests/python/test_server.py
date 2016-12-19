@@ -27,11 +27,13 @@ class TestApplication(Test):
 
 class TestServer(Test):
     @patch('server.AsyncIOMainLoop')
+    @patch('server.Application')
     @patch('server.print')
     @patch('server.get_event_loop')
-    def test_main(self, get_event_loop, mock_print, main_loop):
+    def test_main(self, get_event_loop, mock_print, application, main_loop):
         with self.assertLogs(level='INFO'):
             main()
         self.assertTrue(main_loop().install.called)
+        self.assertTrue(application().listen.called)
         self.assertTrue(mock_print.called)
         self.assertTrue(get_event_loop().run_forever.called)
