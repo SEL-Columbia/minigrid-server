@@ -19,7 +19,9 @@ class BaseHandler(tornado.web.RequestHandler):
 
     @property
     def session(self):
-        """The db session. Use session.begin_nested() for transactions."""
+        """The database session.
+
+        Use the models.transaction(session) context manager."""
         return self.application.session
 
     def get_current_user(self):
@@ -89,8 +91,8 @@ class UsersHandler(BaseHandler):
         email = self.get_argument('email')
         reason = None
         try:
-            with self.session.begin_nested():
-                self.session.add(models.User(email=email))
+            with models.transaction(self.session) as session:
+                session.add(models.User(email=email))
         except IntegrityError as error:
             if 'user_email_check' in error.orig.pgerror:
                 reason = '{} is not a valid e-mail address'.format(email)

@@ -34,8 +34,8 @@ def main():
     if users:
         print('At least one user already exists. Log in as that user.')
         sys.exit(1)
-    with session.begin_nested():
-        session.add(models.User(email=args.email))
+    with models.transaction(session) as tx_session:
+        tx_session.add(models.User(email=args.email))
     print('Created initial user with e-mail', args.email)
 
 

@@ -20,14 +20,14 @@ def BeautifulSoup(page):
 class TestIndex(HTTPTest):
     def setUp(self):
         super().setUp()
-        with self.session.begin_nested():
+        with models.transaction(self.session) as session:
             self.user = models.User(email='a@a.com')
-            self.session.add(self.user)
+            session.add(self.user)
             self.minigrids = (
                 models.Minigrid(name='a', day_tariff=1, night_tariff=2),
                 models.Minigrid(name='b', day_tariff=10, night_tariff=20),
             )
-            self.session.add_all(self.minigrids)
+            session.add_all(self.minigrids)
 
     def test_get_not_logged_in(self):
         response = self.fetch('/')
@@ -56,14 +56,14 @@ class TestIndex(HTTPTest):
 class TestMinigridView(HTTPTest):
     def setUp(self):
         super().setUp()
-        with self.session.begin_nested():
+        with models.transaction(self.session) as session:
             self.user = models.User(email='a@a.com')
-            self.session.add(self.user)
+            session.add(self.user)
             self.minigrids = (
                 models.Minigrid(name='a', day_tariff=1, night_tariff=2),
                 models.Minigrid(name='b', day_tariff=10, night_tariff=20),
             )
-            self.session.add_all(self.minigrids)
+            session.add_all(self.minigrids)
 
     def test_get_not_logged_in(self):
         response = self.fetch(
@@ -99,12 +99,12 @@ class TestMinigridView(HTTPTest):
 class TestUsersView(HTTPTest):
     def setUp(self):
         super().setUp()
-        with self.session.begin_nested():
+        with models.transaction(self.session) as session:
             self.users = (
                 models.User(email='a@a.com'),
                 models.User(email='b@b.com'),
             )
-            self.session.add_all(self.users)
+            session.add_all(self.users)
 
     def test_get_not_logged_in(self):
         response = self.fetch('/users', follow_redirects=False)
@@ -179,8 +179,8 @@ class TestXSRF(HTTPTest):
 
 class TestAuthentication(HTTPTest):
     def create_user(self, email='a@a.com'):
-        with self.session.begin_nested():
-            self.session.add(models.User(email=email))
+        with models.transaction(self.session) as session:
+            session.add(models.User(email=email))
 
     def test_login_missing_email(self):
         log_1 = ExpectLog('tornado.general', '.*Missing argument email')

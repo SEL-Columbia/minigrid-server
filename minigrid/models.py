@@ -1,4 +1,6 @@
 """ORM models."""
+from contextlib import contextmanager
+
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.ext.declarative import declarative_base
@@ -29,6 +31,21 @@ def create_engine():
         options.db_user, options.db_password, options.db_host,
         options.db_port, options.db_database)
     return sa.create_engine(connection_string)
+
+
+@contextmanager
+def transaction(session):
+    """Provide a transactional scope around a series of operations.
+
+    Taken from http://docs.sqlalchemy.org/en/latest/orm/session_basics.html
+    #when-do-i-construct-a-session-when-do-i-commit-it-and-when-do-i-close-it
+    """
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
 
 
 def pk():

@@ -23,8 +23,8 @@ def create_user(*, email):
     """Create a user with the given e-mail."""
     from minigrid import models
     session = createdb(ensure=False)
-    with session.begin_nested():
-        session.add(models.User(email=email))
+    with models.transaction(session) as tx_session:
+        tx_session.add(models.User(email=email))
     print('Created user with e-mail ' + email)
 
 
