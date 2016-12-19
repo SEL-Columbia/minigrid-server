@@ -91,8 +91,11 @@ class UsersHandler(BaseHandler):
         try:
             with self.session.begin_nested():
                 self.session.add(models.User(email=email))
-        except IntegrityError:
-            reason = 'Account for {} already exists'.format(email)
+        except IntegrityError as error:
+            if 'user_email_check' in error.orig.pgerror:
+                reason = '{} is not a valid e-mail address'.format(email)
+            else:
+                reason = 'Account for {} already exists'.format(email)
         self._render_users(reason=reason)
 
 
