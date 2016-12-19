@@ -37,11 +37,12 @@ Session = sessionmaker()
 
 class Test(unittest.TestCase):
     def setUp(self):
+        shutil.rmtree(path('../tests/python/tmp'), ignore_errors=True)
         os.mkdir(path('../tests/python/tmp'))
         models.Base.metadata.create_all(engine)
         self.connection = engine.connect()
         self.transaction = self.connection.begin()
-        self.session = Session(bind=self.connection, autocommit=True)
+        self.session = Session(bind=self.connection)
         super().setUp()
 
     def tearDown(self):

@@ -3,6 +3,7 @@ from datetime import timedelta
 from urllib.parse import urlencode
 from uuid import uuid4
 
+from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 import tornado.web
@@ -18,7 +19,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
     @property
     def session(self):
-        """The database session. Use session.begin() for transactions."""
+        """The db session. Use session.begin_nested() for transactions."""
         return self.application.session
 
     def get_current_user(self):
@@ -46,7 +47,13 @@ class MainHandler(BaseHandler):
 
     def get(self):
         """Render the homepage."""
-        self.render('index.html', reason=None)
+        if self.current_user:
+            minigrids = (
+                self.session
+                .query(models.Minigrid).order_by(models.Minigrid.name))
+            self.render('index-minigrid-list.html', minigrids=minigrids)
+            return
+        self.render('index-logged-out.html', reason=None)
 
     def post(self):
         """Send login information to the portier broker."""
@@ -62,6 +69,52 @@ class MainHandler(BaseHandler):
             'redirect_uri': options.minigrid_website_url + '/verify',
         })
         self.redirect('https://broker.portier.io/auth?' + query_args)
+
+
+class UsersHandler(BaseHandler):
+    """Handlers for user management."""
+
+    def _render_users(self, reason=None):
+        users = self.session.query(models.User).order_by('email')
+        self.render('users.html', users=users, reason=reason)
+
+    @tornado.web.authenticated
+    def get(self):
+        """Render the view for user management."""
+        self._render_users()
+
+    @tornado.web.authenticated
+    def post(self):
+        """Create a new user model."""
+        email = self.get_argument('email')
+        reason = None
+        try:
+            with self.session.begin_nested():
+                self.session.add(models.User(email=email))
+        except IntegrityError as error:
+            if 'user_email_check' in error.orig.pgerror:
+                reason = '{} is not a valid e-mail address'.format(email)
+            else:
+                reason = 'Account for {} already exists'.format(email)
+        self._render_users(reason=reason)
+
+
+class MinigridHandler(BaseHandler):
+    """Handlers for a minigrid view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the view for a minigrid record."""
+        try:
+            minigrid = (
+                self.session
+                .query(models.Minigrid)
+                .filter_by(minigrid_id=minigrid_id)
+                .one()
+            )
+        except (NoResultFound, DataError):
+            raise tornado.web.HTTPError(404)
+        self.render('minigrid.html', minigrid=minigrid)
 
 
 class VerifyLoginHandler(BaseHandler):
@@ -115,6 +168,8 @@ class LogoutHandler(BaseHandler):
 
 application_urls = [
     (r'/', MainHandler),
+    (r'/minigrid/(.+)?', MinigridHandler),
+    (r'/users/?', UsersHandler),
     (r'/verify/?', VerifyLoginHandler),
     (r'/logout/?', LogoutHandler),
 ]

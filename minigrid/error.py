@@ -21,7 +21,7 @@ class LoginError(MinigridHTTPError):
 
     def __init__(self,
                  status_code=400,
-                 template_name='index.html',
+                 template_name='index-logged-out.html',
                  *, reason):
         """Create a login error (400 by default)."""
         super().__init__(reason, status_code, template_name)

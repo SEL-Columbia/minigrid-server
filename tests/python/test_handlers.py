@@ -1,5 +1,8 @@
 from unittest.mock import patch
 from urllib.parse import urlparse, parse_qs
+import uuid
+
+from bs4 import BeautifulSoup as inconvenient_soup
 
 from tornado.testing import ExpectLog
 
@@ -10,11 +13,148 @@ from minigrid.portier import redis_kv
 from server import Application
 
 
+def BeautifulSoup(page):
+    return inconvenient_soup(page, 'html.parser')
+
+
 class TestIndex(HTTPTest):
-    def test_get(self):
+    def setUp(self):
+        super().setUp()
+        with self.session.begin_nested():
+            self.user = models.User(email='a@a.com')
+            self.session.add(self.user)
+            self.minigrids = (
+                models.Minigrid(name='a', day_tariff=1, night_tariff=2),
+                models.Minigrid(name='b', day_tariff=10, night_tariff=20),
+            )
+            self.session.add_all(self.minigrids)
+
+    def test_get_not_logged_in(self):
         response = self.fetch('/')
         self.assertResponseCode(response, 200)
         self.assertNotIn('user', response.headers['Set-Cookie'])
+        self.assertIn('Log In', response.body.decode())
+        self.assertNotIn('Log Out', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_logged_in(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch('/')
+        self.assertResponseCode(response, 200)
+        self.assertNotIn('Log In', response.body.decode())
+        self.assertIn('Log Out', response.body.decode())
+        body = BeautifulSoup(response.body)
+        minigrids = body.ul.findAll('li')
+        self.assertEqual(len(minigrids), 2)
+        self.assertEqual(
+            minigrids[0].a['href'],
+            '/minigrid/' + self.minigrids[0].minigrid_id,
+        )
+        self.assertEqual(minigrids[0].a.text, self.minigrids[0].name + ' »')
+
+
+class TestMinigridView(HTTPTest):
+    def setUp(self):
+        super().setUp()
+        with self.session.begin_nested():
+            self.user = models.User(email='a@a.com')
+            self.session.add(self.user)
+            self.minigrids = (
+                models.Minigrid(name='a', day_tariff=1, night_tariff=2),
+                models.Minigrid(name='b', day_tariff=10, night_tariff=20),
+            )
+            self.session.add_all(self.minigrids)
+
+    def test_get_not_logged_in(self):
+        response = self.fetch(
+            '/minigrid/' + self.minigrids[0].minigrid_id,
+            follow_redirects=False,
+        )
+        self.assertResponseCode(response, 302)
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_malformed_id(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '404'):
+            response = self.fetch('/minigrid/' + 'nope')
+        self.assertResponseCode(response, 404)
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_nonexistent_id(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '404'):
+            response = self.fetch('/minigrid/' + str(uuid.uuid4()))
+        self.assertResponseCode(response, 404)
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_success(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch('/minigrid/' + self.minigrids[0].minigrid_id)
+        self.assertResponseCode(response, 200)
+        body = BeautifulSoup(response.body)
+        self.assertIn('Minigrid Name: a', body.h1)
+        self.assertIn('Day tariff: 1', body.findAll('p')[2])
+
+
+class TestUsersView(HTTPTest):
+    def setUp(self):
+        super().setUp()
+        with self.session.begin_nested():
+            self.users = (
+                models.User(email='a@a.com'),
+                models.User(email='b@b.com'),
+            )
+            self.session.add_all(self.users)
+
+    def test_get_not_logged_in(self):
+        response = self.fetch('/users', follow_redirects=False)
+        self.assertResponseCode(response, 302)
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_logged_in(self, get_current_user):
+        get_current_user.return_value = self.users[0]
+        response = self.fetch('/users')
+        self.assertResponseCode(response, 200)
+        body = BeautifulSoup(response.body)
+        user_ul = body.ul.findAll('li')
+        self.assertEqual(user_ul[0].a['href'], 'mailto:a@a.com')
+        self.assertEqual(user_ul[1].a['href'], 'mailto:b@b.com')
+
+    def test_post_not_logged_in(self):
+        with ExpectLog('tornado.access', '403'):
+            response = self.fetch('/users', method='POST', body='')
+        self.assertResponseCode(response, 403)
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_post_empty_email(self, get_current_user):
+        get_current_user.return_value = self.users[0]
+        response = self.fetch('/users?email=', method='POST', body='')
+        self.assertIn('Could not create user account', response.body.decode())
+        self.assertIn('not a valid e-mail address', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_post_invalid_email(self, get_current_user):
+        get_current_user.return_value = self.users[0]
+        response = self.fetch('/users?email=notemail', method='POST', body='')
+        self.assertIn('Could not create user account', response.body.decode())
+        self.assertIn('not a valid e-mail address', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_post_user_exists(self, get_current_user):
+        get_current_user.return_value = self.users[0]
+        response = self.fetch('/users?email=a@a.com', method='POST', body='')
+        self.assertIn(
+            'Account for a@a.com already exists', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_post_success(self, get_current_user):
+        get_current_user.return_value = self.users[0]
+        response = self.fetch('/users?email=ba@a.com', method='POST', body='')
+        body = BeautifulSoup(response.body)
+        user_ul = body.ul.findAll('li')
+        self.assertEqual(user_ul[1].a['href'], 'mailto:ba@a.com')
+        self.assertIsNotNone(
+            self.session.query(models.User).filter_by(email='ba@a.com').one())
 
 
 class TestXSRF(HTTPTest):
@@ -39,7 +179,7 @@ class TestXSRF(HTTPTest):
 
 class TestAuthentication(HTTPTest):
     def create_user(self, email='a@a.com'):
-        with self.session.begin():
+        with self.session.begin_nested():
             self.session.add(models.User(email=email))
 
     def test_login_missing_email(self):

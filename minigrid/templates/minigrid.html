@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  <h1>Minigrid Name: {{ minigrid.name }}</h1>
+  <p>ID: {{ minigrid.minigrid_id }}</p>
+  <p>Day tariff: {{ minigrid.day_tariff }}</p>
+  <p>Last update of day tariff: {{ minigrid.day_tariff_update_time }}</p>
+  <p>Night tariff: {{ minigrid.night_tariff }}</p>
+  <p>Last update of night tariff: {{ minigrid.night_tariff_update_time }}</p>
+  <p>Error code: {{ minigrid.error_code }}</p>
+  <p>Status: {{ minigrid.status }}</p>
+  <footer><a href="/">&laquo; Return to minigrid index</a></footer>
+{% end %}
