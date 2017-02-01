@@ -6,7 +6,6 @@ from time import sleep
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
-import tornado.ioloop
 from tornado.platform.asyncio import AsyncIOMainLoop
 import tornado.web
 
@@ -47,7 +46,7 @@ def main():
     """Start the Tornado application."""
     AsyncIOMainLoop().install()
     Application().listen(options.minigrid_port)
-    print('Listening on port {}'.format(options.minigrid_port))
+    print(f'Listening on port {options.minigrid_port}')
     logging.info('Application started')
     get_event_loop().run_forever()
 

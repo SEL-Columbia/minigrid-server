@@ -4,6 +4,8 @@ import uuid
 
 from bs4 import BeautifulSoup as inconvenient_soup
 
+from sqlalchemy.exc import IntegrityError
+
 from tornado.testing import ExpectLog
 
 from tests.python.util import HTTPTest, CoroMock
@@ -17,15 +19,70 @@ def BeautifulSoup(page):
     return inconvenient_soup(page, 'html.parser')
 
 
+class TestSystemNotInitialized(HTTPTest):
+    def setUp(self):
+        super().setUp()
+        with models.transaction(self.session) as session:
+            self.user = models.User(email='a@a.com')
+            session.add(self.user)
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_not_initialized_message(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch('/')
+        self.assertResponseCode(response, 200)
+        self.assertNotIn('Log In', response.body.decode())
+        self.assertIn('Log Out', response.body.decode())
+        self.assertIn(
+            'You must initialize the system tariff information.',
+            response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_view_tariffs_not_initialized(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch('/tariffs', follow_redirects=False)
+        self.assertResponseCode(response, 302)
+        self.assertEqual(response.headers['Location'], '/')
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_post_tariffs_not_initialized(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch(
+            '/tariffs?day_tariff=1&day_tariff_start=6'
+            '&night_tariff=1&night_tariff_start=18',
+            method='POST', body='')
+        self.assertResponseCode(response, 200)
+        self.assertNotIn(
+            'You must initialize the system tariff information.',
+            response.body.decode())
+        system = self.session.query(models.System).one()
+        self.assertEqual(system.day_tariff, 1)
+        self.assertEqual(system.day_tariff_start, 6)
+        self.assertEqual(system.night_tariff, 1)
+        self.assertEqual(system.night_tariff_start, 18)
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_post_tariffs_not_initialized_missing_values(
+            self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                '/tariffs?day_tariff=1', method='POST', body='')
+        self.assertResponseCode(response, 400)
+        self.assertIn('Null value', response.body.decode())
+        self.assertIsNone(self.session.query(models.System).one_or_none())
+
+
 class TestIndex(HTTPTest):
     def setUp(self):
         super().setUp()
         with models.transaction(self.session) as session:
             self.user = models.User(email='a@a.com')
             session.add(self.user)
+            session.add(models.System(day_tariff=1, night_tariff=1))
             self.minigrids = (
-                models.Minigrid(name='a', day_tariff=1, night_tariff=2),
-                models.Minigrid(name='b', day_tariff=10, night_tariff=20),
+                models.Minigrid(name='a'),
+                models.Minigrid(name='b'),
             )
             session.add_all(self.minigrids)
 
@@ -43,6 +100,9 @@ class TestIndex(HTTPTest):
         self.assertResponseCode(response, 200)
         self.assertNotIn('Log In', response.body.decode())
         self.assertIn('Log Out', response.body.decode())
+        self.assertNotIn(
+            'You must initialize the system tariff information.',
+            response.body.decode())
         body = BeautifulSoup(response.body)
         minigrids = body.ul.findAll('li')
         self.assertEqual(len(minigrids), 2)
@@ -59,9 +119,10 @@ class TestMinigridView(HTTPTest):
         with models.transaction(self.session) as session:
             self.user = models.User(email='a@a.com')
             session.add(self.user)
+            session.add(models.System(day_tariff=1, night_tariff=1))
             self.minigrids = (
-                models.Minigrid(name='a', day_tariff=1, night_tariff=2),
-                models.Minigrid(name='b', day_tariff=10, night_tariff=20),
+                models.Minigrid(name='a'),
+                models.Minigrid(name='b'),
             )
             session.add_all(self.minigrids)
 
@@ -93,7 +154,6 @@ class TestMinigridView(HTTPTest):
         self.assertResponseCode(response, 200)
         body = BeautifulSoup(response.body)
         self.assertIn('Minigrid Name: a', body.h1)
-        self.assertIn('Day tariff: 1', body.findAll('p')[2])
 
 
 class TestUsersView(HTTPTest):
@@ -155,6 +215,141 @@ class TestUsersView(HTTPTest):
         self.assertEqual(user_ul[1].a['href'], 'mailto:ba@a.com')
         self.assertIsNotNone(
             self.session.query(models.User).filter_by(email='ba@a.com').one())
+
+
+class TestTariffsView(HTTPTest):
+    def setUp(self):
+        super().setUp()
+        with models.transaction(self.session) as session:
+            self.user = models.User(email='a@a.com')
+            session.add(self.user)
+            session.add(models.System(day_tariff=1, night_tariff=1))
+
+    def test_get_tariffs_not_logged_in(self):
+        response = self.fetch('/tariffs')
+        self.assertResponseCode(response, 200)
+        self.assertNotIn('user', response.headers['Set-Cookie'])
+        self.assertIn('Log In', response.body.decode())
+        self.assertNotIn('Log Out', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_tariffs_logged_in(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch('/tariffs')
+        self.assertResponseCode(response, 200)
+        body = BeautifulSoup(response.body)
+        self.assertEqual(
+            body.findAll('p')[1].contents[0], 'Tariff information:')
+        self.assertEqual(
+            body.find('input', {'name': 'day_tariff'})['value'], '1')
+        self.assertEqual(
+            body.find('input', {'name': 'day_tariff_start'})['value'], '6')
+        self.assertEqual(
+            body.find('input', {'name': 'night_tariff'})['value'], '1')
+        self.assertEqual(
+            body.find('input', {'name': 'night_tariff_start'})['value'], '18')
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_update_tariffs(self, get_current_user):
+        get_current_user.return_value = self.user
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().day_tariff, 1)
+        response = self.fetch(
+            '/tariffs?day_tariff=2.5', method='POST', body='')
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().day_tariff, 2.5)
+        body = BeautifulSoup(response.body)
+        self.assertEqual(
+            body.find('input', {'name': 'day_tariff'})['value'], '2.5')
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_update_tariffs_bad_tariff_invalid_value(self, get_current_user):
+        get_current_user.return_value = self.user
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().day_tariff, 1)
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                '/tariffs?day_tariff=-2', method='POST', body='')
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().day_tariff, 1)
+        self.assertIn('Invalid value', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_update_tariffs_missing_tariff(self, get_current_user):
+        get_current_user.return_value = self.user
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().day_tariff, 1)
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                '/tariffs?day_tariff=', method='POST', body='')
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().day_tariff, 1)
+        self.assertIn('Invalid input syntax', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_update_tariffs_bad_day_tariff_start(self, get_current_user):
+        get_current_user.return_value = self.user
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().day_tariff_start,
+            6)
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                '/tariffs?day_tariff_start=-1', method='POST', body='')
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().day_tariff_start,
+            6)
+        self.assertIn('Invalid value', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_update_tariffs_late_day_tariff_start(self, get_current_user):
+        get_current_user.return_value = self.user
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().day_tariff_start,
+            6)
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                '/tariffs?day_tariff_start=19', method='POST', body='')
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().day_tariff_start,
+            6)
+        self.assertIn(
+            'The daytime start hour must be less than'
+            ' the nighttime start hour.',
+            response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_update_tariffs_early_night_tariff_start(self, get_current_user):
+        get_current_user.return_value = self.user
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().night_tariff_start,
+            18)
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                '/tariffs?night_tariff_start=5', method='POST', body='')
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().night_tariff_start,
+            18)
+        self.assertIn(
+            'The daytime start hour must be less than'
+            ' the nighttime start hour.',
+            response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.session')
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_update_tariffs_bad_tariff(self, get_current_user, session):
+        get_current_user.return_value = self.user
+
+        class FakePGError:
+            pgerror = 'This should show up'
+        session.execute.side_effect = IntegrityError(None, None, FakePGError)
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().day_tariff, 1)
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                '/tariffs?day_tariff=-2', method='POST', body='')
+        self.assertEqual(
+            self.session.query(models.System).one_or_none().day_tariff, 1)
+        self.assertIn('This should show up', response.body.decode())
 
 
 class TestXSRF(HTTPTest):

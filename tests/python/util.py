@@ -21,7 +21,7 @@ from minigrid import models
 
 
 class Dummy:
-    pass
+    """Dummy class to help fake redis in tests."""
 
 
 DummyRedis = Dummy
@@ -37,7 +37,10 @@ Session = sessionmaker()
 
 
 class Test(unittest.TestCase):
+    """Base Test class that runs code in a transaction."""
+
     def setUp(self):
+        """Get the database ready for a test."""
         shutil.rmtree(path('../tests/python/tmp'), ignore_errors=True)
         os.mkdir(path('../tests/python/tmp'))
         models.Base.metadata.create_all(engine)
@@ -48,7 +51,7 @@ class Test(unittest.TestCase):
 
         @event.listens_for(self.session, 'after_transaction_end')
         def restart_savepoint(session, transaction):
-            """Taken from
+            """Taken from...
 
             http://docs.sqlalchemy.org/en/latest/orm/session_transaction.html
             #joining-a-session-into-an-external-transaction
@@ -61,6 +64,7 @@ class Test(unittest.TestCase):
         super().setUp()
 
     def tearDown(self):
+        """Clean up the database."""
         self.session.close()
         self.transaction.rollback()
         self.connection.close()
@@ -72,11 +76,15 @@ class Test(unittest.TestCase):
 
 
 class HTTPTest(Test, AsyncHTTPTestCase):
+    """Tests for endpoints."""
+
     def get_app(self):
+        """Return a Tornado Application object."""
         self.app = Application(self.session, xsrf_cookies=False)
         return self.app
 
     def assertResponseCode(self, response, code):
+        """Assert that a response has the given code, and print any error."""
         self.assertEqual(response.code, code, msg=response)
 
 

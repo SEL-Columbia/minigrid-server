@@ -2,13 +2,32 @@
 
 {% block body %}
   <p><a href="/users">Manage users &raquo;</a></p>
-  <p>Minigrids:</p>
-  <ul>
-    {% for grid in minigrids %}
-    <li>
-      <p><a href="/minigrid/{{ grid.minigrid_id }}">{{ grid.name }} &raquo;</a></p>
-      <p>Status: {{ grid.status }}</p>
-    </li>
-    {% end %}
-  </ul>
+  {% if not system %}
+    <strong>You must initialize the system tariff information.</strong>
+    <form action="/tariffs" method="POST">
+      {% module xsrf_form_html() %}
+      {% include tariff_form.html %}
+    </form>
+  {% else %}
+    <p><a href="/tariffs">Manage tariffs &raquo;</a></p>
+    <p>Minigrids:</p>
+    <ul>
+      {% for grid in minigrids %}
+      <li>
+        <p><a href="/minigrid/{{ grid.minigrid_id }}">{{ grid.name }} &raquo;</a></p>
+        <p>Status: {{ grid.status }}</p>
+      </li>
+      {% else %}
+      <p>No minigrids</p>
+      {% end %}
+    </ul>
+
+    <p>Add minigrid:</p>
+    <form action="/minigrids" method="POST">
+      {% module xsrf_form_html() %}
+      <label>Name: <input name="minigrid_name" required /></label><br>
+      <label>AES key: <input name="minigrid_aes_key" required /></label><br>
+      <input type="submit" value="Add Minigrid" />
+    </form>
+  {% end %}
 {% end %}

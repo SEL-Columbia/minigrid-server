@@ -4,7 +4,6 @@ from contextlib import contextmanager
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql import func
 
 from minigrid.options import options
@@ -16,13 +15,12 @@ Base = declarative_base(metadata=metadata)
 
 sa.event.listen(
     Base.metadata, 'before_create',
-    sa.DDL("""
-        ALTER DATABASE {} SET TIMEZONE TO "UTC";
+    sa.DDL(f"""
+        ALTER DATABASE {options.db_database} SET TIMEZONE TO "UTC";
         CREATE SCHEMA IF NOT EXISTS public;
-        CREATE SCHEMA IF NOT EXISTS {};
+        CREATE SCHEMA IF NOT EXISTS {options.db_schema};
         CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA pg_catalog;
-    """.format(options.db_database, options.db_schema))
-)
+    """))
 
 
 def create_engine():
@@ -54,23 +52,13 @@ def pk():
         pg.UUID, primary_key=True, server_default=func.uuid_generate_v4())
 
 
-def update_time():
-    """Return a timestamp column set to CURRENT_TIMESTAMP by default."""
-    return sa.Column(
-        pg.TIMESTAMP(timezone=True),
-        nullable=False,
-        server_default=current_timestamp(),
-    )
-
-
 def json_column(column_name, default=None):
     """Return a JSONB column that is a dictionary at the top level."""
     return sa.Column(
         pg.json.JSONB,
-        sa.CheckConstraint("{} @> '{{}}'".format(column_name)),
+        sa.CheckConstraint(f"{column_name} @> '{{}}'"),
         nullable=False,
-        server_default=default,
-    )
+        server_default=default)
 
 
 class User(Base):
@@ -80,8 +68,34 @@ class User(Base):
     user_id = pk()
     email = sa.Column(
         pg.TEXT, sa.CheckConstraint("email ~ '.*@.*'"),
-        nullable=False, unique=True,
-    )
+        nullable=False, unique=True)
+
+
+class System(Base):
+    """The model for the entire system of minigrids."""
+
+    __tablename__ = 'minigrid_system'
+    system_id = sa.Column(
+        pg.INTEGER, sa.CheckConstraint('system_id = 1'),
+        primary_key=True, server_default='1')
+    day_tariff = sa.Column(
+        pg.NUMERIC,
+        sa.CheckConstraint('day_tariff > 0'), nullable=False)
+    day_tariff_start = sa.Column(
+        pg.INTEGER,
+        sa.CheckConstraint('day_tariff_start >= 0'),
+        sa.CheckConstraint('day_tariff_start <= 23'),
+        sa.CheckConstraint('day_tariff_start < night_tariff_start'),
+        nullable=False, server_default='6')
+    night_tariff = sa.Column(
+        pg.NUMERIC,
+        sa.CheckConstraint('night_tariff > 0'), nullable=False)
+    night_tariff_start = sa.Column(
+        pg.INTEGER,
+        sa.CheckConstraint('night_tariff_start >= 0'),
+        sa.CheckConstraint('night_tariff_start <= 23'),
+        sa.CheckConstraint('night_tariff_start > day_tariff_start'),
+        nullable=False, server_default='18')
 
 
 class Minigrid(Base):
@@ -92,13 +106,5 @@ class Minigrid(Base):
     name = sa.Column(
         pg.TEXT, sa.CheckConstraint("name != ''"),
         nullable=False, unique=True)
-    day_tariff = sa.Column(
-        pg.NUMERIC,
-        sa.CheckConstraint('day_tariff > 0'), nullable=False)
-    day_tariff_update_time = update_time()
-    night_tariff = sa.Column(
-        pg.NUMERIC,
-        sa.CheckConstraint('night_tariff > 0'), nullable=False)
-    night_tariff_update_time = update_time()
     error_code = json_column('error_code', default='{}')
     status = json_column('status', default='{}')

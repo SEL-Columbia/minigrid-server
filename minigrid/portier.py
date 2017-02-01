@@ -72,7 +72,7 @@ async def get_verified_email(token):
         pub_key = keys[header['kid']]
     except KeyError:
         raise minigrid.error.LoginError(
-            reason='Cannot find public key with ID {}'.format(header['kid']))
+            reason=f"Cannot find public key with ID {header['kid']}")
     try:
         payload = jwt.decode(
             token, pub_key,
@@ -82,10 +82,10 @@ async def get_verified_email(token):
             leeway=3*60,
         )
     except Exception as exc:
-        raise minigrid.error.LoginError(reason='Invalid JWT: {}'.format(exc))
+        raise minigrid.error.LoginError(reason=f'Invalid JWT: {exc}')
     if not re.match('.+@.+', payload['sub']):
         raise minigrid.error.LoginError(
-            reason='Invalid e-mail address: {}'.format(payload['sub']))
+            reason=f"Invalid e-mail address: {payload['sub']}")
     if not redis_kv.delete(payload['nonce']):
         raise minigrid.error.LoginError(
             reason='Invalid, expired, or re-used nonce')

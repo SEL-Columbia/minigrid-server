@@ -1,6 +1,7 @@
 """All of the application-level options."""
 from functools import partial
 import os
+import secrets
 
 from tornado.options import define, options, parse_command_line
 
@@ -20,7 +21,7 @@ def get_cookie_secret():
             cookie_secret = cookie_file.read()
     except FileNotFoundError:
         with open(cookie_secret_path, 'wb') as new_cookie_file:
-            cookie_secret = os.urandom(24)
+            cookie_secret = secrets.token_bytes(24)
             new_cookie_file.write(cookie_secret)
     return cookie_secret
 

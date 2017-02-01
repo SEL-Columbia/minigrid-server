@@ -13,7 +13,7 @@ sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 
 def main():
-    """Supply the administrator's e-mail"""
+    """Supply the administrator's e-mail."""
     parser = argparse.ArgumentParser()
     parser.add_argument('email')
     args, others = parser.parse_known_args()
