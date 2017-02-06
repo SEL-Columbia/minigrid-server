@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  {% if message is not None %}
+    <p><strong>{{ message }}</strong></p>
+  {% end %}
+  <p>Write technician ID card:</p>
+  <form>
+    {% module xsrf_form_html() %}
+    <input type="submit" value="Write technician ID card" />
+  </form>
+  <footer><a href="/">&laquo; Return to minigrid index</a></footer>
+{% end %}

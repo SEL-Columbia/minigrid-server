@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  {% if message is not None %}
+    <p><strong>{{ message }}</strong></p>
+  {% end %}
+  <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
+  <p>ID: {{ minigrid.minigrid_id }}</p>
+  <p>Write credit card:</p>
+  <form>
+    {% module xsrf_form_html() %}
+    <input type="submit" value="Write credit card" />
+  </form>
+  <footer>
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
+    <p><a href="/">&laquo; Return to minigrid index</a></p>
+  </footer>
+{% end %}

@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DataError, IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound, UnmappedInstanceError
 
 import tornado.web
 
@@ -41,11 +41,17 @@ class BaseHandler(tornado.web.RequestHandler):
         error = kwargs['exc_info'][1]
         if isinstance(error, minigrid.error.MinigridHTTPError):
             self.set_status(error.status_code, reason=error.reason)
+            message = getattr(error, 'message', error.reason)
             self.render(
-                error.template_name, reason=error.reason,
-                **error.template_kwargs)
+                error.template_name, message=message, **error.template_kwargs)
             return
         super().write_error(status_code, **kwargs)
+
+    def render(self, *args, **kwargs):
+        """Override default render to include a message of None."""
+        if 'message' not in kwargs:
+            kwargs['message'] = None
+        super().render(*args, **kwargs)
 
 
 class MainHandler(BaseHandler):
@@ -55,13 +61,11 @@ class MainHandler(BaseHandler):
         """Render the homepage."""
         if self.current_user:
             system = self.session.query(models.System).one_or_none()
-            minigrids = (
-                self.session
-                .query(models.Minigrid).order_by(models.Minigrid.name))
+            minigrids = models.get_minigrids(self.session)
             self.render(
                 'index-minigrid-list.html', system=system, minigrids=minigrids)
             return
-        self.render('index-logged-out.html', reason=None)
+        self.render('index-logged-out.html')
 
     def post(self):
         """Send login information to the portier broker."""
@@ -93,7 +97,7 @@ class TariffsHandler(BaseHandler):
         except NoResultFound:
             self.redirect('/')
             return
-        self.render('tariffs.html', system=system, reason=None)
+        self.render('tariffs.html', system=system)
 
     @tornado.web.authenticated
     def post(self):
@@ -112,7 +116,7 @@ class TariffsHandler(BaseHandler):
         try:
             with models.transaction(self.session) as session:
                 session.execute(statement)
-            reason = 'Updated tariff information'
+            message = 'Updated tariff information'
         except (IntegrityError, DataError) as error:
             if 'minigrid_system_check' in error.orig.pgerror:
                 message = (
@@ -128,19 +132,50 @@ class TariffsHandler(BaseHandler):
                 message = ' '.join(error.orig.pgerror.split())
             raise minigrid.error.MinigridHTTPError(
                 message, 400, 'tariffs.html', system=self.system)
-        self.set_status(200)
         self.render(
             'tariffs.html',
             system=self.session.query(models.System).one_or_none(),
-            reason=reason)
+            message=message)
+
+
+class MinigridsHandler(BaseHandler):
+    """Handlers for minigrids."""
+
+    @tornado.web.authenticated
+    def get(self):
+        """Redirect to index."""
+        self.redirect('/')
+
+    @tornado.web.authenticated
+    def post(self):
+        """Create a new minigrid model."""
+        try:
+            with models.transaction(self.session) as session:
+                session.add(models.Minigrid(
+                    minigrid_name=self.get_argument('minigrid_name'),
+                    aes_key=self.get_argument('minigrid_aes_key')))
+        except (IntegrityError, DataError) as error:
+            if 'minigrid_name_key' in error.orig.pgerror:
+                message = 'A minigrid with that name already exists'
+            else:
+                message = ' '.join(error.orig.pgerror.split())
+            raise minigrid.error.MinigridHTTPError(
+                message, 400, 'index-minigrid-list.html',
+                system=self.session.query(models.System).one_or_none(),
+                minigrids=models.get_minigrids(session))
+        self.set_status(201)
+        self.render(
+            'index-minigrid-list.html',
+            system=self.session.query(models.System).one_or_none(),
+            minigrids=models.get_minigrids(session))
 
 
 class UsersHandler(BaseHandler):
     """Handlers for user management."""
 
-    def _render_users(self, reason=None):
+    def _render_users(self, message=None):
         users = self.session.query(models.User).order_by('email')
-        self.render('users.html', users=users, reason=reason)
+        self.render('users.html', users=users, message=message)
 
     @tornado.web.authenticated
     def get(self):
@@ -151,16 +186,46 @@ class UsersHandler(BaseHandler):
     def post(self):
         """Create a new user model."""
         email = self.get_argument('email')
-        reason = None
+        message = None
         try:
             with models.transaction(self.session) as session:
                 session.add(models.User(email=email))
         except IntegrityError as error:
             if 'user_email_check' in error.orig.pgerror:
-                reason = f'{email} is not a valid e-mail address'
+                message = f'{email} is not a valid e-mail address'
             else:
-                reason = f'Account for {email} already exists'
-        self._render_users(reason=reason)
+                message = f'Account for {email} already exists'
+        self._render_users(message=message)
+
+
+# TODO: this button should do something
+class TechnicianHandler(BaseHandler):
+    """Handlers for technician view."""
+
+    @tornado.web.authenticated
+    def get(self):
+        """Render the technician ID writing form."""
+        self.render('technician.html')
+
+
+# TODO: this button should do something
+class DeviceHandler(BaseHandler):
+    """Handlers for device view."""
+
+    @tornado.web.authenticated
+    def get(self):
+        """Render the device form."""
+        self.render('device.html')
+
+
+# TODO: this button should do something
+class CardsHandler(BaseHandler):
+    """Handlers for cards view."""
+
+    @tornado.web.authenticated
+    def get(self):
+        """Render the cards form."""
+        self.render('cards.html')
 
 
 class MinigridHandler(BaseHandler):
@@ -169,15 +234,111 @@ class MinigridHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self, minigrid_id):
         """Render the view for a minigrid record."""
-        try:
-            minigrid = (
-                self.session
-                .query(models.Minigrid)
-                .filter_by(minigrid_id=minigrid_id)
-                .one())
-        except (NoResultFound, DataError):
-            raise tornado.web.HTTPError(404)
-        self.render('minigrid.html', minigrid=minigrid)
+        self.render(
+            'minigrid.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id))
+
+
+# TODO: this button should do something
+class MinigridWriteCreditHandler(BaseHandler):
+    """Handlers for writing credit cards view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the write credit card form."""
+        self.render(
+            'minigrid_write_credit.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id))
+
+
+class MinigridVendorsHandler(BaseHandler):
+    """Handlers for vendors view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the vendors view."""
+        self.render(
+            'minigrid_vendors.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id))
+
+    @tornado.web.authenticated
+    def post(self, minigrid_id):
+        """Add a vendor."""
+        grid = models.get_minigrid(self.session, minigrid_id)
+        action = self.get_argument('action')
+        if action == 'create':
+            try:
+                with models.transaction(self.session) as session:
+                    grid.vendors.append(models.Vendor(
+                        vendor_name=self.get_argument('vendor_name')))
+            except (IntegrityError, DataError) as error:
+                if 'vendor_name_key' in error.orig.pgerror:
+                    message = 'A vendor with that name already exists'
+                else:
+                    message = ' '.join(error.orig.pgerror.split())
+                raise minigrid.error.MinigridHTTPError(
+                    message, 400, 'minigrid_vendors.html', minigrid=grid)
+            self.set_status(201)
+        elif action == 'remove':
+            vendor_id = self.get_argument('vendor_id')
+            try:
+                with models.transaction(self.session) as session:
+                    vendor = session.query(models.Vendor).get(vendor_id)
+                    session.delete(vendor)
+                message = f'Vendor {vendor.vendor_name} removed'
+            except UnmappedInstanceError:
+                message = 'The requested vendor no longer exists'
+            self.render(
+                'minigrid_vendors.html', minigrid=grid, message=message)
+            return
+        else:
+            raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
+        self.render('minigrid_vendors.html', minigrid=grid)
+
+
+class MinigridCustomersHandler(BaseHandler):
+    """Handlers for customers view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the customers view."""
+        self.render(
+            'minigrid_customers.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id))
+
+    @tornado.web.authenticated
+    def post(self, minigrid_id):
+        """Add a customer."""
+        grid = models.get_minigrid(self.session, minigrid_id)
+        action = self.get_argument('action')
+        if action == 'create':
+            try:
+                with models.transaction(self.session) as session:
+                    grid.customers.append(models.Customer(
+                        customer_name=self.get_argument('customer_name')))
+            except (IntegrityError, DataError) as error:
+                if 'customer_name_key' in error.orig.pgerror:
+                    message = 'A customer with that name already exists'
+                else:
+                    message = ' '.join(error.orig.pgerror.split())
+                raise minigrid.error.MinigridHTTPError(
+                    message, 400, 'minigrid_customers.html', minigrid=grid)
+            self.set_status(201)
+        elif action == 'remove':
+            customer_id = self.get_argument('customer_id')
+            try:
+                with models.transaction(self.session) as session:
+                    customer = session.query(models.Customer).get(customer_id)
+                    session.delete(customer)
+                message = f'Customer {customer.customer_name} removed'
+            except UnmappedInstanceError:
+                message = 'The requested customer no longer exists'
+            self.render(
+                'minigrid_customers.html', minigrid=grid, message=message)
+            return
+        else:
+            raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
+        self.render('minigrid_customers.html', minigrid=grid)
 
 
 class VerifyLoginHandler(BaseHandler):
@@ -230,8 +391,15 @@ class LogoutHandler(BaseHandler):
 
 application_urls = [
     (r'/', MainHandler),
-    (r'/minigrid/(.+)?', MinigridHandler),
+    (r'/minigrids/(.{36})/?', MinigridHandler),
+    (r'/minigrids/(.{36})/vendors/?', MinigridVendorsHandler),
+    (r'/minigrids/(.{36})/customers/?', MinigridCustomersHandler),
+    (r'/minigrids/(.{36})/write_credit/?', MinigridWriteCreditHandler),
     (r'/tariffs/?', TariffsHandler),
+    (r'/minigrids/?', MinigridsHandler),
     (r'/users/?', UsersHandler),
+    (r'/technician/?', TechnicianHandler),
+    (r'/device/?', DeviceHandler),
+    (r'/cards/?', CardsHandler),
     (r'/verify/?', VerifyLoginHandler),
     (r'/logout/?', LogoutHandler)]

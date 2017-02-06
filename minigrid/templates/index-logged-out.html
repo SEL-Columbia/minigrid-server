@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
 {% block body %}
-  {% if reason is not None %}
-  <p><strong>Login unsuccessful: {{ reason }}</strong></p>
+  {% if message is not None %}
+  <p><strong>Login unsuccessful: {{ message }}</strong></p>
   {% end %}
   <form action="/" method="POST">
     {% module xsrf_form_html() %}

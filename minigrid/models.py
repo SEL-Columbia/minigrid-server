@@ -3,8 +3,13 @@ from contextlib import contextmanager
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql as pg
+from sqlalchemy.exc import DataError
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql import func
+
+import tornado.web
 
 from minigrid.options import options
 
@@ -52,6 +57,12 @@ def pk():
         pg.UUID, primary_key=True, server_default=func.uuid_generate_v4())
 
 
+def fk(foreign_column):
+    """Return a foreign key."""
+    return sa.Column(
+        pg.UUID, sa.ForeignKey(foreign_column))
+
+
 def json_column(column_name, default=None):
     """Return a JSONB column that is a dictionary at the top level."""
     return sa.Column(
@@ -59,6 +70,24 @@ def json_column(column_name, default=None):
         sa.CheckConstraint(f"{column_name} @> '{{}}'"),
         nullable=False,
         server_default=default)
+
+
+def get_minigrids(session):
+    """Return the minigrids ordered by name."""
+    return session.query(Minigrid).order_by(Minigrid.minigrid_name)
+
+
+def get_minigrid(session, minigrid_id, exception=tornado.web.HTTPError(404)):
+    """Return a minigrid by ID, if it exists."""
+    try:
+        with transaction(session) as tx_session:
+            return (
+                tx_session.query(Minigrid)
+                .filter_by(minigrid_id=minigrid_id).one())
+    except (NoResultFound, DataError):
+        if exception is None:
+            raise
+        raise exception
 
 
 class User(Base):
@@ -103,8 +132,44 @@ class Minigrid(Base):
 
     __tablename__ = 'minigrid'
     minigrid_id = pk()
-    name = sa.Column(
-        pg.TEXT, sa.CheckConstraint("name != ''"),
+    minigrid_name = sa.Column(
+        pg.TEXT, sa.CheckConstraint("minigrid_name != ''"),
         nullable=False, unique=True)
+    aes_key = sa.Column(
+        pg.TEXT, sa.CheckConstraint("aes_key != ''"),
+        nullable=False)
     error_code = json_column('error_code', default='{}')
     status = json_column('status', default='{}')
+
+    vendors = relationship(
+        'Vendor', backref='minigrid', order_by='Vendor.vendor_name')
+    customers = relationship(
+        'Customer', backref='minigrid', order_by='Customer.customer_name')
+
+
+class Vendor(Base):
+    """The model for a Vendor."""
+
+    __tablename__ = 'vendor'
+    vendor_id = pk()
+    vendor_minigrid_id = fk('minigrid.minigrid_id')
+    vendor_name = sa.Column(
+        pg.TEXT, sa.CheckConstraint("vendor_name != ''"),
+        nullable=False)
+
+    __table_args__ = (
+        sa.UniqueConstraint('vendor_minigrid_id', 'vendor_name'),)
+
+
+class Customer(Base):
+    """The model for a customer."""
+
+    __tablename__ = 'customer'
+    customer_id = pk()
+    customer_minigrid_id = fk('minigrid.minigrid_id')
+    customer_name = sa.Column(
+        pg.TEXT, sa.CheckConstraint("customer_name != ''"),
+        nullable=False)
+
+    __table_args__ = (
+        sa.UniqueConstraint('customer_minigrid_id', 'customer_name'),)

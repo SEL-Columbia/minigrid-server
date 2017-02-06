@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  {% if message is not None %}
+    <p><strong>{{ message }}</strong></p>
+  {% end %}
+  <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
+  <p>ID: {{ minigrid.minigrid_id }}</p>
+  <p>Vendors:</p>
+  <ul>
+    {% set zero_vendors = True %}
+    {% for vendor in minigrid.vendors %}
+      {% set zero_vendors = False %}
+      <li>
+	<p>Name: {{ vendor.vendor_name }}</p>
+        <form>
+          {% module xsrf_form_html() %}
+          <input type="submit" value="Write ID card" />
+        </form>
+	<form action="/minigrids/{{ minigrid.minigrid_id }}/vendors?action=remove&vendor_id={{ vendor.vendor_id }}" method="POST">
+          {% module xsrf_form_html() %}
+	  <input type="submit" value="Remove Vendor {{ vendor.vendor_name }}" />
+	</form>
+      </li>
+    {% end %}
+  </ul>
+  {% if zero_vendors %}
+    <p>No vendors</p>
+  {% end %}
+  <hr>
+
+  <p>Add vendor:</p>
+  <form action="/minigrids/{{ minigrid.minigrid_id }}/vendors?action=create" method="POST">
+    {% module xsrf_form_html() %}
+    <label>Name: <input name="vendor_name" required /></label><br>
+    <input type="submit" value="Add Vendor" />
+  </form>
+  <hr>
+
+  <footer>
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
+    <p><a href="/">&laquo; Return to minigrid index</a></p>
+  </footer>
+{% end %}

@@ -15,8 +15,8 @@
     <label>E-mail: <input type="email" name="email" /></label>
     <input type="submit" value="Add User" />
   </form>
-  {% if reason is not None %}
-  <p><strong>Could not create user account: {{ reason }}</strong></p>
+  {% if message is not None %}
+  <p><strong>Could not create user account: {{ message }}</strong></p>
   {% end %}
   <footer><a href="/">&laquo; Return to minigrid index</a></footer>
 {% end %}

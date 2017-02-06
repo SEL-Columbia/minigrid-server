@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  {% if message is not None %}
+    <p><strong>{{ message }}</strong></p>
+  {% end %}
+  <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
+  <p>ID: {{ minigrid.minigrid_id }}</p>
+  <p>Customers:</p>
+  <ul>
+    {% set zero_customers = True %}
+    {% for customer in minigrid.customers %}
+      {% set zero_customers = False %}
+      <li>
+	<p>Name: {{ customer.customer_name }}</p>
+        <form>
+          {% module xsrf_form_html() %}
+          <input type="submit" value="Write ID card" />
+        </form>
+	<form action="/minigrids/{{ minigrid.minigrid_id }}/customers?action=remove&customer_id={{ customer.customer_id }}" method="POST">
+          {% module xsrf_form_html() %}
+	  <input type="submit" value="Remove Customer {{ customer.customer_name }}" />
+	</form>
+      </li>
+    {% end %}
+  </ul>
+  {% if zero_customers %}
+    <p>No customers</p>
+  {% end %}
+  <hr>
+
+  <p>Add customer:</p>
+  <form action="/minigrids/{{ minigrid.minigrid_id }}/customers?action=create" method="POST">
+    {% module xsrf_form_html() %}
+    <label>Name: <input name="customer_name" required /></label><br>
+    <input type="submit" value="Add Customer" />
+  </form>
+  <hr>
+
+  <footer>
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
+    <p><a href="/">&laquo; Return to minigrid index</a></p>
+  </footer>
+{% end %}

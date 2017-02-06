@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
 {% block body %}
-  {% if reason is not None %}
-    <p><strong>{{ reason }}</strong></p>
+  {% if message is not None %}
+    <p><strong>{{ message }}</strong></p>
   {% end %}
   <p>Tariff information:</p>
   <form action="/tariffs" method="POST">

@@ -10,18 +10,30 @@
     </form>
   {% else %}
     <p><a href="/tariffs">Manage tariffs &raquo;</a></p>
+    <p><a href="/technician">Write technician ID card &raquo;</a></p>
+    <p><a href="/device">Manage devices &raquo;</a></p>
+    <p><a href="/cards">Read and validate cards &raquo;</a></p>
+
+    <hr>
     <p>Minigrids:</p>
     <ul>
+      {% set zero_minigrids = True %}
       {% for grid in minigrids %}
-      <li>
-        <p><a href="/minigrid/{{ grid.minigrid_id }}">{{ grid.name }} &raquo;</a></p>
-        <p>Status: {{ grid.status }}</p>
-      </li>
-      {% else %}
-      <p>No minigrids</p>
+        {% set zero_minigrids = False %}
+        <li>
+          <p><a href="/minigrids/{{ grid.minigrid_id }}">{{ grid.minigrid_name }} &raquo;</a></p>
+          <p>Status: {{ grid.status }}</p>
+        </li>
       {% end %}
     </ul>
+    {% if zero_minigrids %}
+      <p>No minigrids</p>
+    {% end %}
+    <hr>
 
+    {% if message is not None %}
+    <p><strong>Could not create minigrid: {{ message }}</strong></p>
+    {% end %}
     <p>Add minigrid:</p>
     <form action="/minigrids" method="POST">
       {% module xsrf_form_html() %}
@@ -29,5 +41,9 @@
       <label>AES key: <input name="minigrid_aes_key" required /></label><br>
       <input type="submit" value="Add Minigrid" />
     </form>
+    <hr>
+
+    <p>Aggregate data plots:</p>
+    <p>TODO: What data? From where?</p>
   {% end %}
 {% end %}
