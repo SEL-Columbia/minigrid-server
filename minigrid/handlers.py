@@ -3,6 +3,10 @@ from datetime import timedelta
 from urllib.parse import urlencode
 from uuid import uuid4
 
+from asyncio_portier import get_verified_email
+
+import redis
+
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.orm.exc import NoResultFound, UnmappedInstanceError
@@ -12,7 +16,10 @@ import tornado.web
 import minigrid.error
 import minigrid.models as models
 from minigrid.options import options
-from minigrid.portier import get_verified_email, redis_kv
+
+
+cache = redis.StrictRedis.from_url(options.redis_url)
+broker_url = 'https://broker.portier.io'
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -65,12 +72,15 @@ class MainHandler(BaseHandler):
             self.render(
                 'index-minigrid-list.html', system=system, minigrids=minigrids)
             return
-        self.render('index-logged-out.html')
+        self.render(
+            'index-logged-out.html', next_page=self.get_argument('next', '/'))
 
     def post(self):
         """Send login information to the portier broker."""
         nonce = uuid4().hex
-        redis_kv.setex(nonce, timedelta(minutes=15), '')
+        next_page = self.get_argument('next', '/')
+        expiration = timedelta(minutes=15)
+        cache.set('portier:nonce:{}'.format(nonce), next_page, expiration)
         query_args = urlencode({
             'login_hint': self.get_argument('email'),
             'scope': 'openid email',
@@ -79,7 +89,7 @@ class MainHandler(BaseHandler):
             'response_mode': 'form_post',
             'client_id': options.minigrid_website_url,
             'redirect_uri': options.minigrid_website_url + '/verify'})
-        self.redirect('https://broker.portier.io/auth?' + query_args)
+        self.redirect(broker_url + '/auth?' + query_args)
 
 
 class TariffsHandler(BaseHandler):
@@ -360,7 +370,15 @@ class VerifyLoginHandler(BaseHandler):
             raise minigrid.error.LoginError(
                 reason=f'Broker Error: {error}: {description}')
         token = self.get_argument('id_token')
-        email = await get_verified_email(token)
+        try:
+            email, next_page = await get_verified_email(
+                broker_url,
+                token,
+                options.minigrid_website_url,
+                broker_url,
+                cache)
+        except ValueError as exc:
+            raise minigrid.error.LoginError(reason=str(exc))
         try:
             user = (
                 self.session
@@ -373,7 +391,7 @@ class VerifyLoginHandler(BaseHandler):
         self.set_secure_cookie(
             'user', str(user.user_id),
             httponly=True, secure=options.minigrid_https)
-        self.redirect(self.get_argument('next', '/'))
+        self.redirect(next_page)
 
 
 class LogoutHandler(BaseHandler):

@@ -28,7 +28,7 @@ DummyRedis = Dummy
 DummyRedis.StrictRedis = Dummy
 DummyRedis.StrictRedis.from_url = lambda _: fakeredis.FakeStrictRedis()
 sys.modules['redis'] = DummyRedis
-from minigrid import portier  # noqa
+import minigrid.handlers  # noqa
 from server import Application  # noqa
 
 
@@ -71,7 +71,7 @@ class Test(unittest.TestCase):
         for tbl in reversed(models.Base.metadata.sorted_tables):
             engine.execute(tbl.delete())
         shutil.rmtree(path('../tests/python/tmp'), ignore_errors=True)
-        portier.redis_kv.flushall()
+        minigrid.handlers.cache.flushall()
         super().tearDown()
 
 
