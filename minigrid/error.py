@@ -15,6 +15,8 @@ class MinigridHTTPError(tornado.web.HTTPError):
         self.template_name = template_name
         self.log_message = None
         self.template_kwargs = template_kwargs
+        if 'next_page' not in template_kwargs:
+            template_kwargs['next_page'] = '/'
 
 
 class LoginError(MinigridHTTPError):

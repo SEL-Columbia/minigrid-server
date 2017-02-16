@@ -11,7 +11,7 @@ from tornado.testing import ExpectLog
 from tests.python.util import HTTPTest, CoroMock
 
 from minigrid import models
-from minigrid.portier import redis_kv
+from minigrid.handlers import cache
 from server import Application
 
 
@@ -796,12 +796,12 @@ class TestAuthentication(HTTPTest):
         self.assertResponseCode(response, 302)
         query = parse_qs(urlparse(response.headers['Location']).query)
         self.assertEqual(query['login_hint'][0], 'a@a.com')
-        self.assertIn(query['nonce'][0].encode(), redis_kv)
+        self.assertIn(('portier:nonce:' + query['nonce'][0]).encode(), cache)
         self.assertTrue(query['redirect_uri'][0].endswith('/verify'))
 
     @patch('minigrid.handlers.get_verified_email', new_callable=CoroMock)
     def test_verify(self, get_verified_email):
-        get_verified_email.coro.return_value = 'a@a.com'
+        get_verified_email.coro.return_value = 'a@a.com', ''
         self.create_user()
         response = self.fetch(
             '/verify?id_token=', method='POST', body='', follow_redirects=False
@@ -815,7 +815,7 @@ class TestAuthentication(HTTPTest):
 
     @patch('minigrid.handlers.get_verified_email', new_callable=CoroMock)
     def test_verify_user_does_not_exist(self, get_verified_email):
-        get_verified_email.coro.return_value = 'a@a.com'
+        get_verified_email.coro.return_value = 'a@a.com', ''
         with ExpectLog('tornado.access', '400'):
             response = self.fetch('/verify?id_token=', method='POST', body='')
         self.assertResponseCode(response, 400)
