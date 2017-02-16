@@ -378,7 +378,7 @@ class VerifyLoginHandler(BaseHandler):
                 broker_url,
                 cache)
         except ValueError as exc:
-            raise minigrid.error.LoginError(exc)
+            raise minigrid.error.LoginError(reason=str(exc))
         try:
             user = (
                 self.session

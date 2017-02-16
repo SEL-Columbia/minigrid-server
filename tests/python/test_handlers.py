@@ -800,6 +800,19 @@ class TestAuthentication(HTTPTest):
         self.assertTrue(query['redirect_uri'][0].endswith('/verify'))
 
     @patch('minigrid.handlers.get_verified_email', new_callable=CoroMock)
+    def test_verify_value_error(self, get_verified_email):
+        get_verified_email.coro.side_effect = ValueError('error')
+        self.create_user()
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                '/verify?id_token=',
+                method='POST', body='', follow_redirects=False
+            )
+        self.assertResponseCode(response, 400)
+        self.assertEqual(
+            response.error.message, 'error')
+
+    @patch('minigrid.handlers.get_verified_email', new_callable=CoroMock)
     def test_verify(self, get_verified_email):
         get_verified_email.coro.return_value = 'a@a.com', ''
         self.create_user()
