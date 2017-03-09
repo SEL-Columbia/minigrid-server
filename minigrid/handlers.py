@@ -276,15 +276,18 @@ class MinigridVendorsHandler(BaseHandler):
         """Add a vendor."""
         grid = models.get_minigrid(self.session, minigrid_id)
         action = self.get_argument('action')
+        user_id_exists = 'vendor_vendor_minigrid_id_vendor_user_id_key'
         if action == 'create':
             try:
                 with models.transaction(self.session) as session:
                     grid.vendors.append(models.Vendor(
-                        vendor_user_id = self.get_argument('vendor_user_id'),
+                        vendor_user_id=self.get_argument('vendor_user_id'),
                         vendor_name=self.get_argument('vendor_name')))
             except (IntegrityError, DataError) as error:
                 if 'vendor_name_key' in error.orig.pgerror:
                     message = 'A vendor with that name already exists'
+                elif user_id_exists in error.orig.pgerror:
+                    message = 'A vendor with that User ID already exists'
                 else:
                     message = ' '.join(error.orig.pgerror.split())
                 raise minigrid.error.MinigridHTTPError(
@@ -322,14 +325,18 @@ class MinigridCustomersHandler(BaseHandler):
         """Add a customer."""
         grid = models.get_minigrid(self.session, minigrid_id)
         action = self.get_argument('action')
+        user_id_exists = 'customer_customer_minigrid_id_customer_user_id_key'
         if action == 'create':
             try:
                 with models.transaction(self.session) as session:
                     grid.customers.append(models.Customer(
+                        customer_user_id=self.get_argument('customer_user_id'),
                         customer_name=self.get_argument('customer_name')))
             except (IntegrityError, DataError) as error:
                 if 'customer_name_key' in error.orig.pgerror:
                     message = 'A customer with that name already exists'
+                elif user_id_exists in error.orig.pgerror:
+                    message = 'A customer with that User ID already exists'
                 else:
                     message = ' '.join(error.orig.pgerror.split())
                 raise minigrid.error.MinigridHTTPError(

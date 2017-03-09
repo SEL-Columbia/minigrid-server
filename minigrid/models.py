@@ -174,6 +174,10 @@ class Customer(Base):
     customer_name = sa.Column(
         pg.TEXT, sa.CheckConstraint("customer_name != ''"),
         nullable=False)
+    customer_user_id = sa.Column(
+        pg.TEXT, sa.CheckConstraint("customer_user_id ~ '\d{4}'"),
+        nullable=False)
 
     __table_args__ = (
-        sa.UniqueConstraint('customer_minigrid_id', 'customer_name'),)
+        sa.UniqueConstraint('customer_minigrid_id', 'customer_user_id'),
+        sa.UniqueConstraint('customer_minigrid_id', 'customer_name'))

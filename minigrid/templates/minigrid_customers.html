@@ -13,6 +13,7 @@
       {% set zero_customers = False %}
       <li>
 	<p>Name: {{ customer.customer_name }}</p>
+	<p>User ID: {{ customer.customer_user_id }}</p>
         <form>
           {% module xsrf_form_html() %}
           <input type="submit" value="Write ID card" />
@@ -33,6 +34,7 @@
   <form action="/minigrids/{{ minigrid.minigrid_id }}/customers?action=create" method="POST">
     {% module xsrf_form_html() %}
     <label>Name: <input name="customer_name" required /></label><br>
+    <label>User ID (0000-9999): <input name="customer_user_id" pattern="\d{4}" required /></label><br>
     <input type="submit" value="Add Customer" />
   </form>
   <hr>
