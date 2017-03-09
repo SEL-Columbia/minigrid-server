@@ -13,6 +13,7 @@ from sqlalchemy.orm.exc import NoResultFound, UnmappedInstanceError
 
 import tornado.web
 
+from minigrid.device_interface import write_vendor_card
 import minigrid.error
 import minigrid.models as models
 from minigrid.options import options
@@ -302,6 +303,15 @@ class MinigridVendorsHandler(BaseHandler):
                 message = f'Vendor {vendor.vendor_name} removed'
             except UnmappedInstanceError:
                 message = 'The requested vendor no longer exists'
+            self.render(
+                'minigrid_vendors.html', minigrid=grid, message=message)
+            return
+        elif action == 'write':
+            vendor = (
+                self.session.query(models.Vendor)
+                .get(self.get_argument('vendor_id')))
+            write_vendor_card(minigrid_id, vendor)
+            message = 'Card written'
             self.render(
                 'minigrid_vendors.html', minigrid=grid, message=message)
             return

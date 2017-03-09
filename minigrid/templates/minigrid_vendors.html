@@ -12,16 +12,16 @@
     {% for vendor in minigrid.vendors %}
       {% set zero_vendors = False %}
       <li>
-	<p>Name: {{ vendor.vendor_name }}</p>
-	<p>User ID: {{ vendor.vendor_user_id }}</p>
-        <form>
+        <p>Name: {{ vendor.vendor_name }}</p>
+        <p>User ID: {{ vendor.vendor_user_id }}</p>
+        <form action="/minigrids/{{ minigrid.minigrid_id }}/vendors?action=write&vendor_id={{ vendor.vendor_id }}" method="POST">
           {% module xsrf_form_html() %}
           <input type="submit" value="Write ID card" />
         </form>
-	<form action="/minigrids/{{ minigrid.minigrid_id }}/vendors?action=remove&vendor_id={{ vendor.vendor_id }}" method="POST">
+        <form action="/minigrids/{{ minigrid.minigrid_id }}/vendors?action=remove&vendor_id={{ vendor.vendor_id }}" method="POST">
           {% module xsrf_form_html() %}
-	  <input type="submit" value="Remove Vendor {{ vendor.vendor_name }}" />
-	</form>
+          <input type="submit" value="Remove Vendor {{ vendor.vendor_name }}" />
+        </form>
       </li>
     {% end %}
   </ul>
