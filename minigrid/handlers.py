@@ -13,7 +13,7 @@ from sqlalchemy.orm.exc import NoResultFound, UnmappedInstanceError
 
 import tornado.web
 
-from minigrid.device_interface import write_vendor_card
+from minigrid.device_interface import write_vendor_card, write_customer_card
 import minigrid.error
 import minigrid.models as models
 from minigrid.options import options
@@ -361,6 +361,15 @@ class MinigridCustomersHandler(BaseHandler):
                 message = f'Customer {customer.customer_name} removed'
             except UnmappedInstanceError:
                 message = 'The requested customer no longer exists'
+            self.render(
+                'minigrid_customers.html', minigrid=grid, message=message)
+            return
+        elif action == 'write':
+            customer = (
+                self.session.query(models.Customer)
+                .get(self.get_argument('customer_id')))
+            write_customer_card(minigrid_id, customer)
+            message = 'Card written'
             self.render(
                 'minigrid_customers.html', minigrid=grid, message=message)
             return

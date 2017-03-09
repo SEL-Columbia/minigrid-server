@@ -12,16 +12,16 @@
     {% for customer in minigrid.customers %}
       {% set zero_customers = False %}
       <li>
-	<p>Name: {{ customer.customer_name }}</p>
-	<p>User ID: {{ customer.customer_user_id }}</p>
-        <form>
-          {% module xsrf_form_html() %}
-          <input type="submit" value="Write ID card" />
-        </form>
-	<form action="/minigrids/{{ minigrid.minigrid_id }}/customers?action=remove&customer_id={{ customer.customer_id }}" method="POST">
-          {% module xsrf_form_html() %}
-	  <input type="submit" value="Remove Customer {{ customer.customer_name }}" />
-	</form>
+      <p>Name: {{ customer.customer_name }}</p>
+      <p>User ID: {{ customer.customer_user_id }}</p>
+      <form action="/minigrids/{{ minigrid.minigrid_id }}/customers?action=write&customer_id={{ customer.customer_id }}" method="POST">
+        {% module xsrf_form_html() %}
+        <input type="submit" value="Write ID card" />
+      </form>
+      <form action="/minigrids/{{ minigrid.minigrid_id }}/customers?action=remove&customer_id={{ customer.customer_id }}" method="POST">
+        {% module xsrf_form_html() %}
+        <input type="submit" value="Remove Customer {{ customer.customer_name }}" />
+      </form>
       </li>
     {% end %}
   </ul>
