@@ -156,9 +156,13 @@ class Vendor(Base):
     vendor_name = sa.Column(
         pg.TEXT, sa.CheckConstraint("vendor_name != ''"),
         nullable=False)
+    vendor_user_id = sa.Column(
+        pg.TEXT, sa.CheckConstraint("vendor_user_id ~ '\d{4}'"),
+        nullable=False)
 
     __table_args__ = (
-        sa.UniqueConstraint('vendor_minigrid_id', 'vendor_name'),)
+        sa.UniqueConstraint('vendor_minigrid_id', 'vendor_user_id'),
+        sa.UniqueConstraint('vendor_minigrid_id', 'vendor_name'))
 
 
 class Customer(Base):

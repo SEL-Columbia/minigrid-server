@@ -280,6 +280,7 @@ class MinigridVendorsHandler(BaseHandler):
             try:
                 with models.transaction(self.session) as session:
                     grid.vendors.append(models.Vendor(
+                        vendor_user_id = self.get_argument('vendor_user_id'),
                         vendor_name=self.get_argument('vendor_name')))
             except (IntegrityError, DataError) as error:
                 if 'vendor_name_key' in error.orig.pgerror:
