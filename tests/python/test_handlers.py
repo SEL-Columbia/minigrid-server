@@ -584,7 +584,7 @@ class TestMinigridVendorsHandler(HTTPTest):
         self.assertEqual(vendor.vendor_name, 'v2')
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
-    def test_create_duplicate_vendor(self, get_current_user):
+    def test_create_duplicate_vendor_name(self, get_current_user):
         get_current_user.return_value = self.user
         with ExpectLog('tornado.access', '400'):
             response = self.fetch(
@@ -594,6 +594,19 @@ class TestMinigridVendorsHandler(HTTPTest):
         self.assertResponseCode(response, 400)
         self.assertIn(
             'A vendor with that name already exists', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_create_duplicate_vendor_user_id(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                f'/minigrids/{self.minigrid.minigrid_id}/vendors?'
+                'action=create&vendor_name=v2&vendor_user_id=0000',
+                method='POST', body='')
+        self.assertResponseCode(response, 400)
+        self.assertIn(
+            'A vendor with that User ID already exists',
+            response.body.decode())
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
     def test_create_missing_name(self, get_current_user):
@@ -700,7 +713,7 @@ class TestMinigridCustomersHandler(HTTPTest):
         self.assertEqual(customer.customer_name, 'c2')
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
-    def test_create_duplicate_customer(self, get_current_user):
+    def test_create_duplicate_customer_name(self, get_current_user):
         get_current_user.return_value = self.user
         with ExpectLog('tornado.access', '400'):
             response = self.fetch(
@@ -710,6 +723,19 @@ class TestMinigridCustomersHandler(HTTPTest):
         self.assertResponseCode(response, 400)
         self.assertIn(
             'A customer with that name already exists', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_create_duplicate_customer_user_id(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                f'/minigrids/{self.minigrid.minigrid_id}/customers?'
+                'action=create&customer_name=c2&customer_user_id=0000',
+                method='POST', body='')
+        self.assertResponseCode(response, 400)
+        self.assertIn(
+            'A customer with that User ID already exists',
+            response.body.decode())
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
     def test_create_missing_name(self, get_current_user):
