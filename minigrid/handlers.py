@@ -13,7 +13,8 @@ from sqlalchemy.orm.exc import NoResultFound, UnmappedInstanceError
 
 import tornado.web
 
-from minigrid.device_interface import write_vendor_card, write_customer_card
+from minigrid.device_interface import (
+    write_vendor_card, write_customer_card, write_credit_card)
 import minigrid.error
 import minigrid.models as models
 from minigrid.options import options
@@ -250,7 +251,6 @@ class MinigridHandler(BaseHandler):
             minigrid=models.get_minigrid(self.session, minigrid_id))
 
 
-# TODO: this button should do something
 class MinigridWriteCreditHandler(BaseHandler):
     """Handlers for writing credit cards view."""
 
@@ -260,6 +260,21 @@ class MinigridWriteCreditHandler(BaseHandler):
         self.render(
             'minigrid_write_credit.html',
             minigrid=models.get_minigrid(self.session, minigrid_id))
+
+    @tornado.web.authenticated
+    def post(self, minigrid_id):
+        """Write a credit card for this minigrid."""
+        minigrid = models.get_minigrid(self.session, minigrid_id)
+        system = self.session.query(models.System).one()
+        write_credit_card(
+            minigrid_id,
+            int(self.get_argument('credit_value')),
+            system.day_tariff,
+            system.night_tariff,
+        )
+        message = 'Card written'
+        self.render(
+            'minigrid_write_credit.html', minigrid=minigrid, message=message)
 
 
 class MinigridVendorsHandler(BaseHandler):
