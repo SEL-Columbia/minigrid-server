@@ -449,12 +449,45 @@ class LogoutHandler(BaseHandler):
         self.redirect('/')
 
 
+class EchoHandler(BaseHandler):
+    def check_xsrf_cookie(self):
+        """Disable XSRF check.
+
+        OpenID doesn't reply with _xsrf header.
+        https://github.com/portier/demo-rp/issues/10
+        """
+        pass
+    def get(self):
+        self.write('POST to echo')
+
+    def post(self):
+        self.write(self.request.body)
+
+class EchoAuthHandler(BaseHandler):
+    def check_xsrf_cookie(self):
+        """Disable XSRF check.
+
+        OpenID doesn't reply with _xsrf header.
+        https://github.com/portier/demo-rp/issues/10
+        """
+        pass
+    @tornado.web.authenticated
+    def get(self):
+        self.write('POST to echo')
+
+    @tornado.web.authenticated
+    def post(self):
+        self.write(self.request.body)
+
+
 application_urls = [
     (r'/', MainHandler),
     (r'/minigrids/(.{36})/?', MinigridHandler),
     (r'/minigrids/(.{36})/vendors/?', MinigridVendorsHandler),
     (r'/minigrids/(.{36})/customers/?', MinigridCustomersHandler),
     (r'/minigrids/(.{36})/write_credit/?', MinigridWriteCreditHandler),
+    (r'/echo/?', EchoHandler),
+    (r'/echo_auth/?', EchoAuthHandler),
     (r'/tariffs/?', TariffsHandler),
     (r'/minigrids/?', MinigridsHandler),
     (r'/users/?', UsersHandler),
