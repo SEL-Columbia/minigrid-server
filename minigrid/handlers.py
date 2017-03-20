@@ -14,6 +14,7 @@ from sqlalchemy.orm.exc import NoResultFound, UnmappedInstanceError
 import tornado.web
 
 from minigrid.device_interface import (
+    _wrap_binary,
     write_vendor_card, write_customer_card, write_credit_card)
 import minigrid.error
 import minigrid.models as models
@@ -458,10 +459,12 @@ class EchoHandler(BaseHandler):
         """
         pass
     def get(self):
-        self.write('POST to echo')
+        self.write(_wrap_binary(cache.get('echoes') or b'<br>'))
 
     def post(self):
-        self.write(self.request.body)
+        echoes = cache.get('echoes') or b'<br>'
+        cache.set('echoes', echoes + self.request.body + b'<br>')
+        self.write(_wrap_binary(self.request.body))
 
 class EchoAuthHandler(BaseHandler):
     def check_xsrf_cookie(self):
@@ -473,11 +476,11 @@ class EchoAuthHandler(BaseHandler):
         pass
     @tornado.web.authenticated
     def get(self):
-        self.write('POST to echo')
+        self.write(_wrap_binary('POST to echo'))
 
     @tornado.web.authenticated
     def post(self):
-        self.write(self.request.body)
+        self.write(_wrap_binary(self.request.body))
 
 
 application_urls = [
