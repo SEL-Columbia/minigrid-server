@@ -48,7 +48,14 @@ def write_customer_card(minigrid_id, customer):
     print('=' * 60)
 
 
-def write_credit_card(minigrid_id, credit_amount, day_tariff, night_tariff):
+def _hour_on_epoch_day(hour_int):
+    return (hour_int * 3600).to_bytes(4, 'big')
+
+
+def write_credit_card(
+        minigrid_id, credit_amount,
+        day_tariff, day_tariff_start,
+        night_tariff, night_tariff_start):
     """Write information to a credit card."""
     block_4 = b''.join((
         b'C',  # C for credit
@@ -62,13 +69,13 @@ def write_credit_card(minigrid_id, credit_amount, day_tariff, night_tariff):
     block_6 = uuid.UUID(minigrid_id).bytes
     block_8 = b''.join((
         b'\1',  # 1 for int
-        bytes(4),  # tariff 1 validate time??? TODO
+        _hour_on_epoch_day(day_tariff_start),  # tariff 1 validate time
         (int(day_tariff * 100)).to_bytes(4, 'big'),  # day tariff in cents
         bytes(7),  # intentionally empty
     ))
     block_9 = b''.join((
         b'\1',  # 1 for int
-        bytes(4),  # tariff 2 validate time??? TODO
+        _hour_on_epoch_day(night_tariff_start),  # tariff 2 validate time
         (int(night_tariff * 100)).to_bytes(4, 'big'),  # night tariff in cents
         bytes(7),  # intentionally empty
     ))

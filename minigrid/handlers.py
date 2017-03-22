@@ -271,7 +271,9 @@ class MinigridWriteCreditHandler(BaseHandler):
             minigrid_id,
             int(self.get_argument('credit_value')),
             system.day_tariff,
+            system.day_tariff_start,
             system.night_tariff,
+            system.night_tariff_start,
         )
         message = 'Card written'
         self.render(
@@ -458,6 +460,7 @@ class EchoHandler(BaseHandler):
         https://github.com/portier/demo-rp/issues/10
         """
         pass
+
     def get(self):
         self.write(_wrap_binary(cache.get('echoes') or b'<br>'))
 
@@ -465,6 +468,7 @@ class EchoHandler(BaseHandler):
         echoes = cache.get('echoes') or b'<br>'
         cache.set('echoes', echoes + self.request.body + b'<br>')
         self.write(_wrap_binary(self.request.body))
+
 
 class EchoAuthHandler(BaseHandler):
     def check_xsrf_cookie(self):
@@ -474,6 +478,7 @@ class EchoAuthHandler(BaseHandler):
         https://github.com/portier/demo-rp/issues/10
         """
         pass
+
     @tornado.web.authenticated
     def get(self):
         self.write(_wrap_binary('POST to echo'))
