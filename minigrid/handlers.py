@@ -346,6 +346,7 @@ class MinigridCustomersHandler(BaseHandler):
         """Render the customers view."""
         self.render(
             'minigrid_customers.html',
+            device_active=cache.get('device_active'),
             minigrid=models.get_minigrid(self.session, minigrid_id))
 
     @tornado.web.authenticated
@@ -380,20 +381,27 @@ class MinigridCustomersHandler(BaseHandler):
             except UnmappedInstanceError:
                 message = 'The requested customer no longer exists'
             self.render(
-                'minigrid_customers.html', minigrid=grid, message=message)
+                'minigrid_customers.html',
+                device_active=cache.get('device_active'),
+                minigrid=grid, message=message)
             return
         elif action == 'write':
             customer = (
                 self.session.query(models.Customer)
                 .get(self.get_argument('customer_id')))
-            write_customer_card(minigrid_id, customer)
+            write_customer_card(cache, minigrid_id, customer)
             message = 'Card written'
             self.render(
-                'minigrid_customers.html', minigrid=grid, message=message)
+                'minigrid_customers.html',
+                device_active=cache.get('device_active'),
+                minigrid=grid, message=message)
             return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
-        self.render('minigrid_customers.html', minigrid=grid)
+        self.render(
+            'minigrid_customers.html',
+            device_active=cache.get('device_active'),
+            minigrid=grid)
 
 
 class VerifyLoginHandler(BaseHandler):
@@ -452,6 +460,24 @@ class LogoutHandler(BaseHandler):
         self.redirect('/')
 
 
+class DeviceInfoHandler(BaseHandler):
+    def check_xsrf_cookie(self):
+        """Disable XSRF check.
+
+        OpenID doesn't reply with _xsrf header.
+        https://github.com/portier/demo-rp/issues/10
+        """
+        pass
+
+    def get(self):
+        cache.set('device_active', True, 5)
+        cache.set('received_info', self.request.query_arguments, 5)
+        device_info = cache.get('device_info')
+        if device_info is not None:
+            self.write(device_info)
+            cache.delete('device_info')
+
+
 class EchoHandler(BaseHandler):
     def check_xsrf_cookie(self):
         """Disable XSRF check.
@@ -494,6 +520,7 @@ application_urls = [
     (r'/minigrids/(.{36})/vendors/?', MinigridVendorsHandler),
     (r'/minigrids/(.{36})/customers/?', MinigridCustomersHandler),
     (r'/minigrids/(.{36})/write_credit/?', MinigridWriteCreditHandler),
+    (r'/device_info/?', DeviceInfoHandler),
     (r'/echo/?', EchoHandler),
     (r'/echo_auth/?', EchoAuthHandler),
     (r'/tariffs/?', TariffsHandler),

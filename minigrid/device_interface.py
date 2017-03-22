@@ -28,7 +28,7 @@ def write_vendor_card(minigrid_id, vendor):
     print('=' * 60)
 
 
-def write_customer_card(minigrid_id, customer):
+def write_customer_card(cache, minigrid_id, customer):
     """Write information to a customer ID card."""
     block_4 = b''.join((
         b'B',  # B for customer
@@ -42,8 +42,13 @@ def write_customer_card(minigrid_id, customer):
 
     message = _wrap_binary(block_4 + block_5 + block_6)
 
+    cache.set('device_info', message, 5)
+
     # TODO write to device
     print('=' * 60)
+    print(cache.get('device_active'))
+    print(cache.get('device_info'))
+    print(cache.get('received_info'))
     print(message.hex())
     print('=' * 60)
 

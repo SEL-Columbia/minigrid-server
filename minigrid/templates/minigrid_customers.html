@@ -14,12 +14,20 @@
       <li>
       <p>Name: {{ customer.customer_name }}</p>
       <p>User ID: {{ customer.customer_user_id }}</p>
-      <form action="/minigrids/{{ minigrid.minigrid_id }}/customers?action=write&customer_id={{ customer.customer_id }}" method="POST">
+      <form action="/minigrids/{{ minigrid.minigrid_id }}/customers" method="POST">
         {% module xsrf_form_html() %}
-        <input type="submit" value="Write ID card" />
+	<input type="hidden" name="action" value="write" />
+	<input type="hidden" name="customer_id" value="{{ customer.customer_id }}" />
+	{% if device_active %}
+          <input type="submit" value="Write ID card" />
+	{% else %}
+          <input type="submit" value="Write ID card" title="Touch card to reader" disabled/>
+	{% end %}
       </form>
-      <form action="/minigrids/{{ minigrid.minigrid_id }}/customers?action=remove&customer_id={{ customer.customer_id }}" method="POST">
+      <form action="/minigrids/{{ minigrid.minigrid_id }}/customers" method="POST">
         {% module xsrf_form_html() %}
+	<input type="hidden" name="action" value="remove" />
+	<input type="hidden" name="customer_id" value="{{ customer.customer_id }}" />
         <input type="submit" value="Remove Customer {{ customer.customer_name }}" />
       </form>
       </li>
