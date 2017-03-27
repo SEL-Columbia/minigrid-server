@@ -31,7 +31,7 @@ def write_vendor_card(cache, minigrid_id, vendor):
     message = block_4 + block_5
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(message) + encryptor.finalize()
-    payload = _wrap_binary(message)
+    payload = _wrap_binary(ciphertext)
 
     cache.set('device_info', payload, 5)
 
@@ -57,7 +57,7 @@ def write_customer_card(cache, minigrid_id, customer):
     message = block_4 + block_5
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(message) + encryptor.finalize()
-    payload = _wrap_binary(message)
+    payload = _wrap_binary(ciphertext)
 
     cache.set('device_info', payload, 5)
 
@@ -116,7 +116,7 @@ def write_credit_card(
     )
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(message) + encryptor.finalize()
-    payload = _wrap_binary(message)
+    payload = _wrap_binary(ciphertext)
 
     cache.set('device_info', payload, 5)
 
