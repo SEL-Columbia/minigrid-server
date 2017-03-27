@@ -1,4 +1,5 @@
 """Handlers for the URL endpoints."""
+from collections import OrderedDict
 from datetime import timedelta
 from urllib.parse import urlencode
 from uuid import uuid4
@@ -252,7 +253,19 @@ class MinigridHandler(BaseHandler):
             minigrid=models.get_minigrid(self.session, minigrid_id))
 
 
-class MinigridWriteCreditHandler(BaseHandler):
+class WriteCardBaseHandler(BaseHandler):
+    """Base class for card-writing handlers."""
+
+    def render(self, *args, **kwargs):
+        """Override default render to include cached information."""
+        if 'device_active' not in kwargs:
+            kwargs['device_active'] = cache.get('device_active')
+        if 'received_info' not in kwargs:
+            kwargs['received_info'] = cache.get('received_info')
+        super().render(*args, **kwargs)
+
+
+class MinigridWriteCreditHandler(WriteCardBaseHandler):
     """Handlers for writing credit cards view."""
 
     @tornado.web.authenticated
@@ -268,6 +281,7 @@ class MinigridWriteCreditHandler(BaseHandler):
         minigrid = models.get_minigrid(self.session, minigrid_id)
         system = self.session.query(models.System).one()
         write_credit_card(
+            cache,
             minigrid_id,
             int(self.get_argument('credit_value')),
             system.day_tariff,
@@ -280,7 +294,7 @@ class MinigridWriteCreditHandler(BaseHandler):
             'minigrid_write_credit.html', minigrid=minigrid, message=message)
 
 
-class MinigridVendorsHandler(BaseHandler):
+class MinigridVendorsHandler(WriteCardBaseHandler):
     """Handlers for vendors view."""
 
     @tornado.web.authenticated
@@ -328,7 +342,7 @@ class MinigridVendorsHandler(BaseHandler):
             vendor = (
                 self.session.query(models.Vendor)
                 .get(self.get_argument('vendor_id')))
-            write_vendor_card(minigrid_id, vendor)
+            write_vendor_card(cache, minigrid_id, vendor)
             message = 'Card written'
             self.render(
                 'minigrid_vendors.html', minigrid=grid, message=message)
@@ -338,7 +352,7 @@ class MinigridVendorsHandler(BaseHandler):
         self.render('minigrid_vendors.html', minigrid=grid)
 
 
-class MinigridCustomersHandler(BaseHandler):
+class MinigridCustomersHandler(WriteCardBaseHandler):
     """Handlers for customers view."""
 
     @tornado.web.authenticated
@@ -346,7 +360,6 @@ class MinigridCustomersHandler(BaseHandler):
         """Render the customers view."""
         self.render(
             'minigrid_customers.html',
-            device_active=cache.get('device_active'),
             minigrid=models.get_minigrid(self.session, minigrid_id))
 
     @tornado.web.authenticated
@@ -382,7 +395,6 @@ class MinigridCustomersHandler(BaseHandler):
                 message = 'The requested customer no longer exists'
             self.render(
                 'minigrid_customers.html',
-                device_active=cache.get('device_active'),
                 minigrid=grid, message=message)
             return
         elif action == 'write':
@@ -393,14 +405,12 @@ class MinigridCustomersHandler(BaseHandler):
             message = 'Card written'
             self.render(
                 'minigrid_customers.html',
-                device_active=cache.get('device_active'),
                 minigrid=grid, message=message)
             return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
         self.render(
             'minigrid_customers.html',
-            device_active=cache.get('device_active'),
             minigrid=grid)
 
 
@@ -460,6 +470,17 @@ class LogoutHandler(BaseHandler):
         self.redirect('/')
 
 
+def _pack_into_dict(binary):
+    chunks = len(binary) // 17
+    result = OrderedDict()
+    for i in range(chunks):
+        block = binary[17*i:17*(i+1)]
+        block_id = int(chr(block[0]), 16)
+        message = block[1:]
+        result[block_id] = message
+    return result
+
+
 class DeviceInfoHandler(BaseHandler):
     def check_xsrf_cookie(self):
         """Disable XSRF check.
@@ -472,6 +493,15 @@ class DeviceInfoHandler(BaseHandler):
     def get(self):
         cache.set('device_active', True, 5)
         cache.set('received_info', self.request.query_arguments, 5)
+        device_info = cache.get('device_info')
+        if device_info is not None:
+            self.write(device_info)
+            cache.delete('device_info')
+
+    def post(self):
+        cache.set('device_active', True, 5)
+        payload = _pack_into_dict(self.request.body)
+        cache.set('received_info', payload, 5)
         device_info = cache.get('device_info')
         if device_info is not None:
             self.write(device_info)

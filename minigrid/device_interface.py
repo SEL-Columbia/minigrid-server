@@ -2,13 +2,20 @@
 import time
 import uuid
 
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+
+
+key = bytes(range(32))  # only for testing
+cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
+
 
 def _wrap_binary(binary):
     """Add a signifier to the beginning and end of a binary block."""
     return b'qS' + binary + b'EL'
 
 
-def write_vendor_card(minigrid_id, vendor):
+def write_vendor_card(cache, minigrid_id, vendor):
     """Write information to a vendor ID card."""
     block_4 = b''.join((
         b'A',  # A for vendor
@@ -20,7 +27,13 @@ def write_vendor_card(minigrid_id, vendor):
     block_5 = uuid.UUID(minigrid_id).bytes
     block_6 = bytes(16)  # other information
 
-    message = _wrap_binary(block_4 + block_5 + block_6)
+    #message = _wrap_binary(block_4 + block_5 + block_6)
+    message = block_4 + block_5
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(message) + encryptor.finalize()
+    payload = _wrap_binary(message)
+
+    cache.set('device_info', payload, 5)
 
     # TODO write to device
     print('=' * 60)
@@ -40,9 +53,13 @@ def write_customer_card(cache, minigrid_id, customer):
     block_5 = uuid.UUID(minigrid_id).bytes
     block_6 = bytes(16)  # other information
 
-    message = _wrap_binary(block_4 + block_5 + block_6)
+    #message = _wrap_binary(block_4 + block_5 + block_6)
+    message = block_4 + block_5
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(message) + encryptor.finalize()
+    payload = _wrap_binary(message)
 
-    cache.set('device_info', message, 5)
+    cache.set('device_info', payload, 5)
 
     # TODO write to device
     print('=' * 60)
@@ -58,6 +75,7 @@ def _hour_on_epoch_day(hour_int):
 
 
 def write_credit_card(
+        cache,
         minigrid_id, credit_amount,
         day_tariff, day_tariff_start,
         night_tariff, night_tariff_start):
@@ -90,9 +108,17 @@ def write_credit_card(
         bytes(8),  # intentionally empty
     ))
 
-    message = _wrap_binary(
+    #message = _wrap_binary(
+    #    block_4 + block_5 + block_6 + block_8 + block_9 + block_10
+    #)
+    message = (
         block_4 + block_5 + block_6 + block_8 + block_9 + block_10
     )
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(message) + encryptor.finalize()
+    payload = _wrap_binary(message)
+
+    cache.set('device_info', payload, 5)
 
     # TODO write to device
     print('=' * 60)

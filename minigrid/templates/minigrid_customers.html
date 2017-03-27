@@ -6,6 +6,10 @@
   {% end %}
   <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
   <p>ID: {{ minigrid.minigrid_id }}</p>
+  {% if received_info %}
+    <p>Card info:</p>
+    <p>{{ received_info }}</p>
+  {% end %}
   <p>Customers:</p>
   <ul>
     {% set zero_customers = True %}

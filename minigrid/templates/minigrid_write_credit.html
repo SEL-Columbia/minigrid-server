@@ -6,11 +6,19 @@
   {% end %}
   <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
   <p>ID: {{ minigrid.minigrid_id }}</p>
+  {% if received_info %}
+    <p>Card info:</p>
+    <p>{{ received_info }}</p>
+  {% end %}
   <p>Write credit card:</p>
   <form action="/minigrids/{{ minigrid.minigrid_id }}/write_credit" method="POST">
     {% module xsrf_form_html() %}
     <label>Card value: <input type="number" step="1" min="0" name="credit_value" required /></label><br>
-    <input type="submit" value="Write credit card" />
+	{% if device_active %}
+          <input type="submit" value="Write credit card" />
+	{% else %}
+          <input type="submit" value="Write credit card" title="Touch card to reader" disabled/>
+	{% end %}
   </form>
   <footer>
     <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
