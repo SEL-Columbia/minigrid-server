@@ -12,14 +12,14 @@ cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
 
 def _wrap_binary(binary):
     """Add a signifier to the beginning and end of a binary block."""
-    return b'qS' + binary + b'EL'
+    return b'qS' + binary.hex().encode('ascii') + b'EL'
 
 
 def write_vendor_card(cache, minigrid_id, vendor):
     """Write information to a vendor ID card."""
     block_4 = b''.join((
         b'A',  # A for vendor
-        vendor.vendor_user_id.encode(),  # 0000-9999 ASCII
+        vendor.vendor_user_id.encode('ascii'),  # 0000-9999 ASCII
         int(time.time()).to_bytes(4, 'big'),  # card produced time
         bytes(3),  # intentionally empty
         bytes(4),  # card read time TODO
@@ -45,7 +45,7 @@ def write_customer_card(cache, minigrid_id, customer):
     """Write information to a customer ID card."""
     block_4 = b''.join((
         b'B',  # B for customer
-        customer.customer_user_id.encode(),  # 0000-9999 ASCII
+        customer.customer_user_id.encode('ascii'),  # 0000-9999 ASCII
         int(time.time()).to_bytes(4, 'big'),  # card produced time
         bytes(3),  # intentionally empty
         bytes(4),  # card read time TODO
