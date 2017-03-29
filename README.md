@@ -34,7 +34,9 @@ Note that the login flow is quicker with a gmail.com e-mail address.
 
 ### Native
 
+```
 (venv) $ ./dev/commands.py create_user --kwarg email=<your_email@address.tld>
+```
 
 ### Docker
 
