@@ -26,3 +26,18 @@ dev_db_1         docker-entrypoint.sh postgres    Up      5432/tcp
 dev_minigrid_1   ./dev/run.sh --db_host=db  ...   Up      0.0.0.0:8888->8888/tcp 
 dev_redis_1      docker-entrypoint.sh redis ...   Up      6379/tcp
 ```
+
+
+## Adding a user locally
+
+Note that the login flow is quicker with a gmail.com e-mail address.
+
+### Native
+
+(venv) $ ./dev/commands.py create_user --kwarg email=<your_email@address.tld>
+
+### Docker
+
+```
+$ docker exec dev_minigrid_1 dev/commands.py create_user --db_host=db --kwarg email=<your_email@address.tld>
+```
