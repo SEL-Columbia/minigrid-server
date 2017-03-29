@@ -123,6 +123,9 @@ class TariffsHandler(BaseHandler):
             'day_tariff_start': self._get_value('day_tariff_start'),
             'night_tariff': self._get_value('night_tariff'),
             'night_tariff_start': self._get_value('night_tariff_start')}
+        tat = self._get_value('tariff_activation_timestamp')
+        if tat:
+            data['tariff_activation_timestamp'] = tat
         statement = (
             insert(models.System)
             .values(**data)
@@ -288,6 +291,8 @@ class MinigridWriteCreditHandler(WriteCardBaseHandler):
             system.day_tariff_start,
             system.night_tariff,
             system.night_tariff_start,
+            system.tariff_creation_timestamp,
+            system.tariff_activation_timestamp,
         )
         message = 'Card written'
         self.render(

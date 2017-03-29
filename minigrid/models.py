@@ -125,6 +125,13 @@ class System(Base):
         sa.CheckConstraint('night_tariff_start <= 23'),
         sa.CheckConstraint('night_tariff_start > day_tariff_start'),
         nullable=False, server_default='18')
+    tariff_creation_timestamp = sa.Column(
+        pg.TIMESTAMP, nullable=False,
+        server_default=func.current_timestamp())
+    tariff_activation_timestamp = sa.Column(
+        pg.TIMESTAMP, nullable=False,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp())
 
 
 class Minigrid(Base):

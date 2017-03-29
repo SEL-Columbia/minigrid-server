@@ -78,7 +78,8 @@ def write_credit_card(
         cache,
         minigrid_id, credit_amount,
         day_tariff, day_tariff_start,
-        night_tariff, night_tariff_start):
+        night_tariff, night_tariff_start,
+        tariff_creation_timestamp, tariff_activation_timestamp):
     """Write information to a credit card."""
     block_4 = b''.join((
         b'C',  # C for credit
@@ -103,8 +104,8 @@ def write_credit_card(
         bytes(7),  # intentionally empty
     ))
     block_10 = b''.join((
-        bytes(4),  # time of these 2 tariff was created??? TODO
-        bytes(4),  # time to start use tariff??? TODO
+        int(tariff_creation_timestamp.timestamp()).to_bytes(4, 'big'),
+        int(tariff_activation_timestamp.timestamp()).to_bytes(4, 'big'),
         bytes(8),  # intentionally empty
     ))
 
