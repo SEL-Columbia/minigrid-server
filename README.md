@@ -28,18 +28,18 @@ dev_redis_1      docker-entrypoint.sh redis ...   Up      6379/tcp
 ```
 
 
-## Adding a user locally
+## Adding an initial user locally
 
 Note that the login flow is quicker with a gmail.com e-mail address.
 
 ### Native
 
 ```
-(venv) $ ./dev/commands.py create_user --kwarg email=<your_email@address.tld>
+(venv) $ ./dev/commands.py create_user --kwarg email=<your_email_address>
 ```
 
 ### Docker
 
 ```
-$ docker exec dev_minigrid_1 dev/commands.py create_user --db_host=db --kwarg email=<your_email@address.tld>
+$ docker exec dev_minigrid_1 dev/commands.py create_user --db_host=db --kwarg email=<your_email_address>
 ```
