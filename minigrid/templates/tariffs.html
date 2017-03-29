@@ -15,6 +15,7 @@
       <label>Daytime start hour: <input type="number" step="1" min="0" max="23" value="{{ system.day_tariff_start }}" name="day_tariff_start" required /></label><br>
       <label>Nighttime tariff: <input type="number" step="any" min="0" name="night_tariff" value="{{ system.night_tariff }}" required /></label><br>
       <label>Nighttime start hour: <input type="number" step="1" min="0" max="23" value="{{ system.night_tariff_start }}" name="night_tariff_start" required /></label><br>
+<label>Tariff activation date and time (Default is current time): <input type="datetime-local" name="tariff_activation_timestamp" /></label><br>
       <input type="submit" value="Update Tariff Information" />
     {% end %}
   {% except NameError %}
