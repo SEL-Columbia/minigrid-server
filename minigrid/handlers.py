@@ -496,7 +496,7 @@ class DeviceInfoHandler(BaseHandler):
         pass
 
     def get(self):
-        cache.set('device_active', True, 5)
+        cache.set('device_active', 1, 5)
         cache.set('received_info', self.request.query_arguments, 5)
         device_info = cache.get('device_info')
         if device_info is not None:
@@ -504,13 +504,23 @@ class DeviceInfoHandler(BaseHandler):
             cache.delete('device_info')
 
     def post(self):
-        cache.set('device_active', True, 5)
+        cache.set('device_active', 1, 5)
         payload = _pack_into_dict(self.request.body)
         cache.set('received_info', payload, 5)
         device_info = cache.get('device_info')
         if device_info is not None:
             self.write(device_info)
             cache.delete('device_info')
+
+
+class JSONDeviceHandler(BaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        result = {
+            'device_active': bool(int(cache.get('device_active'))) or False,
+            'received_info': cache.get('received_info'),
+        }
+        self.write(result)
 
 
 class EchoHandler(BaseHandler):
@@ -556,6 +566,7 @@ application_urls = [
     (r'/minigrids/(.{36})/customers/?', MinigridCustomersHandler),
     (r'/minigrids/(.{36})/write_credit/?', MinigridWriteCreditHandler),
     (r'/device_info/?', DeviceInfoHandler),
+    (r'/device_json/?', JSONDeviceHandler),
     (r'/echo/?', EchoHandler),
     (r'/echo_auth/?', EchoAuthHandler),
     (r'/tariffs/?', TariffsHandler),
