@@ -517,7 +517,7 @@ class JSONDeviceHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         result = {
-            'device_active': bool(int(cache.get('device_active'))) or False,
+            'device_active': bool(int(cache.get('device_active') or 0)),
             'received_info': cache.get('received_info'),
         }
         self.write(result)
