@@ -12,6 +12,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.orm.exc import NoResultFound, UnmappedInstanceError
 
+from tornado.escape import json_encode, json_decode
 import tornado.web
 
 from minigrid.device_interface import (
@@ -482,8 +483,8 @@ def _pack_into_dict(binary):
         block = binary[17*i:17*(i+1)]
         block_id = int(chr(block[0]), 16)
         message = block[1:]
-        result[block_id] = message
-    return result
+        result[block_id] = message.hex()  # TODO: deal with encryption etc
+    return json_encode(result)
 
 
 class DeviceInfoHandler(BaseHandler):
@@ -518,7 +519,7 @@ class JSONDeviceHandler(BaseHandler):
     def get(self):
         result = {
             'device_active': bool(int(cache.get('device_active') or 0)),
-            'received_info': cache.get('received_info'),
+            'received_info': json_decode(cache.get('received_info') or '{}'),
         }
         self.write(result)
 
