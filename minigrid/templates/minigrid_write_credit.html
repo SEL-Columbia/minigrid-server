@@ -13,15 +13,18 @@
   <p>Write credit card:</p>
   <form action="/minigrids/{{ minigrid.minigrid_id }}/write_credit" method="POST">
     {% module xsrf_form_html() %}
-    <label>Card value: <input type="number" step="1" min="0" name="credit_value" required /></label><br>
-	{% if device_active %}
-          <input type="submit" value="Write credit card" />
-	{% else %}
-          <input type="submit" value="Write credit card" title="Touch card to reader" disabled/>
-	{% end %}
+    <label>Card value : <input type="number" step="1" min="0" name="credit_value" required /></label><br>
+    <input id="card-value" type="submit" value="Write credit card" title="Touch card to reader" disabled/>
   </form>
   <footer>
     <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
     <p><a href="/">&laquo; Return to minigrid index</a></p>
   </footer>
+
+{% block extra_scripts %}
+
+  <script type="text/javascript" src="{{ static_url('js/minigrid_write_credit.js') }}"></script>
+
+{% end %}
+
 {% end %}
