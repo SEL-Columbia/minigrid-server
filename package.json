@@ -1,0 +1,25 @@
+{
+  "name": "minigrid-server",
+  "version": "1.0.0",
+  "description": "Shared Solar server",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SEL-Columbia/minigrid-server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SEL-Columbia/minigrid-server/issues"
+  },
+  "homepage": "https://github.com/SEL-Columbia/minigrid-server#readme",
+  "dependencies": {
+    "ajax": "0.0.4"
+  }
+}
