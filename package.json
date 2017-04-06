@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/SEL-Columbia/minigrid-server#readme",
   "dependencies": {
-    "ajax": "0.0.4"
+    "ajax": "0.0.4",
+    "bootstrap": "^3.3.7"
   }
 }

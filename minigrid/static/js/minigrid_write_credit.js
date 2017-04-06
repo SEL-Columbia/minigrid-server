@@ -1,6 +1,6 @@
 'use strict';
 
-(function checkDeviceActive(){
+(function(){
 
     const input = document.getElementById('card-value');
     let obj;
