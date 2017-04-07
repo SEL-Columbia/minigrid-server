@@ -5,31 +5,29 @@
     <link href="{{ static_url('css/style.css') }}" rel="stylesheet" type="text/css">
   </head>
   <body>
-  {% if current_user %}
-  <nav class="navbar navbar-custom">
-    <div class="container-fluid">
-      <div class="navbar-header">
-        <span class="nav-a navbar-brand">SharedSolar Minigrid Management</span>
-      </div>
-      <ul class="nav navbar-nav navbar-left">
-        <li><div id="hello">Hi {{ current_user.email }}</div></li>
-      </ul>
-      <ul class="nav navbar-nav navbar-right">
-        <li class="logout"><a>
-          
-          <form action="/logout" method="POST">
-          {% module xsrf_form_html() %}
-          <input id="logout" style="margin:none" type="submit" value="Log Out" />
+    {% if current_user %}
+      <nav class="navbar navbar-custom">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <span class="navbar-brand">SharedSolar Minigrid Management</span>
+          </div>
+          <ul class="nav navbar-nav navbar-left">
+            <li id="user-greeting">
+              Hi {{ current_user.email }}
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li id="logout">
+              <form action="/logout" method="POST">
+                {% module xsrf_form_html() %}
+                <input id="logout" type="submit" value="Log Out" />
               </form>
-
-        </a></li>
-      </ul>
-    </div>
-  </nav>
-    <!-- <div id="user">
-      <p>Hi {{ current_user.email }}.</p>
-    </div> -->
-    {% end %}
+            </li>
+          </ul>
+        </div>
+      </nav>
+      
+      {% end %}
     <div>
       {% block body %}{% end %}
     </div>

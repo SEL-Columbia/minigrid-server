@@ -1,21 +1,34 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<div id="content">
-  <div class="contentbox">
-  <p><a href="/users">Manage users &raquo;</a></p>
-  {% if not system %}
-    <strong>You must initialize the system tariff information.</strong>
-    <form action="/tariffs" method="POST">
-      {% module xsrf_form_html() %}
-      {% include tariff_form.html %}
-    </form>
-  {% else %}
-    <p><a href="/tariffs">Manage tariffs &raquo;</a></p>
-    <p><a href="/technician">Write technician ID card &raquo;</a></p>
-    <p><a href="/device">Manage devices &raquo;</a></p>
-    <p><a href="/cards">Read and validate cards &raquo;</a></p>
+
+<nav class="sidebar">
+  <ul>
+    <li><a href="/users">Manage users &raquo;</a>
+
+{% if not system %}
+    
+  </ul>
+  <div id="tariff-message">You must initialize the system tariff information.</div>
+</nav>
+
+  <div class="content" id="tariff-form">
+      <form action="/tariffs" method="POST">
+        {% module xsrf_form_html() %}
+        {% include tariff_form.html %}
+      </form>
   </div>
+
+{% else %}
+
+    <li><a href="/tariffs">Manage tariffs &raquo;</a></li>
+    <li><a href="/technician">Write technician ID card &raquo;</a></li>
+    <li><a href="/device">Manage devices &raquo;</a></li>
+    <li><a href="/cards">Read and validate cards &raquo;</a></li>
+  </ul>
+</nav>
+
+<div class="content">
 
   <div class="contentbox">
     <p>Minigrids:</p>
@@ -52,5 +65,5 @@
 
     <!-- <p>Aggregate data plots:</p>
     <p>TODO: What data? From where?</p> -->
-  {% end %}
+{% end %}
 {% end %}
