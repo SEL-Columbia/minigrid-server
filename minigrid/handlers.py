@@ -477,10 +477,10 @@ class LogoutHandler(BaseHandler):
 
 
 def _pack_into_dict(binary):
-    chunks = len(binary) // 17
+    chunks = len(binary) // 33
     result = OrderedDict()
     for i in range(chunks):
-        block = binary[17*i:17*(i+1)]
+        block = binary[33*i:33*(i+1)]
         block_id = int(chr(block[0]), 16)
         message = block[1:]
         result[block_id] = message.hex()  # TODO: deal with encryption etc
