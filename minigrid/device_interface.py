@@ -25,13 +25,14 @@ def write_vendor_card(cache, minigrid_id, vendor):
         bytes(4),  # card read time TODO
     ))
     block_5 = uuid.UUID(minigrid_id).bytes
-    block_6 = bytes(16)  # other information
+    #block_6 = bytes(16)  # other information
+    block_6 = uuid.UUID(minigrid_id).bytes
 
     #message = _wrap_binary(block_4 + block_5 + block_6)
     message = block_4 + block_5
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(message) + encryptor.finalize()
-    payload = _wrap_binary(ciphertext)
+    payload = _wrap_binary(ciphertext + block_6)
 
     cache.set('device_info', payload, 5)
 
@@ -51,13 +52,14 @@ def write_customer_card(cache, minigrid_id, customer):
         bytes(4),  # card read time TODO
     ))
     block_5 = uuid.UUID(minigrid_id).bytes
-    block_6 = bytes(16)  # other information
+    #block_6 = bytes(16)  # other information
+    block_6 = uuid.UUID(minigrid_id).bytes
 
     #message = _wrap_binary(block_4 + block_5 + block_6)
     message = block_4 + block_5
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(message) + encryptor.finalize()
-    payload = _wrap_binary(ciphertext)
+    payload = _wrap_binary(ciphertext + block_6)
 
     cache.set('device_info', payload, 5)
 
@@ -112,16 +114,27 @@ def write_credit_card(
     #message = _wrap_binary(
     #    block_4 + block_5 + block_6 + block_8 + block_9 + block_10
     #)
-    message = (
-        block_4 + block_5 + block_6 + block_8 + block_9 + block_10
-    )
-    encryptor = cipher.encryptor()
-    ciphertext = encryptor.update(message) + encryptor.finalize()
-    payload = _wrap_binary(ciphertext)
+
+    #message = (
+    #    block_4 + block_5 + block_6 + block_8 + block_9 + block_10
+    #)
+    #encryptor = cipher.encryptor()
+    #ciphertext = encryptor.update(message) + encryptor.finalize()
+    #payload = _wrap_binary(ciphertext)
+
+    message_1 = block_4 + block_5
+    message_2 = block_8 + block_9 + block_10
+    encryptor_1 = cipher.encryptor()
+    ciphertext_1 = encryptor_1.update(message_1) + encryptor_1.finalize()
+    encryptor_2 = cipher.encryptor()
+    ciphertext_2 = encryptor_2.update(message_2) + encryptor_2.finalize()
+    payload = _wrap_binary(ciphertext_1 + block_6 + ciphertext_2)
 
     cache.set('device_info', payload, 5)
 
     # TODO write to device
     print('=' * 60)
-    print(message.hex())
+    print(message_1.hex())
+    print(block_6.hex())
+    print(message_2.hex())
     print('=' * 60)
