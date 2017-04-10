@@ -6,8 +6,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
 
-key = bytes(range(32))  # only for testing
-cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
+AES = algorithms.AES
 
 
 def _wrap_binary(binary):
@@ -15,7 +14,7 @@ def _wrap_binary(binary):
     return b'qS' + binary.hex().encode('ascii') + b'EL'
 
 
-def write_vendor_card(cache, minigrid_id, vendor):
+def write_vendor_card(cache, key, minigrid_id, vendor):
     """Write information to a vendor ID card."""
     block_4 = b''.join((
         b'A',  # A for vendor
@@ -30,6 +29,7 @@ def write_vendor_card(cache, minigrid_id, vendor):
 
     #message = _wrap_binary(block_4 + block_5 + block_6)
     message = block_4 + block_5
+    cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(message) + encryptor.finalize()
     payload = _wrap_binary(ciphertext + block_6)
@@ -42,7 +42,7 @@ def write_vendor_card(cache, minigrid_id, vendor):
     print('=' * 60)
 
 
-def write_customer_card(cache, minigrid_id, customer):
+def write_customer_card(cache, key, minigrid_id, customer):
     """Write information to a customer ID card."""
     block_4 = b''.join((
         b'B',  # B for customer
@@ -57,6 +57,7 @@ def write_customer_card(cache, minigrid_id, customer):
 
     #message = _wrap_binary(block_4 + block_5 + block_6)
     message = block_4 + block_5
+    cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(message) + encryptor.finalize()
     payload = _wrap_binary(ciphertext + block_6)
@@ -77,7 +78,7 @@ def _hour_on_epoch_day(hour_int):
 
 
 def write_credit_card(
-        cache,
+        cache, key,
         minigrid_id, credit_amount,
         day_tariff, day_tariff_start,
         night_tariff, night_tariff_start,
@@ -124,6 +125,7 @@ def write_credit_card(
 
     message_1 = block_4 + block_5
     message_2 = block_8 + block_9 + block_10
+    cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     encryptor_1 = cipher.encryptor()
     ciphertext_1 = encryptor_1.update(message_1) + encryptor_1.finalize()
     encryptor_2 = cipher.encryptor()

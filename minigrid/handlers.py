@@ -1,10 +1,14 @@
 """Handlers for the URL endpoints."""
+from binascii import unhexlify
 from collections import OrderedDict
 from datetime import timedelta
 from urllib.parse import urlencode
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 from asyncio_portier import get_verified_email
+
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
 
 import redis
 
@@ -23,6 +27,7 @@ import minigrid.models as models
 from minigrid.options import options
 
 
+AES = algorithms.AES
 cache = redis.StrictRedis.from_url(options.redis_url)
 broker_url = 'https://broker.portier.io'
 
@@ -171,7 +176,7 @@ class MinigridsHandler(BaseHandler):
             with models.transaction(self.session) as session:
                 session.add(models.Minigrid(
                     minigrid_name=self.get_argument('minigrid_name'),
-                    aes_key=self.get_argument('minigrid_aes_key')))
+                    aes_key=unhexlify(self.get_argument('minigrid_aes_key'))))
         except (IntegrityError, DataError) as error:
             if 'minigrid_name_key' in error.orig.pgerror:
                 message = 'A minigrid with that name already exists'
@@ -286,6 +291,7 @@ class MinigridWriteCreditHandler(WriteCardBaseHandler):
         system = self.session.query(models.System).one()
         write_credit_card(
             cache,
+            minigrid.aes_key,
             minigrid_id,
             int(self.get_argument('credit_value')),
             system.day_tariff,
@@ -348,7 +354,7 @@ class MinigridVendorsHandler(WriteCardBaseHandler):
             vendor = (
                 self.session.query(models.Vendor)
                 .get(self.get_argument('vendor_id')))
-            write_vendor_card(cache, minigrid_id, vendor)
+            write_vendor_card(cache, grid.aes_key, minigrid_id, vendor)
             message = 'Card written'
             self.render(
                 'minigrid_vendors.html', minigrid=grid, message=message)
@@ -407,7 +413,7 @@ class MinigridCustomersHandler(WriteCardBaseHandler):
             customer = (
                 self.session.query(models.Customer)
                 .get(self.get_argument('customer_id')))
-            write_customer_card(cache, minigrid_id, customer)
+            write_customer_card(cache, grid.aes_key, minigrid_id, customer)
             message = 'Card written'
             self.render(
                 'minigrid_customers.html',
@@ -476,14 +482,24 @@ class LogoutHandler(BaseHandler):
         self.redirect('/')
 
 
-def _pack_into_dict(binary):
+def _pack_into_dict(session, binary):
     chunks = len(binary) // 33
     result = OrderedDict()
     for i in range(chunks):
         block = binary[33*i:33*(i+1)]
         block_id = int(chr(block[0]), 16)
         message = block[1:]
-        result[block_id] = message.hex()  # TODO: deal with encryption etc
+        result[block_id] = message.hex()
+    minigrid_id = str(UUID(unhexlify(result[6]).decode('ascii')))
+    minigrid = models.get_minigrid(session, minigrid_id)
+    key = minigrid.aes_key
+    cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
+    for block_index, value in result.items():
+        binary = unhexlify(value)
+        if block_index != 6:
+            decryptor = cipher.decryptor()
+            plaintext = decryptor.update(binary) + decryptor.finalize()
+            result[block_index] = plaintext.hex()
     return json_encode(result)
 
 
@@ -506,7 +522,7 @@ class DeviceInfoHandler(BaseHandler):
 
     def post(self):
         cache.set('device_active', 1, 5)
-        payload = _pack_into_dict(self.request.body)
+        payload = _pack_into_dict(self.session, self.request.body)
         cache.set('received_info', payload, 5)
         device_info = cache.get('device_info')
         if device_info is not None:

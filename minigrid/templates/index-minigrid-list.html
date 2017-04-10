@@ -56,7 +56,7 @@
     <form action="/minigrids" method="POST">
       {% module xsrf_form_html() %}
       <label>Name: <input name="minigrid_name" required /></label><br>
-      <label>AES key: <input name="minigrid_aes_key" required /></label><br>
+      <label>AES key: <input name="minigrid_aes_key" pattern="[a-fA-F\d]{64}" required title="64 hex digits" /></label><br>
       <input type="submit" value="Add Minigrid" />
     </form>
 

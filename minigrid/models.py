@@ -143,7 +143,7 @@ class Minigrid(Base):
         pg.TEXT, sa.CheckConstraint("minigrid_name != ''"),
         nullable=False, unique=True)
     aes_key = sa.Column(
-        pg.TEXT, sa.CheckConstraint("aes_key != ''"),
+        pg.BYTEA, sa.CheckConstraint("length(aes_key) = 32"),
         nullable=False)
     error_code = json_column('error_code', default='{}')
     status = json_column('status', default='{}')
