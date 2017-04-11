@@ -134,6 +134,14 @@ class System(Base):
         onupdate=func.current_timestamp())
 
 
+class Device(Base):
+    """The model for a device."""
+    __tablename__ = 'device'
+    address = sa.Column(
+        pg.BYTEA, sa.CheckConstraint("length(address) = 6"),
+        primary_key = True)
+
+
 class Minigrid(Base):
     """The model for a minigrid."""
 

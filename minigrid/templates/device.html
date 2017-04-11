@@ -4,9 +4,25 @@
   {% if message is not None %}
     <p><strong>{{ message }}</strong></p>
   {% end %}
+  <div>
+    <p>Devices:</p>
+    <ul>
+      {% set zero_devices = True %}
+      {% for device in devices %}
+        {% set zero_devices = False %}
+        <li>
+          <p>{{ device.address.hex() }}</p>
+        </li>
+      {% end %}
+    </ul>
+    {% if zero_devices %}
+      <p>No devices</p>
+    {% end %}
+  </div>
   <p>Add device:</p>
-  <form>
+  <form action="/device" method="POST">
     {% module xsrf_form_html() %}
+    <label>Device address: <input name="address" pattern="[a-fA-F\d]{12}" required title="12 hex digits" /></label><br>
     <input type="submit" value="Add device" />
   </form>
   <footer><a href="/">&laquo; Return to minigrid index</a></footer>

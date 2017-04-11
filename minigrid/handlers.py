@@ -186,7 +186,7 @@ class MinigridsHandler(BaseHandler):
                 message, 400, 'index-minigrid-list.html',
                 system=self.session.query(models.System).one_or_none(),
                 minigrids=models.get_minigrids(session))
-        self.set_status(201)
+        self.set_status(201)  # TODO: fix this if error case
         self.render(
             'index-minigrid-list.html',
             system=self.session.query(models.System).one_or_none(),
@@ -231,14 +231,31 @@ class TechnicianHandler(BaseHandler):
         self.render('technician.html')
 
 
-# TODO: this button should do something
 class DeviceHandler(BaseHandler):
     """Handlers for device view."""
-
     @tornado.web.authenticated
     def get(self):
         """Render the device form."""
-        self.render('device.html')
+        Device = models.Device
+        devices = self.session.query(Device).order_by(Device.address)
+        self.render('device.html', devices=devices)
+
+    @tornado.web.authenticated
+    def post(self):
+        """Create a new device model."""
+        status = 201
+        try:
+            with models.transaction(self.session) as session:
+                session.add(models.Device(
+                    address=unhexlify(self.get_argument('address'))))
+        except (IntegrityError, DataError) as error:
+            status = 400
+            message = str(error)
+        self.set_status(status)
+        Device = models.Device
+        devices = self.session.query(Device).order_by(Device.address)
+        self.render('device.html', devices=devices)
+
 
 
 # TODO: this button should do something
