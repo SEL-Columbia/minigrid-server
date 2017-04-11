@@ -12,6 +12,7 @@ from cryptography.hazmat.backends import default_backend
 
 import redis
 
+from sqlalchemy import exists
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.orm.exc import NoResultFound, UnmappedInstanceError
@@ -186,7 +187,7 @@ class MinigridsHandler(BaseHandler):
                 message, 400, 'index-minigrid-list.html',
                 system=self.session.query(models.System).one_or_none(),
                 minigrids=models.get_minigrids(session))
-        self.set_status(201)  # TODO: fix this if error case
+        self.set_status(201)
         self.render(
             'index-minigrid-list.html',
             system=self.session.query(models.System).one_or_none(),
@@ -243,6 +244,7 @@ class DeviceHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self):
         """Create a new device model."""
+        # TODO: raise an error
         status = 201
         try:
             with models.transaction(self.session) as session:
@@ -500,6 +502,12 @@ class LogoutHandler(BaseHandler):
 
 
 def _pack_into_dict(session, binary):
+    device_address = unhexlify(binary[:12])
+    device_exists = session.query(
+        exists().where(models.Device.address == device_address)).scalar()
+    if not device_exists:  # TODO: new error class
+        raise tornado.web.HTTPError(400)
+    binary = binary[12:]
     chunks = len(binary) // 33
     result = OrderedDict()
     for i in range(chunks):
