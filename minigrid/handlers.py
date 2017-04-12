@@ -249,7 +249,7 @@ class DeviceHandler(BaseHandler):
         try:
             with models.transaction(self.session) as session:
                 session.add(models.Device(
-                    address=unhexlify(self.get_argument('address'))))
+                    address=unhexlify(self.get_argument('device_address'))))
         except (IntegrityError, DataError) as error:
             status = 400
             message = str(error)

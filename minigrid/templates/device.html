@@ -22,7 +22,7 @@
   <p>Add device:</p>
   <form action="/device" method="POST">
     {% module xsrf_form_html() %}
-    <label>Device address: <input name="address" pattern="[a-fA-F\d]{12}" required title="12 hex digits" /></label><br>
+    <label>Device address: <input name="device_address" pattern="[a-fA-F\d]{12}" required title="12 hex digits" /></label><br>
     <input type="submit" value="Add device" />
   </form>
   <footer><a href="/">&laquo; Return to minigrid index</a></footer>
