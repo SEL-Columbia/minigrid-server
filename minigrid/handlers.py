@@ -320,7 +320,7 @@ class MinigridWriteCreditHandler(WriteCardBaseHandler):
         system = self.session.query(models.System).one()
         write_credit_card(
             cache,
-            minigrid.aes_key,
+            minigrid.payment_system.aes_key,
             minigrid_id,
             int(self.get_argument('credit_value')),
             system.day_tariff,
@@ -383,7 +383,7 @@ class MinigridVendorsHandler(WriteCardBaseHandler):
             vendor = (
                 self.session.query(models.Vendor)
                 .get(self.get_argument('vendor_id')))
-            write_vendor_card(cache, grid.aes_key, minigrid_id, vendor)
+            write_vendor_card(cache, grid.payment_system.aes_key, minigrid_id, vendor)
             message = 'Card written'
             self.render(
                 'minigrid_vendors.html', minigrid=grid, message=message)
@@ -442,7 +442,7 @@ class MinigridCustomersHandler(WriteCardBaseHandler):
             customer = (
                 self.session.query(models.Customer)
                 .get(self.get_argument('customer_id')))
-            write_customer_card(cache, grid.aes_key, minigrid_id, customer)
+            write_customer_card(cache, grid.payment_system.aes_key, minigrid_id, customer)
             message = 'Card written'
             self.render(
                 'minigrid_customers.html',
@@ -527,7 +527,7 @@ def _pack_into_dict(session, binary):
         result[block_id] = message.hex()
     minigrid_id = str(UUID(unhexlify(result[6]).decode('ascii')))
     minigrid = models.get_minigrid(session, minigrid_id, None)
-    key = minigrid.aes_key
+    key = minigrid.payment_system.aes_key
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     for block_index, value in result.items():
         binary = unhexlify(value)
