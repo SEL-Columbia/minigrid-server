@@ -560,10 +560,16 @@ class DeviceInfoHandler(BaseHandler):
         device_address = unhexlify(binary[:12])  # TODO: deal with multi-user -- exclusive lock?
         body = binary[12:]
         cache.set('device_active', 1, 5)
-        if len(body) == 0:
-            return
-        payload = _pack_into_dict(self.session, body)
-        cache.set('received_info', payload, 5)
+        if len(body) > 0:
+            try:
+                # Failure to read the card should be displayed somehow, but
+                # shouldn't prevent overwriting the card
+                # TODO: clean this up
+                payload = _pack_into_dict(self.session, body)
+            except Exception as error:
+                self.write(error)
+            else:
+                cache.set('received_info', payload, 5)
         device_info = cache.get('device_info')
         if device_info is not None:
             self.write(device_info)
