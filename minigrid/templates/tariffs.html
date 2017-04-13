@@ -8,7 +8,7 @@
   <form action="/tariffs" method="POST">
     {% module xsrf_form_html() %}
   {% try %}
-    {% if system is None%}
+    {% if system is None %}
       {% include tariff_form.html %}
     {% else %}
       <label>Daytime tariff: <input type="number" step="any" min="0" value="{{ system.day_tariff }}" name="day_tariff" required /></label><br>

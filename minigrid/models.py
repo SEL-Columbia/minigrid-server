@@ -5,7 +5,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.exc import DataError
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql import func
 
@@ -142,6 +142,16 @@ class Device(Base):
         primary_key = True)
 
 
+class PaymentSystem(Base):
+    """The model for pregenerated payment system IDs."""
+
+    __tablename__ = 'payment_system'
+    payment_id = pk()
+    aes_key = sa.Column(
+        pg.BYTEA, sa.CheckConstraint("length(aes_key) = 32"),
+        nullable=False)
+
+
 class Minigrid(Base):
     """The model for a minigrid."""
 
@@ -150,16 +160,19 @@ class Minigrid(Base):
     minigrid_name = sa.Column(
         pg.TEXT, sa.CheckConstraint("minigrid_name != ''"),
         nullable=False, unique=True)
-    aes_key = sa.Column(
-        pg.BYTEA, sa.CheckConstraint("length(aes_key) = 32"),
-        nullable=False)
+    minigrid_payment_id = fk('payment_system.payment_id')
     error_code = json_column('error_code', default='{}')
     status = json_column('status', default='{}')
 
+    payment_system = relationship(
+        'PaymentSystem', backref=backref('minigrid', uselist=False))
     vendors = relationship(
         'Vendor', backref='minigrid', order_by='Vendor.vendor_name')
     customers = relationship(
         'Customer', backref='minigrid', order_by='Customer.customer_name')
+
+    __table_args__ = (
+        sa.UniqueConstraint('minigrid_payment_id'),)
 
 
 class Vendor(Base):

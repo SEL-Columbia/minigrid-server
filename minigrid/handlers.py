@@ -177,7 +177,8 @@ class MinigridsHandler(BaseHandler):
             with models.transaction(self.session) as session:
                 session.add(models.Minigrid(
                     minigrid_name=self.get_argument('minigrid_name'),
-                    aes_key=unhexlify(self.get_argument('minigrid_aes_key'))))
+                    minigrid_payment_id=self.get_argument(
+                        'minigrid_payment_id')))
         except (IntegrityError, DataError) as error:
             if 'minigrid_name_key' in error.orig.pgerror:
                 message = 'A minigrid with that name already exists'
@@ -279,6 +280,15 @@ class MinigridHandler(BaseHandler):
         self.render(
             'minigrid.html',
             minigrid=models.get_minigrid(self.session, minigrid_id))
+
+    @tornado.web.authenticated
+    def post(self, minigrid_id):
+        """Update minigrid payment system ID."""
+        with models.transaction(self.session) as session:
+            minigrid = models.get_minigrid(self.session, minigrid_id)
+            minigrid.minigrid_payment_id = self.get_argument(
+                'minigrid_payment_id')
+        self.render('minigrid.html', minigrid=minigrid)
 
 
 class WriteCardBaseHandler(BaseHandler):
@@ -546,8 +556,11 @@ class DeviceInfoHandler(BaseHandler):
             cache.delete('device_info')
 
     def post(self):
+        binary = self.request.body
+        device_address = unhexlify(binary[:12])  # TODO: deal with multi-user -- exclusive lock?
+        body = binary[12:]
         cache.set('device_active', 1, 5)
-        payload = _pack_into_dict(self.session, self.request.body)
+        payload = _pack_into_dict(self.session, body)
         cache.set('received_info', payload, 5)
         device_info = cache.get('device_info')
         if device_info is not None:
