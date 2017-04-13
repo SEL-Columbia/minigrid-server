@@ -526,7 +526,7 @@ def _pack_into_dict(session, binary):
         message = block[1:]
         result[block_id] = message.hex()
     minigrid_id = str(UUID(unhexlify(result[6]).decode('ascii')))
-    minigrid = models.get_minigrid(session, minigrid_id)
+    minigrid = models.get_minigrid(session, minigrid_id, None)
     key = minigrid.aes_key
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     for block_index, value in result.items():
@@ -560,6 +560,8 @@ class DeviceInfoHandler(BaseHandler):
         device_address = unhexlify(binary[:12])  # TODO: deal with multi-user -- exclusive lock?
         body = binary[12:]
         cache.set('device_active', 1, 5)
+        if len(body) == 0:
+            return
         payload = _pack_into_dict(self.session, body)
         cache.set('received_info', payload, 5)
         device_info = cache.get('device_info')
