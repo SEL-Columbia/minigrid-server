@@ -557,6 +557,7 @@ class DeviceInfoHandler(BaseHandler):
 
     def post(self):
         binary = self.request.body
+        # TODO: after successfully writing a card, the response is "success"
         device_address = unhexlify(binary[:12])  # TODO: deal with multi-user -- exclusive lock?
         body = binary[12:]
         cache.set('device_active', 1, 5)
