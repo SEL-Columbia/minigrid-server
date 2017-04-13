@@ -20,7 +20,7 @@ def _aes_key():
 
 
 def main():
-    """Generate 1 million AES keys"""
+    """Generate 100,000 AES keys"""
     parser = argparse.ArgumentParser()
     _, others = parser.parse_known_args()
     from minigrid.options import parse_command_line
@@ -43,7 +43,7 @@ def main():
     with models.transaction(session) as tx_session:
         cursor = tx_session.connection().connection.cursor()
         table = '{}.payment_system'.format(options.db_schema)
-        aes_keys = io.StringIO('\n'.join(_aes_key() for _ in range(1000000)))
+        aes_keys = io.StringIO('\n'.join(_aes_key() for _ in range(100000)))
         cursor.copy_from(aes_keys, table, columns=['aes_key'])
     now = session.query(func.count(models.PaymentSystem.payment_id)).scalar()
     print('{} payment IDs in the system now.'.format(now))

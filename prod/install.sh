@@ -136,7 +136,7 @@ $DOCKER_COMPOSE up -d
 MINIGRID_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _minigrid_ | cut -d' ' -f1)
 sleep 1
 docker exec $MINIGRID_CONTAINER_NAME ""prod/create_initial_user.py --db-host=db $ADMIN_EMAIL""
-docker exec $MINIGRID_CONTAINER_NAME ""prod/create_million_payment_ids.py --db-host=db""
+docker exec $MINIGRID_CONTAINER_NAME ""prod/create_payment_ids.py --db-host=db""
 NGINX_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _nginx_ | cut -d' ' -f1)
 
 # Let's Encrypt auto-renew (for now this is a cron job).
