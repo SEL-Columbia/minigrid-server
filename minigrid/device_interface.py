@@ -73,6 +73,37 @@ def write_customer_card(cache, key, minigrid_id, customer):
     print('=' * 60)
 
 
+def write_maintenance_card_card(cache, key, payment_system_id, maintenance_card):
+    """Write information to a maintenance card card."""
+    block_4 = b''.join((
+        b'D',  # D for maintenance card
+        maintenance_card.maintenance_card_card_id.encode('ascii'),  # 0000-9999 ASCII
+        int(time.time()).to_bytes(4, 'big'),  # card produced time
+        bytes(3),  # intentionally empty
+        bytes(4),  # card read time TODO
+    ))
+    block_5 = bytes(16)
+    #block_6 = bytes(16)  # other information
+    block_6 = uuid.UUID(payment_system_id).bytes
+
+    #message = _wrap_binary(block_4 + block_5 + block_6)
+    message = block_4 + block_5
+    cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(message) + encryptor.finalize()
+    payload = _wrap_binary(ciphertext + block_6)
+
+    cache.set('device_info', payload, 5)
+
+    # TODO write to device
+    print('=' * 60)
+    print(cache.get('device_active'))
+    print(cache.get('device_info'))
+    print(cache.get('received_info'))
+    print(message.hex())
+    print('=' * 60)
+
+
 def _hour_on_epoch_day(hour_int):
     return (hour_int * 3600).to_bytes(4, 'big')
 

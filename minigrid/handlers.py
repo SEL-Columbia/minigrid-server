@@ -23,6 +23,7 @@ import tornado.web
 
 from minigrid.device_interface import (
     _wrap_binary,
+    write_maintenance_card_card,
     write_vendor_card, write_customer_card, write_credit_card)
 import minigrid.error
 import minigrid.models as models
@@ -459,6 +460,68 @@ class MinigridCustomersHandler(WriteCardBaseHandler):
             minigrid=grid)
 
 
+class MinigridMaintenanceCardsHandler(WriteCardBaseHandler):
+    """Handlers for maintenance cards view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the maintenance cards view."""
+        self.render(
+            'minigrid_maintenance_cards.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id))
+
+    @tornado.web.authenticated
+    def post(self, minigrid_id):
+        """Add a maintenance card."""
+        grid = models.get_minigrid(self.session, minigrid_id)
+        action = self.get_argument('action')
+        card_id_exists = 'maintenance_card_maintenance_card_minigrid_id_maintenance_card_card_id_key'
+        if action == 'create':
+            try:
+                with models.transaction(self.session) as session:
+                    grid.maintenance_cards.append(models.MaintenanceCard(
+                        maintenance_card_card_id=self.get_argument('maintenance_card_card_id'),
+                        maintenance_card_name=self.get_argument('maintenance_card_name')))
+            except (IntegrityError, DataError) as error:
+                if 'maintenance_card_name_key' in error.orig.pgerror:
+                    message = 'A maintenance_card with that name already exists'
+                elif card_id_exists in error.orig.pgerror:
+                    message = 'A maintenance_card with that User ID already exists'
+                else:
+                    message = ' '.join(error.orig.pgerror.split())
+                raise minigrid.error.MinigridHTTPError(
+                    message, 400, 'minigrid_maintenance_cards.html', minigrid=grid)
+            self.set_status(201)
+        elif action == 'remove':
+            maintenance_card_id = self.get_argument('maintenance_card_id')
+            try:
+                with models.transaction(self.session) as session:
+                    maintenance_card = session.query(models.MaintenanceCard).get(maintenance_card_id)
+                    session.delete(maintenance_card)
+                message = f'Maintenance card {maintenance_card.maintenance_card_name} removed'
+            except UnmappedInstanceError:
+                message = 'The requested maintenance_card no longer exists'
+            self.render(
+                'minigrid_maintenance_cards.html',
+                minigrid=grid, message=message)
+            return
+        elif action == 'write':
+            maintenance_card = (
+                self.session.query(models.MaintenanceCard)
+                .get(self.get_argument('maintenance_card_id')))
+            write_maintenance_card_card(cache, grid.payment_system.aes_key, grid.payment_system.payment_system_id, maintenance_card)
+            message = 'Card written'
+            self.render(
+                'minigrid_maintenance_cards.html',
+                minigrid=grid, message=message)
+            return
+        else:
+            raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
+        self.render(
+            'minigrid_maintenance_cards.html',
+            minigrid=grid)
+
+
 class VerifyLoginHandler(BaseHandler):
     """Handlers for portier verification."""
 
@@ -632,6 +695,7 @@ application_urls = [
     (r'/minigrids/(.{36})/?', MinigridHandler),
     (r'/minigrids/(.{36})/vendors/?', MinigridVendorsHandler),
     (r'/minigrids/(.{36})/customers/?', MinigridCustomersHandler),
+    (r'/minigrids/(.{36})/maintenance_cards/?', MinigridMaintenanceCardsHandler),
     (r'/minigrids/(.{36})/write_credit/?', MinigridWriteCreditHandler),
     (r'/device_info/?', DeviceInfoHandler),
     (r'/device_json/?', JSONDeviceHandler),
