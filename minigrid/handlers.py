@@ -579,9 +579,14 @@ class LogoutHandler(BaseHandler):
 
 
 def _pack_into_dict(session, binary):
-    device_address = unhexlify(binary[:12])
-    device_exists = session.query(
-        exists().where(models.Device.address == device_address)).scalar()
+    try:
+        device_address = unhexlify(binary[:12])
+        device_exists = session.query(
+            exists().where(models.Device.address == device_address)).scalar()
+    except Exception as error:
+        import logging
+        logging.error(str(error))
+        device_exists = False
     if not device_exists:  # TODO: new error class
         raise tornado.web.HTTPError(400)
     binary = binary[12:]
@@ -623,10 +628,13 @@ class DeviceInfoHandler(BaseHandler):
             cache.delete('device_info')
 
     def post(self):
-        binary = self.request.body
-        # TODO: after successfully writing a card, the response is "success"
-        device_address = unhexlify(binary[:12])  # TODO: deal with multi-user -- exclusive lock?
-        body = binary[12:]
+        body = self.request.body
+        ## TODO: after successfully writing a card, the response is "success"
+        #try:
+        #    device_address = unhexlify(binary[:12])  # TODO: deal with multi-user -- exclusive lock?
+        #except Exception as error:
+        #    self.write(str(error))
+        #body = binary[12:]
         cache.set('device_active', 1, 5)
         if len(body) > 0:
             try:
