@@ -509,7 +509,7 @@ class MinigridMaintenanceCardsHandler(WriteCardBaseHandler):
             maintenance_card = (
                 self.session.query(models.MaintenanceCard)
                 .get(self.get_argument('maintenance_card_id')))
-            write_maintenance_card_card(cache, grid.payment_system.aes_key, grid.payment_system.payment_system_id, maintenance_card)
+            write_maintenance_card_card(cache, grid.payment_system.aes_key, grid.payment_system.payment_id, maintenance_card)
             message = 'Card written'
             self.render(
                 'minigrid_maintenance_cards.html',
