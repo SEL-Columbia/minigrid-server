@@ -2,6 +2,7 @@
 from binascii import unhexlify
 from collections import OrderedDict
 from datetime import timedelta
+import secrets
 from urllib.parse import urlencode
 from uuid import uuid4, UUID
 
@@ -176,6 +177,9 @@ class MinigridsHandler(BaseHandler):
         try:
             with models.transaction(self.session) as session:
                 session.add(models.Minigrid(
+                    # TODO: remove this!!!
+                    # The database should generate IDs
+                    minigrid_id=secrets.token_hex(8).encode('ascii').hex(),
                     minigrid_name=self.get_argument('minigrid_name'),
                     minigrid_payment_id=self.get_argument(
                         'minigrid_payment_id')))
