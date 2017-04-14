@@ -87,11 +87,11 @@ def write_maintenance_card_card(cache, key, payment_system_id, maintenance_card)
     block_6 = uuid.UUID(payment_system_id).bytes
 
     #message = _wrap_binary(block_4 + block_5 + block_6)
-    message = block_4 + block_5
+    message = block_4
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(message) + encryptor.finalize()
-    payload = _wrap_binary(ciphertext + block_6)
+    payload = _wrap_binary(ciphertext + block_5 + block_6)
 
     cache.set('device_info', payload, 5)
 
