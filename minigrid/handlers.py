@@ -572,7 +572,7 @@ class DeviceInfoHandler(BaseHandler):
                 # TODO: clean this up
                 payload = _pack_into_dict(self.session, body)
             except Exception as error:
-                self.write(error)
+                self.write(str(error))
             else:
                 cache.set('received_info', payload, 5)
         device_info = cache.get('device_info')
