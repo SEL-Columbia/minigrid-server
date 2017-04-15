@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Minigrid Server installer for version 0.1.6-dev16
+# Minigrid Server installer for version 0.1.6-dev17
 set -e
 
 # Do you have docker installed?
@@ -108,8 +108,8 @@ $SUDO openssl dhparam -out /etc/letsencrypt/live/$LETSENCRYPT_DIR/dhparam.pem 20
 printf "========================================\n"
 printf " Generating configuration               \n"
 printf "========================================\n"
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.1.6-dev16/prod/docker-compose.yml > docker-compose.yml
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.1.6-dev16/prod/nginx.conf > nginx.conf
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.1.6-dev17/prod/docker-compose.yml > docker-compose.yml
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.1.6-dev17/prod/nginx.conf > nginx.conf
 
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g docker-compose.yml
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g nginx.conf
