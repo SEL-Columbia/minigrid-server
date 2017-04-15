@@ -326,7 +326,7 @@ class MinigridWriteCreditHandler(WriteCardBaseHandler):
         write_credit_card(
             cache,
             minigrid.payment_system.aes_key,
-            minigrid_id,
+            minigrid.payment_system.payment_id,
             int(self.get_argument('credit_value')),
             system.day_tariff,
             system.day_tariff_start,
@@ -388,7 +388,7 @@ class MinigridVendorsHandler(WriteCardBaseHandler):
             vendor = (
                 self.session.query(models.Vendor)
                 .get(self.get_argument('vendor_id')))
-            write_vendor_card(cache, grid.payment_system.aes_key, minigrid_id, vendor)
+            write_vendor_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, vendor)
             message = 'Card written'
             self.render(
                 'minigrid_vendors.html', minigrid=grid, message=message)
@@ -447,7 +447,7 @@ class MinigridCustomersHandler(WriteCardBaseHandler):
             customer = (
                 self.session.query(models.Customer)
                 .get(self.get_argument('customer_id')))
-            write_customer_card(cache, grid.payment_system.aes_key, minigrid_id, customer)
+            write_customer_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, customer)
             message = 'Card written'
             self.render(
                 'minigrid_customers.html',

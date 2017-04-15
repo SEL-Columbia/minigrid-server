@@ -14,7 +14,7 @@ def _wrap_binary(binary):
     return b'qS' + binary.hex().encode('ascii') + b'EL'
 
 
-def write_vendor_card(cache, key, minigrid_id, vendor):
+def write_vendor_card(cache, key, minigrid_id, payment_id, vendor):
     """Write information to a vendor ID card."""
     block_4 = b''.join((
         b'A',  # A for vendor
@@ -25,7 +25,7 @@ def write_vendor_card(cache, key, minigrid_id, vendor):
     ))
     block_5 = uuid.UUID(minigrid_id).bytes
     #block_6 = bytes(16)  # other information
-    block_6 = uuid.UUID(minigrid_id).bytes
+    block_6 = uuid.UUID(payment_id).bytes
 
     #message = _wrap_binary(block_4 + block_5 + block_6)
     message = block_4 + block_5
@@ -42,7 +42,7 @@ def write_vendor_card(cache, key, minigrid_id, vendor):
     print('=' * 60)
 
 
-def write_customer_card(cache, key, minigrid_id, customer):
+def write_customer_card(cache, key, minigrid_id, payment_id, customer):
     """Write information to a customer ID card."""
     block_4 = b''.join((
         b'B',  # B for customer
@@ -53,7 +53,7 @@ def write_customer_card(cache, key, minigrid_id, customer):
     ))
     block_5 = uuid.UUID(minigrid_id).bytes
     #block_6 = bytes(16)  # other information
-    block_6 = uuid.UUID(minigrid_id).bytes
+    block_6 = uuid.UUID(payment_id).bytes
 
     #message = _wrap_binary(block_4 + block_5 + block_6)
     message = block_4 + block_5
@@ -110,7 +110,7 @@ def _hour_on_epoch_day(hour_int):
 
 def write_credit_card(
         cache, key,
-        minigrid_id, credit_amount,
+        payment_id, credit_amount,
         day_tariff, day_tariff_start,
         night_tariff, night_tariff_start,
         tariff_creation_timestamp, tariff_activation_timestamp):
@@ -124,7 +124,7 @@ def write_credit_card(
         bytes(4),  # card read time TODO
     ))
     block_5 = uuid.uuid4().bytes
-    block_6 = uuid.UUID(minigrid_id).bytes
+    block_6 = uuid.UUID(payment_id).bytes
     block_8 = b''.join((
         b'\1',  # 1 for int
         _hour_on_epoch_day(day_tariff_start),  # tariff 1 validate time
