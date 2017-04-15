@@ -597,10 +597,10 @@ def _pack_into_dict(session, binary):
         block_id = int(chr(block[0]), 16)
         message = block[1:]
         result[block_id] = message.hex()
-    minigrid_id = str(UUID(unhexlify(result[6]).decode('ascii')))
-    # TODO: for a blank one, it will be 202020...
-    minigrid = models.get_minigrid(session, minigrid_id, None)
-    key = minigrid.payment_system.aes_key
+    payment_id = str(UUID(unhexlify(result[6]).decode('ascii')))
+    # TODO: for a blank one, it will be 202020...?
+    payment_system = session.query(models.PaymentSystem).get(payment_id)
+    key = payment_system.aes_key
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     for block_index, value in result.items():
         bin_value = unhexlify(unhexlify(value))
