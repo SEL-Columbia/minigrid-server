@@ -619,7 +619,7 @@ def _pack_into_dict(session, binary):
         new_result[5] = binary[34:66].hex()
         block_8_length = int.from_bytes(unhexlify(binary[34:38]), 'big')
         new_result[6] = result[6]
-        new_result[8] = binary[67:67+block_8_length*32].hex()
+        new_result[8] = binary[100:100+block_8_length*32].hex()
         result = new_result
     return json_encode(result)
 
