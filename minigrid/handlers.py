@@ -603,11 +603,21 @@ def _pack_into_dict(session, binary):
     key = minigrid.payment_system.aes_key
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     for block_index, value in result.items():
-        binary = unhexlify(value)
+        bin_value = unhexlify(unhexlify(value))
         if block_index != 6:
             decryptor = cipher.decryptor()
-            plaintext = decryptor.update(binary) + decryptor.finalize()
+            plaintext = decryptor.update(bin_value) + decryptor.finalize()
             result[block_index] = plaintext.hex()
+    # Deal with maintenance card, which has a different format
+    # TODO: clean this up
+    if result[4][:2] == '44':
+        new_result = OrderedDict()
+        new_result[4] = result[4]
+        new_result[5] = binary[34:66].hex()
+        block_8_length = int(binary[34:38], 16)
+        new_result[6] = result[6]
+        new_result[8] = binary[67:67+block_8_length*32].hex()
+        result = new_result
     return json_encode(result)
 
 
