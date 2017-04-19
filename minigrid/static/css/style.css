@@ -113,6 +113,23 @@ input#logout:hover {
 	color: rgba(0,0,0,0.8);
 }
 
-#tariff-form {
-    width: 70%;
+form#tariff {
+    background-color: rgba(255, 255, 255, 0.4);
+    display: inline-block;
+}
+
+form#tariff>fieldset {
+    padding: 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+form#tariff>fieldset>input {
+    float: right;
+    padding-left: 5px;
+    margin-left: 20px;
+}
+
+form#tariff>input#submit {
+    margin: 10px auto;
+    display: block;
 }
