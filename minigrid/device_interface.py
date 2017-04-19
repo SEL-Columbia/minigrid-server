@@ -1,4 +1,5 @@
 """Functions for interacting with devices."""
+from binascii import unhexlify
 import time
 import uuid
 
@@ -23,7 +24,8 @@ def write_vendor_card(cache, key, minigrid_id, payment_id, vendor):
         bytes(3),  # intentionally empty
         bytes(4),  # card read time TODO
     ))
-    block_5 = uuid.UUID(minigrid_id).bytes
+    #block_5 = uuid.UUID(minigrid_id).bytes
+    block_5 = unhexlify(uuid.UUID(minigrid_id).bytes).hex().upper().encode()
     #block_6 = bytes(16)  # other information
     block_6 = uuid.UUID(payment_id).bytes
 
@@ -51,7 +53,8 @@ def write_customer_card(cache, key, minigrid_id, payment_id, customer):
         bytes(3),  # intentionally empty
         bytes(4),  # card read time TODO
     ))
-    block_5 = uuid.UUID(minigrid_id).bytes
+    #block_5 = uuid.UUID(minigrid_id).bytes
+    block_5 = unhexlify(uuid.UUID(minigrid_id).bytes).hex().upper().encode()
     #block_6 = bytes(16)  # other information
     block_6 = uuid.UUID(payment_id).bytes
 
