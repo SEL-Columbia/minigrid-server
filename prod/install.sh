@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Minigrid Server installer for version 0.1.6-dev17
+# Minigrid Server installer for version 0.1.6-dev12
 set -e
 
 # Do you have docker installed?
@@ -108,8 +108,8 @@ $SUDO openssl dhparam -out /etc/letsencrypt/live/$LETSENCRYPT_DIR/dhparam.pem 20
 printf "========================================\n"
 printf " Generating configuration               \n"
 printf "========================================\n"
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.1.6-dev17/prod/docker-compose.yml > docker-compose.yml
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.1.6-dev17/prod/nginx.conf > nginx.conf
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.1.6-dev12/prod/docker-compose.yml > docker-compose.yml
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.1.6-dev12/prod/nginx.conf > nginx.conf
 
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g docker-compose.yml
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g nginx.conf
@@ -136,7 +136,6 @@ $DOCKER_COMPOSE up -d
 MINIGRID_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _minigrid_ | cut -d' ' -f1)
 sleep 1
 docker exec $MINIGRID_CONTAINER_NAME ""prod/create_initial_user.py --db-host=db $ADMIN_EMAIL""
-docker exec $MINIGRID_CONTAINER_NAME ""prod/create_payment_ids.py --db-host=db""
 NGINX_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _nginx_ | cut -d' ' -f1)
 
 # Let's Encrypt auto-renew (for now this is a cron job).
