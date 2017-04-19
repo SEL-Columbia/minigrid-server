@@ -2,33 +2,7 @@
 
 {% block body %}
 
-<nav class="sidebar">
-  <ul>
-    <li><a href="/users">Manage users &raquo;</a>
-
-{% if not system %}
-    
-  </ul>
-  <div id="tariff-message">You must initialize the system tariff information.</div>
-</nav>
-
-  <div class="content" id="tariff-form">
-      <form action="/tariffs" method="POST">
-        {% module xsrf_form_html() %}
-        {% include tariff_form.html %}
-      </form>
-  </div>
-
-{% else %}
-
-    <li><a href="/tariffs">Manage tariffs &raquo;</a></li>
-    <li><a href="/technician">Write technician ID card &raquo;</a></li>
-    <li><a href="/device">Manage devices &raquo;</a></li>
-    <li><a href="/cards">Read and validate cards &raquo;</a></li>
-  </ul>
-</nav>
-
-<div class="content">
+<div class="minigrid-index">
 
   <div class="contentbox">
     <p>Minigrids:</p>
@@ -37,8 +11,8 @@
       {% for grid in minigrids %}
         {% set zero_minigrids = False %}
         <li>
-          <p><a href="/minigrids/{{ grid.minigrid_id }}">{{ grid.minigrid_name }} &raquo;</a></p>
-          <p>Status: {{ grid.status }}</p>
+          <p><a href="/minigrids/{{ grid.minigrid_id }}">
+          <b>{{ grid.minigrid_name }} &raquo;</b></a></p>
         </li>
       {% end %}
     </ul>
@@ -62,6 +36,33 @@
 
   </div>
 </div>
+
+<nav class="sidebar">
+  <ul>
+    <li><a href="/users">&laquo; Manage users</a>
+
+{% if not system %}
+    
+  </ul>
+  <div id="tariff-message">You must initialize the system tariff information.</div>
+</nav>
+
+  <div class="content" id="tariff-form">
+      <form action="/tariffs" method="POST">
+        {% module xsrf_form_html() %}
+        {% include tariff_form.html %}
+      </form>
+  </div>
+
+{% else %}
+
+    <li><a href="/tariffs">&laquo; Manage tariffs</a></li>
+    <!-- <li><a href="/technician">Write technician ID card &raquo;</a></li> -->
+    <li><a href="/device">&laquo; Manage devices</a></li>
+    <li><a href="/cards">&laquo; Read and validate cards</a></li>
+  </ul>
+</nav>
+
 
     <!-- <p>Aggregate data plots:</p>
     <p>TODO: What data? From where?</p> -->
