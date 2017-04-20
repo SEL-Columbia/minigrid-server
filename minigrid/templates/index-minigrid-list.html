@@ -31,14 +31,14 @@
 <div class="minigrid-index">
 
   <div class="contentbox">
-    <p>Minigrids:</p>
+    <h3>Minigrids:</h3>
     <ul>
       {% set zero_minigrids = True %}
       {% for grid in minigrids %}
         {% set zero_minigrids = False %}
         <li>
           <p><a href="/minigrids/{{ grid.minigrid_id }}">{{ grid.minigrid_name }} &raquo;</a></p>
-          <p>Status: {{ grid.status }}</p>
+          <!-- <p>Status: {{ grid.status }}</p> -->
         </li>
       {% end %}
     </ul>
@@ -52,7 +52,7 @@
     {% if message is not None %}
     <p><strong>Could not create minigrid: {{ message }}</strong></p>
     {% end %}
-    <p>Add minigrid:</p>
+    <h3>Add minigrid:</h3>
     <form action="/minigrids" method="POST">
       {% module xsrf_form_html() %}
       <label>Name: <input name="minigrid_name" required /></label><br>

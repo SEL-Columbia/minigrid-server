@@ -17,6 +17,10 @@ a:hover {
     text-decoration: none;
 }
 
+h3 {
+    margin: 20px 0px;
+}
+
 
 /* NAVBAR */
 .navbar-custom {
