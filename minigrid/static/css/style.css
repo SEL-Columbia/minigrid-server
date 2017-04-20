@@ -22,7 +22,41 @@ h3 {
 }
 
 footer {
-    margin: 20px;
+    margin: 20px 0px;
+}
+
+input[type="submit"] {
+    background-color: #2C3031;
+    border-color: #232828;
+    border-radius: 3px;
+    color: white;
+    padding: 4px 10px;
+    margin-top: 10px;
+}
+
+input {
+    height: 35px;
+}
+
+form {
+    background-color: rgba(255, 255, 255, 0.4);
+    display: inline-block;
+}
+
+form>fieldset {
+    padding: 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+form>fieldset>input {
+    padding-left: 5px;
+    margin-left: 20px;
+    width: 150px;
+}
+
+form>input[type="submit"] {
+    margin: 10px auto;
+    display: block;
 }
 
 
@@ -60,14 +94,17 @@ li#logout {
 }
 
 input#logout {
-    background-color: rgba(0,0,0,0.2);
+    background-color: rgba(0,0,0,0.7);
     padding: 15px 25px;
-    border:none;
+    border: none;
+    border-radius: 0px;
+    margin: 0px;
+    height: auto;
 }
 
 input#logout:hover {
     text-decoration: none;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0,0,0,0.8);
 }
 
 
@@ -88,7 +125,7 @@ input#logout:hover {
 
 .sidebar>ul>li {
     background-color: #4e4545;
-    border: solid 2px;
+    border-bottom: solid 3px;
 }
 
 .sidebar>ul>li>a{
@@ -111,7 +148,7 @@ input#logout:hover {
 /*CONTENT*/
 .minigrid-index {
     margin-right: 300px;
-    padding-left: 100px;
+    padding-left: 30px;
     position: relative;
 	display: flex;
 }
@@ -121,31 +158,17 @@ input#logout:hover {
     padding-top: 10px;
 }
 
+.box-container {
+    display: flex;
+}
+
 .contentbox {
 	width: 33%;
-	padding: 2% 5%;
+	padding: 2%;
     margin: 0px 10px;
 	color: rgba(0,0,0,0.8);
 }
 
-form#tariff {
-    background-color: rgba(255, 255, 255, 0.4);
-    display: inline-block;
-}
-
-form#tariff>fieldset {
-    padding: 10px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-}
-
-form#tariff>fieldset>input {
-    float: right;
-    padding-left: 5px;
-    margin-left: 20px;
-    width: 150px;
-}
-
-form#tariff>input#submit {
-    margin: 10px auto;
-    display: block;
+form#minigrid {
+    width: 250px;
 }

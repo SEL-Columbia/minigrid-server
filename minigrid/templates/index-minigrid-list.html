@@ -24,7 +24,7 @@
     <li><a href="/tariffs">&laquo; Manage tariffs</a></li>
     <!-- <li><a href="/technician">Write technician ID card &raquo;</a></li> -->
     <li><a href="/device">&laquo; Manage devices</a></li>
-    <li><a href="/cards">&laquo; Read and validate cards</a><li>
+    <li><a href="/cards">&laquo; Read and validate cards</a></li>
   </ul>
 </nav>
 
@@ -53,10 +53,18 @@
     <p><strong>Could not create minigrid: {{ message }}</strong></p>
     {% end %}
     <h3>Add minigrid:</h3>
-    <form action="/minigrids" method="POST">
+    <form id="minigrid" action="/minigrids" method="POST">
       {% module xsrf_form_html() %}
-      <label>Name: <input name="minigrid_name" required /></label><br>
-      <label>Payment system ID: <input name="minigrid_payment_id" pattern="[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}" required title="UUID format" /></label><br>
+      <fieldset>
+        <label>Name:</label>
+        <br>
+        <input name="minigrid_name" required />
+      </fieldset>
+      <fieldset>
+        <label>Payment system ID:</label>
+        <br>
+        <input name="minigrid_payment_id" pattern="[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}" required title="UUID format" />
+      </fieldset>
       <input type="submit" value="Add Minigrid" />
     </form>
 
