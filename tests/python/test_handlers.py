@@ -542,7 +542,7 @@ class TestMinigridVendorsHandler(HTTPTest):
             session.add(self.user)
             session.add(models.System(day_tariff=1, night_tariff=1))
             self.minigrid = models.Minigrid(minigrid_name='a', aes_key='a')
-            self.vendor = models.Vendor(vendor_name='v')
+            self.vendor = models.Vendor(vendor_name='v', vendor_user_id='0000')
             self.minigrid.vendors.append(self.vendor)
             session.add(self.minigrid)
 
@@ -575,7 +575,8 @@ class TestMinigridVendorsHandler(HTTPTest):
         get_current_user.return_value = self.user
         response = self.fetch(
             f'/minigrids/{self.minigrid.minigrid_id}/vendors?'
-            'action=create&vendor_name=v2', method='POST', body='')
+            'action=create&vendor_name=v2&vendor_user_id=0001',
+            method='POST', body='')
         self.assertResponseCode(response, 201)
         vendor = (
             self.session.query(models.Vendor)
@@ -583,15 +584,29 @@ class TestMinigridVendorsHandler(HTTPTest):
         self.assertEqual(vendor.vendor_name, 'v2')
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
-    def test_create_duplicate_vendor(self, get_current_user):
+    def test_create_duplicate_vendor_name(self, get_current_user):
         get_current_user.return_value = self.user
         with ExpectLog('tornado.access', '400'):
             response = self.fetch(
                 f'/minigrids/{self.minigrid.minigrid_id}/vendors?'
-                'action=create&vendor_name=v', method='POST', body='')
+                'action=create&vendor_name=v&vendor_user_id=0001',
+                method='POST', body='')
         self.assertResponseCode(response, 400)
         self.assertIn(
             'A vendor with that name already exists', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_create_duplicate_vendor_user_id(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                f'/minigrids/{self.minigrid.minigrid_id}/vendors?'
+                'action=create&vendor_name=v2&vendor_user_id=0000',
+                method='POST', body='')
+        self.assertResponseCode(response, 400)
+        self.assertIn(
+            'A vendor with that User ID already exists',
+            response.body.decode())
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
     def test_create_missing_name(self, get_current_user):
@@ -599,7 +614,8 @@ class TestMinigridVendorsHandler(HTTPTest):
         with ExpectLog('tornado.access', '400'):
             response = self.fetch(
                 f'/minigrids/{self.minigrid.minigrid_id}/vendors?'
-                'action=create&vendor_name=', method='POST', body='')
+                'action=create&vendor_name=&vendor_user_id=0001',
+                method='POST', body='')
         self.assertResponseCode(response, 400)
         self.assertIn('vendor_vendor_name_check', response.body.decode())
 
@@ -654,7 +670,8 @@ class TestMinigridCustomersHandler(HTTPTest):
             session.add(self.user)
             session.add(models.System(day_tariff=1, night_tariff=1))
             self.minigrid = models.Minigrid(minigrid_name='a', aes_key='a')
-            self.customer = models.Customer(customer_name='c')
+            self.customer = models.Customer(
+                customer_name='c', customer_user_id='0000')
             self.minigrid.customers.append(self.customer)
             session.add(self.minigrid)
 
@@ -687,7 +704,8 @@ class TestMinigridCustomersHandler(HTTPTest):
         get_current_user.return_value = self.user
         response = self.fetch(
             f'/minigrids/{self.minigrid.minigrid_id}/customers?'
-            'action=create&customer_name=c2', method='POST', body='')
+            'action=create&customer_name=c2&customer_user_id=0001',
+            method='POST', body='')
         self.assertResponseCode(response, 201)
         customer = (
             self.session.query(models.Customer)
@@ -695,15 +713,29 @@ class TestMinigridCustomersHandler(HTTPTest):
         self.assertEqual(customer.customer_name, 'c2')
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
-    def test_create_duplicate_customer(self, get_current_user):
+    def test_create_duplicate_customer_name(self, get_current_user):
         get_current_user.return_value = self.user
         with ExpectLog('tornado.access', '400'):
             response = self.fetch(
                 f'/minigrids/{self.minigrid.minigrid_id}/customers?'
-                'action=create&customer_name=c', method='POST', body='')
+                'action=create&customer_name=c&customer_user_id=0001',
+                method='POST', body='')
         self.assertResponseCode(response, 400)
         self.assertIn(
             'A customer with that name already exists', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_create_duplicate_customer_user_id(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                f'/minigrids/{self.minigrid.minigrid_id}/customers?'
+                'action=create&customer_name=c2&customer_user_id=0000',
+                method='POST', body='')
+        self.assertResponseCode(response, 400)
+        self.assertIn(
+            'A customer with that User ID already exists',
+            response.body.decode())
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
     def test_create_missing_name(self, get_current_user):
@@ -711,7 +743,8 @@ class TestMinigridCustomersHandler(HTTPTest):
         with ExpectLog('tornado.access', '400'):
             response = self.fetch(
                 f'/minigrids/{self.minigrid.minigrid_id}/customers?'
-                'action=create&customer_name=', method='POST', body='')
+                'action=create&customer_name=&customer_user_id=0001',
+                method='POST', body='')
         self.assertResponseCode(response, 400)
         self.assertIn('customer_customer_name_check', response.body.decode())
 
