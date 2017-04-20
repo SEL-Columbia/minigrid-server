@@ -74,6 +74,18 @@ class BaseHandler(tornado.web.RequestHandler):
         super().render(*args, **kwargs)
 
 
+class ReadCardBaseHandler(BaseHandler):
+    """Base class for card-writing handlers."""
+
+    def render(self, *args, **kwargs):
+        """Override default render to include cached information."""
+        if 'device_active' not in kwargs:
+            kwargs['device_active'] = cache.get('device_active')
+        if 'received_info' not in kwargs:
+            kwargs['received_info'] = cache.get('received_info')
+        super().render(*args, **kwargs)
+
+
 class MainHandler(BaseHandler):
     """Handlers for the site index."""
 
@@ -266,8 +278,7 @@ class DeviceHandler(BaseHandler):
 
 
 
-# TODO: this button should do something
-class CardsHandler(BaseHandler):
+class CardsHandler(ReadCardBaseHandler):
     """Handlers for cards view."""
 
     @tornado.web.authenticated
@@ -296,19 +307,7 @@ class MinigridHandler(BaseHandler):
         self.render('minigrid.html', minigrid=minigrid)
 
 
-class WriteCardBaseHandler(BaseHandler):
-    """Base class for card-writing handlers."""
-
-    def render(self, *args, **kwargs):
-        """Override default render to include cached information."""
-        if 'device_active' not in kwargs:
-            kwargs['device_active'] = cache.get('device_active')
-        if 'received_info' not in kwargs:
-            kwargs['received_info'] = cache.get('received_info')
-        super().render(*args, **kwargs)
-
-
-class MinigridWriteCreditHandler(WriteCardBaseHandler):
+class MinigridWriteCreditHandler(ReadCardBaseHandler):
     """Handlers for writing credit cards view."""
 
     @tornado.web.authenticated
@@ -340,7 +339,7 @@ class MinigridWriteCreditHandler(WriteCardBaseHandler):
             'minigrid_write_credit.html', minigrid=minigrid, message=message)
 
 
-class MinigridVendorsHandler(WriteCardBaseHandler):
+class MinigridVendorsHandler(ReadCardBaseHandler):
     """Handlers for vendors view."""
 
     @tornado.web.authenticated
@@ -398,7 +397,7 @@ class MinigridVendorsHandler(WriteCardBaseHandler):
         self.render('minigrid_vendors.html', minigrid=grid)
 
 
-class MinigridCustomersHandler(WriteCardBaseHandler):
+class MinigridCustomersHandler(ReadCardBaseHandler):
     """Handlers for customers view."""
 
     @tornado.web.authenticated
@@ -460,7 +459,7 @@ class MinigridCustomersHandler(WriteCardBaseHandler):
             minigrid=grid)
 
 
-class MinigridMaintenanceCardsHandler(WriteCardBaseHandler):
+class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
     """Handlers for maintenance cards view."""
 
     @tornado.web.authenticated
@@ -589,7 +588,7 @@ def _pack_into_dict(session, binary):
         logging.error(str(error))
         device_exists = False
     if not device_exists:  # TODO: new error class
-        raise tornado.web.HTTPError(400)
+        raise tornado.web.HTTPError(400, 'bad device id {}'.format(binary[:12]))
     binary = binary[12:]
     chunks = len(binary) // 33
     result = OrderedDict()
