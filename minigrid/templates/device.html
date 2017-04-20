@@ -5,7 +5,7 @@
     <p><strong>{{ message }}</strong></p>
   {% end %}
   <div>
-    <p>Devices:</p>
+    <h3>Devices:</h3>
     <ul>
       {% set zero_devices = True %}
       {% for device in devices %}
@@ -19,7 +19,7 @@
       <p>No devices</p>
     {% end %}
   </div>
-  <p>Add device:</p>
+  <h3>Add device:</h3>
   <form action="/device" method="POST">
     {% module xsrf_form_html() %}
     <label>Device address: <input name="device_address" pattern="[a-fA-F\d]{12}" required title="12 hex digits" /></label><br>
