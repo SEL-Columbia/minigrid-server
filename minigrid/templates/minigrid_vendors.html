@@ -6,21 +6,34 @@
   {% end %}
   <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
   <p>ID: {{ minigrid.minigrid_id }}</p>
+  {% if received_info %}
+    <p>Card info:</p>
+    <p>{{ received_info }}</p>
+  {% end %}
   <p>Vendors:</p>
   <ul>
     {% set zero_vendors = True %}
     {% for vendor in minigrid.vendors %}
       {% set zero_vendors = False %}
       <li>
-	<p>Name: {{ vendor.vendor_name }}</p>
-        <form>
-          {% module xsrf_form_html() %}
+      <p>Name: {{ vendor.vendor_name }}</p>
+      <p>User ID: {{ vendor.vendor_user_id }}</p>
+      <form action="/minigrids/{{ minigrid.minigrid_id }}/vendors" method="POST">
+        {% module xsrf_form_html() %}
+	<input type="hidden" name="action" value="write" />
+	<input type="hidden" name="vendor_id" value="{{ vendor.vendor_id }}" />
+	{% if device_active %}
           <input type="submit" value="Write ID card" />
-        </form>
-	<form action="/minigrids/{{ minigrid.minigrid_id }}/vendors?action=remove&vendor_id={{ vendor.vendor_id }}" method="POST">
-          {% module xsrf_form_html() %}
-	  <input type="submit" value="Remove Vendor {{ vendor.vendor_name }}" />
-	</form>
+	{% else %}
+          <input type="submit" value="Write ID card" title="Touch card to reader" disabled/>
+	{% end %}
+      </form>
+      <form action="/minigrids/{{ minigrid.minigrid_id }}/vendors" method="POST">
+        {% module xsrf_form_html() %}
+	<input type="hidden" name="action" value="remove" />
+	<input type="hidden" name="vendor_id" value="{{ vendor.vendor_id }}" />
+        <input type="submit" value="Remove Vendor {{ vendor.vendor_name }}" />
+      </form>
       </li>
     {% end %}
   </ul>
@@ -33,6 +46,7 @@
   <form action="/minigrids/{{ minigrid.minigrid_id }}/vendors?action=create" method="POST">
     {% module xsrf_form_html() %}
     <label>Name: <input name="vendor_name" required /></label><br>
+    <label>User ID (0000-9999): <input name="vendor_user_id" pattern="\d{4}" required /></label><br>
     <input type="submit" value="Add Vendor" />
   </form>
   <hr>

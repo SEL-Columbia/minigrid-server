@@ -1,23 +1,36 @@
 """Handlers for the URL endpoints."""
+from binascii import unhexlify
+from collections import OrderedDict
 from datetime import timedelta
+import secrets
 from urllib.parse import urlencode
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 from asyncio_portier import get_verified_email
 
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+
 import redis
 
+from sqlalchemy import exists
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.orm.exc import NoResultFound, UnmappedInstanceError
 
+from tornado.escape import json_encode, json_decode
 import tornado.web
 
+from minigrid.device_interface import (
+    _wrap_binary,
+    write_maintenance_card_card,
+    write_vendor_card, write_customer_card, write_credit_card)
 import minigrid.error
 import minigrid.models as models
 from minigrid.options import options
 
 
+AES = algorithms.AES
 cache = redis.StrictRedis.from_url(options.redis_url)
 broker_url = 'https://broker.portier.io'
 
@@ -119,6 +132,9 @@ class TariffsHandler(BaseHandler):
             'day_tariff_start': self._get_value('day_tariff_start'),
             'night_tariff': self._get_value('night_tariff'),
             'night_tariff_start': self._get_value('night_tariff_start')}
+        tat = self._get_value('tariff_activation_timestamp')
+        if tat:
+            data['tariff_activation_timestamp'] = tat
         statement = (
             insert(models.System)
             .values(**data)
@@ -162,8 +178,12 @@ class MinigridsHandler(BaseHandler):
         try:
             with models.transaction(self.session) as session:
                 session.add(models.Minigrid(
+                    # TODO: remove this!!!
+                    # The database should generate IDs
+                    minigrid_id=secrets.token_hex(8).encode('ascii').hex(),
                     minigrid_name=self.get_argument('minigrid_name'),
-                    aes_key=self.get_argument('minigrid_aes_key')))
+                    minigrid_payment_id=self.get_argument(
+                        'minigrid_payment_id')))
         except (IntegrityError, DataError) as error:
             if 'minigrid_name_key' in error.orig.pgerror:
                 message = 'A minigrid with that name already exists'
@@ -218,14 +238,32 @@ class TechnicianHandler(BaseHandler):
         self.render('technician.html')
 
 
-# TODO: this button should do something
 class DeviceHandler(BaseHandler):
     """Handlers for device view."""
-
     @tornado.web.authenticated
     def get(self):
         """Render the device form."""
-        self.render('device.html')
+        Device = models.Device
+        devices = self.session.query(Device).order_by(Device.address)
+        self.render('device.html', devices=devices)
+
+    @tornado.web.authenticated
+    def post(self):
+        """Create a new device model."""
+        # TODO: raise an error
+        status = 201
+        try:
+            with models.transaction(self.session) as session:
+                session.add(models.Device(
+                    address=unhexlify(self.get_argument('device_address'))))
+        except (IntegrityError, DataError) as error:
+            status = 400
+            message = str(error)
+        self.set_status(status)
+        Device = models.Device
+        devices = self.session.query(Device).order_by(Device.address)
+        self.render('device.html', devices=devices)
+
 
 
 # TODO: this button should do something
@@ -248,9 +286,29 @@ class MinigridHandler(BaseHandler):
             'minigrid.html',
             minigrid=models.get_minigrid(self.session, minigrid_id))
 
+    @tornado.web.authenticated
+    def post(self, minigrid_id):
+        """Update minigrid payment system ID."""
+        with models.transaction(self.session) as session:
+            minigrid = models.get_minigrid(self.session, minigrid_id)
+            minigrid.minigrid_payment_id = self.get_argument(
+                'minigrid_payment_id')
+        self.render('minigrid.html', minigrid=minigrid)
 
-# TODO: this button should do something
-class MinigridWriteCreditHandler(BaseHandler):
+
+class WriteCardBaseHandler(BaseHandler):
+    """Base class for card-writing handlers."""
+
+    def render(self, *args, **kwargs):
+        """Override default render to include cached information."""
+        if 'device_active' not in kwargs:
+            kwargs['device_active'] = cache.get('device_active')
+        if 'received_info' not in kwargs:
+            kwargs['received_info'] = cache.get('received_info')
+        super().render(*args, **kwargs)
+
+
+class MinigridWriteCreditHandler(WriteCardBaseHandler):
     """Handlers for writing credit cards view."""
 
     @tornado.web.authenticated
@@ -260,8 +318,29 @@ class MinigridWriteCreditHandler(BaseHandler):
             'minigrid_write_credit.html',
             minigrid=models.get_minigrid(self.session, minigrid_id))
 
+    @tornado.web.authenticated
+    def post(self, minigrid_id):
+        """Write a credit card for this minigrid."""
+        minigrid = models.get_minigrid(self.session, minigrid_id)
+        system = self.session.query(models.System).one()
+        write_credit_card(
+            cache,
+            minigrid.payment_system.aes_key,
+            minigrid.payment_system.payment_id,
+            int(self.get_argument('credit_value')),
+            system.day_tariff,
+            system.day_tariff_start,
+            system.night_tariff,
+            system.night_tariff_start,
+            system.tariff_creation_timestamp,
+            system.tariff_activation_timestamp,
+        )
+        message = 'Card written'
+        self.render(
+            'minigrid_write_credit.html', minigrid=minigrid, message=message)
 
-class MinigridVendorsHandler(BaseHandler):
+
+class MinigridVendorsHandler(WriteCardBaseHandler):
     """Handlers for vendors view."""
 
     @tornado.web.authenticated
@@ -276,14 +355,18 @@ class MinigridVendorsHandler(BaseHandler):
         """Add a vendor."""
         grid = models.get_minigrid(self.session, minigrid_id)
         action = self.get_argument('action')
+        user_id_exists = 'vendor_vendor_minigrid_id_vendor_user_id_key'
         if action == 'create':
             try:
                 with models.transaction(self.session) as session:
                     grid.vendors.append(models.Vendor(
+                        vendor_user_id=self.get_argument('vendor_user_id'),
                         vendor_name=self.get_argument('vendor_name')))
             except (IntegrityError, DataError) as error:
                 if 'vendor_name_key' in error.orig.pgerror:
                     message = 'A vendor with that name already exists'
+                elif user_id_exists in error.orig.pgerror:
+                    message = 'A vendor with that User ID already exists'
                 else:
                     message = ' '.join(error.orig.pgerror.split())
                 raise minigrid.error.MinigridHTTPError(
@@ -301,12 +384,21 @@ class MinigridVendorsHandler(BaseHandler):
             self.render(
                 'minigrid_vendors.html', minigrid=grid, message=message)
             return
+        elif action == 'write':
+            vendor = (
+                self.session.query(models.Vendor)
+                .get(self.get_argument('vendor_id')))
+            write_vendor_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, vendor)
+            message = 'Card written'
+            self.render(
+                'minigrid_vendors.html', minigrid=grid, message=message)
+            return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
         self.render('minigrid_vendors.html', minigrid=grid)
 
 
-class MinigridCustomersHandler(BaseHandler):
+class MinigridCustomersHandler(WriteCardBaseHandler):
     """Handlers for customers view."""
 
     @tornado.web.authenticated
@@ -321,14 +413,18 @@ class MinigridCustomersHandler(BaseHandler):
         """Add a customer."""
         grid = models.get_minigrid(self.session, minigrid_id)
         action = self.get_argument('action')
+        user_id_exists = 'customer_customer_minigrid_id_customer_user_id_key'
         if action == 'create':
             try:
                 with models.transaction(self.session) as session:
                     grid.customers.append(models.Customer(
+                        customer_user_id=self.get_argument('customer_user_id'),
                         customer_name=self.get_argument('customer_name')))
             except (IntegrityError, DataError) as error:
                 if 'customer_name_key' in error.orig.pgerror:
                     message = 'A customer with that name already exists'
+                elif user_id_exists in error.orig.pgerror:
+                    message = 'A customer with that User ID already exists'
                 else:
                     message = ' '.join(error.orig.pgerror.split())
                 raise minigrid.error.MinigridHTTPError(
@@ -344,11 +440,86 @@ class MinigridCustomersHandler(BaseHandler):
             except UnmappedInstanceError:
                 message = 'The requested customer no longer exists'
             self.render(
-                'minigrid_customers.html', minigrid=grid, message=message)
+                'minigrid_customers.html',
+                minigrid=grid, message=message)
+            return
+        elif action == 'write':
+            customer = (
+                self.session.query(models.Customer)
+                .get(self.get_argument('customer_id')))
+            write_customer_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, customer)
+            message = 'Card written'
+            self.render(
+                'minigrid_customers.html',
+                minigrid=grid, message=message)
             return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
-        self.render('minigrid_customers.html', minigrid=grid)
+        self.render(
+            'minigrid_customers.html',
+            minigrid=grid)
+
+
+class MinigridMaintenanceCardsHandler(WriteCardBaseHandler):
+    """Handlers for maintenance cards view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the maintenance cards view."""
+        self.render(
+            'minigrid_maintenance_cards.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id))
+
+    @tornado.web.authenticated
+    def post(self, minigrid_id):
+        """Add a maintenance card."""
+        grid = models.get_minigrid(self.session, minigrid_id)
+        action = self.get_argument('action')
+        card_id_exists = 'maintenance_card_maintenance_card_minigrid_id_maintenance_card_card_id_key'
+        if action == 'create':
+            try:
+                with models.transaction(self.session) as session:
+                    grid.maintenance_cards.append(models.MaintenanceCard(
+                        maintenance_card_card_id=self.get_argument('maintenance_card_card_id'),
+                        maintenance_card_name=self.get_argument('maintenance_card_name')))
+            except (IntegrityError, DataError) as error:
+                if 'maintenance_card_name_key' in error.orig.pgerror:
+                    message = 'A maintenance_card with that name already exists'
+                elif card_id_exists in error.orig.pgerror:
+                    message = 'A maintenance_card with that User ID already exists'
+                else:
+                    message = ' '.join(error.orig.pgerror.split())
+                raise minigrid.error.MinigridHTTPError(
+                    message, 400, 'minigrid_maintenance_cards.html', minigrid=grid)
+            self.set_status(201)
+        elif action == 'remove':
+            maintenance_card_id = self.get_argument('maintenance_card_id')
+            try:
+                with models.transaction(self.session) as session:
+                    maintenance_card = session.query(models.MaintenanceCard).get(maintenance_card_id)
+                    session.delete(maintenance_card)
+                message = f'Maintenance card {maintenance_card.maintenance_card_name} removed'
+            except UnmappedInstanceError:
+                message = 'The requested maintenance_card no longer exists'
+            self.render(
+                'minigrid_maintenance_cards.html',
+                minigrid=grid, message=message)
+            return
+        elif action == 'write':
+            maintenance_card = (
+                self.session.query(models.MaintenanceCard)
+                .get(self.get_argument('maintenance_card_id')))
+            write_maintenance_card_card(cache, grid.payment_system.aes_key, grid.payment_system.payment_id, maintenance_card)
+            message = 'Card written'
+            self.render(
+                'minigrid_maintenance_cards.html',
+                minigrid=grid, message=message)
+            return
+        else:
+            raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
+        self.render(
+            'minigrid_maintenance_cards.html',
+            minigrid=grid)
 
 
 class VerifyLoginHandler(BaseHandler):
@@ -407,12 +578,151 @@ class LogoutHandler(BaseHandler):
         self.redirect('/')
 
 
+def _pack_into_dict(session, binary):
+    # TODO: here there be dragons...
+    try:
+        device_address = unhexlify(binary[:12])
+        device_exists = session.query(
+            exists().where(models.Device.address == device_address)).scalar()
+    except Exception as error:
+        import logging
+        logging.error(str(error))
+        device_exists = False
+    if not device_exists:  # TODO: new error class
+        raise tornado.web.HTTPError(400)
+    binary = binary[12:]
+    chunks = len(binary) // 33
+    result = OrderedDict()
+    for i in range(chunks):
+        block = binary[33*i:33*(i+1)]
+        block_id = int(chr(block[0]), 16)
+        message = block[1:]
+        result[block_id] = message
+    payment_id = str(UUID(result[6].decode('ascii')))
+    # TODO: for a blank one, it will be 202020...?
+    payment_system = session.query(models.PaymentSystem).get(payment_id)
+    key = payment_system.aes_key
+    cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
+    for block_index, value in result.items():
+        bin_value = unhexlify(value)
+        if block_index == 6:
+            result[block_index] = value.hex()
+        else:
+            decryptor = cipher.decryptor()
+            plaintext = decryptor.update(bin_value) + decryptor.finalize()
+            result[block_index] = plaintext.hex()
+    # Deal with maintenance card, which has a different format
+    # TODO: clean this up
+    if result[4][:2] == '44':
+        new_result = OrderedDict()
+        new_result[4] = result[4]
+        new_result[5] = binary[34:66].hex()
+        block_8_length = int.from_bytes(unhexlify(binary[34:38]), 'big')
+        new_result[6] = result[6]
+        new_result[8] = binary[100:100+block_8_length*32].hex()
+        result = new_result
+    return json_encode(result)
+
+
+class DeviceInfoHandler(BaseHandler):
+    def check_xsrf_cookie(self):
+        """Disable XSRF check.
+
+        OpenID doesn't reply with _xsrf header.
+        https://github.com/portier/demo-rp/issues/10
+        """
+        pass
+
+    def get(self):
+        cache.set('device_active', 1, 5)
+        cache.set('received_info', self.request.query_arguments, 5)
+        device_info = cache.get('device_info')
+        if device_info is not None:
+            self.write(device_info)
+            cache.delete('device_info')
+
+    def post(self):
+        body = self.request.body
+        ## TODO: after successfully writing a card, the response is "success"
+        #try:
+        #    device_address = unhexlify(binary[:12])  # TODO: deal with multi-user -- exclusive lock?
+        #except Exception as error:
+        #    self.write(str(error))
+        #body = binary[12:]
+        cache.set('device_active', 1, 5)
+        if len(body) > 0:
+            try:
+                # Failure to read the card should be displayed somehow, but
+                # shouldn't prevent overwriting the card
+                # TODO: clean this up
+                payload = _pack_into_dict(self.session, body)
+            except Exception as error:
+                self.write(str(error))
+            else:
+                cache.set('received_info', payload, 5)
+        device_info = cache.get('device_info')
+        if device_info is not None:
+            self.write(device_info)
+            cache.delete('device_info')
+
+
+class JSONDeviceHandler(BaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        result = {
+            'device_active': bool(int(cache.get('device_active') or 0)),
+            'received_info': json_decode(cache.get('received_info') or '{}'),
+        }
+        self.write(result)
+
+
+class EchoHandler(BaseHandler):
+    def check_xsrf_cookie(self):
+        """Disable XSRF check.
+
+        OpenID doesn't reply with _xsrf header.
+        https://github.com/portier/demo-rp/issues/10
+        """
+        pass
+
+    def get(self):
+        self.write(_wrap_binary(cache.get('echoes') or b'<br>'))
+
+    def post(self):
+        echoes = cache.get('echoes') or b'<br>'
+        cache.set('echoes', echoes + self.request.body + b'<br>')
+        self.write(_wrap_binary(self.request.body))
+
+
+class EchoAuthHandler(BaseHandler):
+    def check_xsrf_cookie(self):
+        """Disable XSRF check.
+
+        OpenID doesn't reply with _xsrf header.
+        https://github.com/portier/demo-rp/issues/10
+        """
+        pass
+
+    @tornado.web.authenticated
+    def get(self):
+        self.write(_wrap_binary('POST to echo'))
+
+    @tornado.web.authenticated
+    def post(self):
+        self.write(_wrap_binary(self.request.body))
+
+
 application_urls = [
     (r'/', MainHandler),
     (r'/minigrids/(.{36})/?', MinigridHandler),
     (r'/minigrids/(.{36})/vendors/?', MinigridVendorsHandler),
     (r'/minigrids/(.{36})/customers/?', MinigridCustomersHandler),
+    (r'/minigrids/(.{36})/maintenance_cards/?', MinigridMaintenanceCardsHandler),
     (r'/minigrids/(.{36})/write_credit/?', MinigridWriteCreditHandler),
+    (r'/device_info/?', DeviceInfoHandler),
+    (r'/device_json/?', JSONDeviceHandler),
+    (r'/echo/?', EchoHandler),
+    (r'/echo_auth/?', EchoAuthHandler),
     (r'/tariffs/?', TariffsHandler),
     (r'/minigrids/?', MinigridsHandler),
     (r'/users/?', UsersHandler),
