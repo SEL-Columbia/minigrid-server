@@ -6,7 +6,7 @@
     <p><strong>{{ message }}</strong></p>
   {% end %}
   <h3>Tariff information:</h3>
-  <form id="tariff" action="/tariffs" method="POST">
+  <form id="tariffs" action="/tariffs" method="POST">
     {% module xsrf_form_html() %}
   {% try %}
     {% if system is None %}
@@ -36,7 +36,7 @@
         <label>Tariff activation date and time:</label>
         <input type="datetime-local" name="tariff_activation_timestamp" />
       </fieldset>
-        <input type="submit" id="submit" value="Update Tariff Information"/>
+        <input type="submit" value="Update Tariff Information"/>
     {% end %}
   {% except NameError %}
     {% include tariff_form.html %}
