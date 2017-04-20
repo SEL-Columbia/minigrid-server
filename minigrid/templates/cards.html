@@ -5,9 +5,11 @@
     <p><strong>{{ message }}</strong></p>
   {% end %}
   <p>Read and validate cards:</p>
-  <form>
-    {% module xsrf_form_html() %}
-    <input type="submit" value="Read and validate cards" />
-  </form>
+  {% if received_info %}
+    <p>Card info:</p>
+    <p>{{ received_info }}</p>
+  {% else %}
+    <p>No card info received. Is there a card on the device?</p>
+  {% end %}
   <footer><a href="/">&laquo; Return to minigrid index</a></footer>
 {% end %}
