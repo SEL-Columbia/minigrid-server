@@ -65,7 +65,6 @@ input#logout:hover {
 
 /* SIDEBAR */
 .sidebar {
-    margin: -30px;
     background-color: #3d3737;
     width: 300px;
     min-height: 100%;
