@@ -65,11 +65,13 @@ input#logout:hover {
 
 /* SIDEBAR */
 .sidebar {
+    margin: -30px;
     background-color: #3d3737;
     width: 300px;
     min-height: 100%;
-    margin-top: -20px;
+    margin-top: -50px;
     position: absolute;
+    right: 0%;
 }
 
 .sidebar>ul {
@@ -100,16 +102,21 @@ input#logout:hover {
 
 
 /*CONTENT*/
-.content {
-    padding: 10px 30px;
+.minigrid-index {
+    margin-right: 300px;
+    padding-left: 100px;
     position: relative;
-    left: 300px;
 	display: flex;
+}
+
+.content {
+    padding: 30px;
 }
 
 .contentbox {
 	width: 33%;
 	padding: 2% 5%;
+    margin: 0px 10px;
 	color: rgba(0,0,0,0.8);
 }
 
