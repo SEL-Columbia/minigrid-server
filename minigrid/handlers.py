@@ -94,8 +94,11 @@ class MainHandler(BaseHandler):
         if self.current_user:
             system = self.session.query(models.System).one_or_none()
             minigrids = models.get_minigrids(self.session)
+            any_devices = self.session.query(
+                exists().where(models.Device.address.isnot(None))).scalar()
             self.render(
-                'index-minigrid-list.html', system=system, minigrids=minigrids)
+                'index-minigrid-list.html',
+                system=system, minigrids=minigrids, any_devices=any_devices)
             return
         self.render(
             'index-logged-out.html', next_page=self.get_argument('next', '/'))
@@ -204,11 +207,16 @@ class MinigridsHandler(BaseHandler):
             raise minigrid.error.MinigridHTTPError(
                 message, 400, 'index-minigrid-list.html',
                 system=self.session.query(models.System).one_or_none(),
+                any_devices=self.session.query(
+                    exists().where(models.Device.address.isnot(None))
+                ).scalar(),
                 minigrids=models.get_minigrids(session))
         self.set_status(201)
         self.render(
             'index-minigrid-list.html',
             system=self.session.query(models.System).one_or_none(),
+            any_devices=self.session.query(
+                exists().where(models.Device.address.isnot(None))).scalar(),
             minigrids=models.get_minigrids(session))
 
 
