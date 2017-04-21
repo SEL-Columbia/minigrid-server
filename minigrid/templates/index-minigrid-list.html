@@ -26,9 +26,11 @@
 
 </nav>
 
-  <div class="content">
-    <p>Go to the device page here: <a href="/device">Devices page</a></p>
-  </div>
+    <h3>Add device:</h3>
+      <form action="/device" method="POST">
+        {% module xsrf_form_html() %}
+	{% include device_form.html %}
+      </form>
 
 {% else %}
 
