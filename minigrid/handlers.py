@@ -70,20 +70,30 @@ class BaseHandler(tornado.web.RequestHandler):
     def render(self, *args, **kwargs):
         """Override default render to include a message of None."""
         if 'message' not in kwargs:
-            kwargs['message'] = None
+            kwargs['message'] = self.get_secure_cookie('message')
+            self.clear_cookie('message')
         super().render(*args, **kwargs)
 
+    def redirect(self, url, message=None, **kwargs):
+        """Override default redirect to deal with success/fail message."""
+        if message is not None:
+            self.set_secure_cookie('message', message)
+        super().redirect(url, **kwargs)
 
-class ReadCardBaseHandler(BaseHandler):
-    """Base class for card-writing handlers."""
 
-    def render(self, *args, **kwargs):
-        """Override default render to include cached information."""
-        if 'device_active' not in kwargs:
-            kwargs['device_active'] = cache.get('device_active')
-        if 'received_info' not in kwargs:
-            kwargs['received_info'] = cache.get('received_info')
-        super().render(*args, **kwargs)
+### TODO:
+# mkc1 add live card read to these pages
+
+#class ReadCardBaseHandler(BaseHandler):
+#    """Base class for card-writing handlers."""
+#
+#    def render(self, *args, **kwargs):
+#        """Override default render to include cached information."""
+#        if 'device_active' not in kwargs:
+#            kwargs['device_active'] = cache.get('device_active')
+#        if 'received_info' not in kwargs:
+#            kwargs['received_info'] = cache.get('received_info')
+#        super().render(*args, **kwargs)
 
 
 class MainHandler(BaseHandler):
@@ -173,10 +183,7 @@ class TariffsHandler(BaseHandler):
                 message = ' '.join(error.orig.pgerror.split())
             raise minigrid.error.MinigridHTTPError(
                 message, 400, 'tariffs.html', system=self.system)
-        self.render(
-            'tariffs.html',
-            system=self.session.query(models.System).one_or_none(),
-            message=message)
+        self.redirect('/tariffs', message=message)
 
 
 class MinigridsHandler(BaseHandler):
@@ -211,26 +218,17 @@ class MinigridsHandler(BaseHandler):
                     exists().where(models.Device.address.isnot(None))
                 ).scalar(),
                 minigrids=models.get_minigrids(session))
-        self.set_status(201)
-        self.render(
-            'index-minigrid-list.html',
-            system=self.session.query(models.System).one_or_none(),
-            any_devices=self.session.query(
-                exists().where(models.Device.address.isnot(None))).scalar(),
-            minigrids=models.get_minigrids(session))
+        self.redirect('/')
 
 
 class UsersHandler(BaseHandler):
     """Handlers for user management."""
 
-    def _render_users(self, message=None):
-        users = self.session.query(models.User).order_by('email')
-        self.render('users.html', users=users, message=message)
-
     @tornado.web.authenticated
     def get(self):
         """Render the view for user management."""
-        self._render_users()
+        users = self.session.query(models.User).order_by('email')
+        self.render('users.html', users=users)
 
     @tornado.web.authenticated
     def post(self):
@@ -245,7 +243,7 @@ class UsersHandler(BaseHandler):
                 message = f'{email} is not a valid e-mail address'
             else:
                 message = f'Account for {email} already exists'
-        self._render_users(message=message)
+        self.redirect('/users', message=message)
 
 
 # TODO: this button should do something
@@ -271,22 +269,19 @@ class DeviceHandler(BaseHandler):
     def post(self):
         """Create a new device model."""
         # TODO: raise an error
-        status = 201
+        #status = 201
         try:
             with models.transaction(self.session) as session:
                 session.add(models.Device(
                     address=unhexlify(self.get_argument('device_address'))))
+            message = 'Device added'
         except (IntegrityError, DataError) as error:
-            status = 400
             message = str(error)
-        self.set_status(status)
-        Device = models.Device
-        devices = self.session.query(Device).order_by(Device.address)
-        self.render('device.html', devices=devices)
+        self.redirect('/device', message=message)
 
 
 
-class CardsHandler(ReadCardBaseHandler):
+class CardsHandler(BaseHandler):
     """Handlers for cards view."""
 
     @tornado.web.authenticated
@@ -308,14 +303,18 @@ class MinigridHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self, minigrid_id):
         """Update minigrid payment system ID."""
-        with models.transaction(self.session) as session:
-            minigrid = models.get_minigrid(self.session, minigrid_id)
-            minigrid.minigrid_payment_id = self.get_argument(
-                'minigrid_payment_id')
-        self.render('minigrid.html', minigrid=minigrid)
+        try:
+            with models.transaction(self.session) as session:
+                minigrid = models.get_minigrid(self.session, minigrid_id)
+                minigrid.minigrid_payment_id = self.get_argument(
+                    'minigrid_payment_id')
+            message = 'Payment ID updated'
+        except (IntegrityError, DataError) as error:
+            message = str(error)
+        self.redirect(f'/minigrids/{minigrid_id}/', message=message)
 
 
-class MinigridWriteCreditHandler(ReadCardBaseHandler):
+class MinigridWriteCreditHandler(BaseHandler):
     """Handlers for writing credit cards view."""
 
     @tornado.web.authenticated
@@ -343,11 +342,12 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
             system.tariff_activation_timestamp,
         )
         message = 'Card written'
-        self.render(
-            'minigrid_write_credit.html', minigrid=minigrid, message=message)
+        self.redirect(f'/minigrids/{minigrid_id}/write_credit', message=message)
+        #self.render(
+        #    'minigrid_write_credit.html', minigrid=minigrid, message=message)
 
 
-class MinigridVendorsHandler(ReadCardBaseHandler):
+class MinigridVendorsHandler(BaseHandler):
     """Handlers for vendors view."""
 
     @tornado.web.authenticated
@@ -388,8 +388,9 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
                 message = f'Vendor {vendor.vendor_name} removed'
             except UnmappedInstanceError:
                 message = 'The requested vendor no longer exists'
-            self.render(
-                'minigrid_vendors.html', minigrid=grid, message=message)
+            self.redirect(f'/minigrids/{minigrid_id}/vendors', message=message)
+            #self.render(
+            #    'minigrid_vendors.html', minigrid=grid, message=message)
             return
         elif action == 'write':
             vendor = (
@@ -397,15 +398,17 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
                 .get(self.get_argument('vendor_id')))
             write_vendor_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, vendor)
             message = 'Card written'
-            self.render(
-                'minigrid_vendors.html', minigrid=grid, message=message)
+            self.redirect(f'/minigrids/{minigrid_id}/vendors', message=message)
+            #self.render(
+            #    'minigrid_vendors.html', minigrid=grid, message=message)
             return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
-        self.render('minigrid_vendors.html', minigrid=grid)
+        self.redirect(f'/minigrids/{minigrid_id}/vendors')
+        #self.render('minigrid_vendors.html', minigrid=grid)
 
 
-class MinigridCustomersHandler(ReadCardBaseHandler):
+class MinigridCustomersHandler(BaseHandler):
     """Handlers for customers view."""
 
     @tornado.web.authenticated
@@ -446,9 +449,10 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
                 message = f'Customer {customer.customer_name} removed'
             except UnmappedInstanceError:
                 message = 'The requested customer no longer exists'
-            self.render(
-                'minigrid_customers.html',
-                minigrid=grid, message=message)
+            self.redirect(f'/minigrids/{minigrid_id}/customers', message=message)
+            #self.render(
+            #    'minigrid_customers.html',
+            #    minigrid=grid, message=message)
             return
         elif action == 'write':
             customer = (
@@ -456,18 +460,20 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
                 .get(self.get_argument('customer_id')))
             write_customer_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, customer)
             message = 'Card written'
-            self.render(
-                'minigrid_customers.html',
-                minigrid=grid, message=message)
+            self.redirect(f'/minigrids/{minigrid_id}/customers', message=message)
+            #self.render(
+            #    'minigrid_customers.html',
+            #    minigrid=grid, message=message)
             return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
-        self.render(
-            'minigrid_customers.html',
-            minigrid=grid)
+        self.redirect(f'/minigrids/{minigrid_id}/customers')
+        #self.render(
+        #    'minigrid_customers.html',
+        #    minigrid=grid)
 
 
-class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
+class MinigridMaintenanceCardsHandler(BaseHandler):
     """Handlers for maintenance cards view."""
 
     @tornado.web.authenticated
@@ -508,9 +514,10 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
                 message = f'Maintenance card {maintenance_card.maintenance_card_name} removed'
             except UnmappedInstanceError:
                 message = 'The requested maintenance_card no longer exists'
-            self.render(
-                'minigrid_maintenance_cards.html',
-                minigrid=grid, message=message)
+            self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards', message=message)
+            #self.render(
+            #    'minigrid_maintenance_cards.html',
+            #    minigrid=grid, message=message)
             return
         elif action == 'write':
             maintenance_card = (
@@ -518,15 +525,17 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
                 .get(self.get_argument('maintenance_card_id')))
             write_maintenance_card_card(cache, grid.payment_system.aes_key, grid.payment_system.payment_id, maintenance_card)
             message = 'Card written'
-            self.render(
-                'minigrid_maintenance_cards.html',
-                minigrid=grid, message=message)
+            self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards', message=message)
+            #self.render(
+            #    'minigrid_maintenance_cards.html',
+            #    minigrid=grid, message=message)
             return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
-        self.render(
-            'minigrid_maintenance_cards.html',
-            minigrid=grid)
+        self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards')
+        #self.render(
+        #    'minigrid_maintenance_cards.html',
+        #    minigrid=grid)
 
 
 class VerifyLoginHandler(BaseHandler):
