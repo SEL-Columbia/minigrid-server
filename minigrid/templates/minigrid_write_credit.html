@@ -16,11 +16,24 @@
     <label>Card value : <input type="number" step="1" min="0" name="credit_value" required /></label><br>
     <input id="card-value" type="submit" value="Write credit card" title="Touch card to reader" disabled/>
   </form>
+
+
+  <input type="text" id="datetime24" data-format="DD-MM-YYYY HH:mm" data-template="DD / MM / YYYY     HH : mm" name="datetime" value="21-12-2012 20:30">
+
+
   <footer>
     <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
     <p><a href="/">&laquo; Return to minigrid index</a></p>
   </footer>
 
   <script type="text/javascript" src="{{ static_url('js/minigrid_write_credit.js') }}"></script>
+  <script type="text/javascript" src="{{ static_url('js/bundles/main.bundle.js') }}"></script>
+  <script type="text/javascript" src="{{ static_url('js/combodate.js') }}"></script>
+
+<script>
+  $(function(){
+      $('#datetime24').combodate();  
+  });
+</script>
 
 {% end %}

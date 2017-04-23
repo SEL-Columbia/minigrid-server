@@ -48,10 +48,15 @@ form>fieldset {
     border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-form>fieldset>input {
+form>fieldset>input,
+form>fieldset>span>select {
     padding-left: 5px;
     margin-left: 20px;
     width: 150px;
+}
+
+form>fieldset>span {
+    height: 35px;
 }
 
 form>input[type="submit"] {
