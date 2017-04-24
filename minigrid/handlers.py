@@ -81,19 +81,16 @@ class BaseHandler(tornado.web.RequestHandler):
         super().redirect(url, **kwargs)
 
 
-### TODO:
-# mkc1 add live card read to these pages
+class ReadCardBaseHandler(BaseHandler):
+    """Base class for card-writing handlers."""
 
-#class ReadCardBaseHandler(BaseHandler):
-#    """Base class for card-writing handlers."""
-#
-#    def render(self, *args, **kwargs):
-#        """Override default render to include cached information."""
-#        if 'device_active' not in kwargs:
-#            kwargs['device_active'] = cache.get('device_active')
-#        if 'received_info' not in kwargs:
-#            kwargs['received_info'] = cache.get('received_info')
-#        super().render(*args, **kwargs)
+    def render(self, *args, **kwargs):
+        """Override default render to include cached information."""
+        if 'device_active' not in kwargs:
+            kwargs['device_active'] = cache.get('device_active')
+        if 'received_info' not in kwargs:
+            kwargs['received_info'] = cache.get('received_info')
+        super().render(*args, **kwargs)
 
 
 class MainHandler(BaseHandler):
@@ -281,7 +278,7 @@ class DeviceHandler(BaseHandler):
 
 
 
-class CardsHandler(BaseHandler):
+class CardsHandler(ReadCardBaseHandler):
     """Handlers for cards view."""
 
     @tornado.web.authenticated
@@ -314,7 +311,7 @@ class MinigridHandler(BaseHandler):
         self.redirect(f'/minigrids/{minigrid_id}/', message=message)
 
 
-class MinigridWriteCreditHandler(BaseHandler):
+class MinigridWriteCreditHandler(ReadCardBaseHandler):
     """Handlers for writing credit cards view."""
 
     @tornado.web.authenticated
@@ -343,11 +340,9 @@ class MinigridWriteCreditHandler(BaseHandler):
         )
         message = 'Card written'
         self.redirect(f'/minigrids/{minigrid_id}/write_credit', message=message)
-        #self.render(
-        #    'minigrid_write_credit.html', minigrid=minigrid, message=message)
 
 
-class MinigridVendorsHandler(BaseHandler):
+class MinigridVendorsHandler(ReadCardBaseHandler):
     """Handlers for vendors view."""
 
     @tornado.web.authenticated
@@ -408,7 +403,7 @@ class MinigridVendorsHandler(BaseHandler):
         #self.render('minigrid_vendors.html', minigrid=grid)
 
 
-class MinigridCustomersHandler(BaseHandler):
+class MinigridCustomersHandler(ReadCardBaseHandler):
     """Handlers for customers view."""
 
     @tornado.web.authenticated
@@ -473,7 +468,7 @@ class MinigridCustomersHandler(BaseHandler):
         #    minigrid=grid)
 
 
-class MinigridMaintenanceCardsHandler(BaseHandler):
+class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
     """Handlers for maintenance cards view."""
 
     @tornado.web.authenticated
