@@ -19,6 +19,19 @@
       </form>
   </div>
 
+{% elif not any_devices %}
+
+  </ul>
+  <div id="tariff-message">You must add at least one payment system device address.</div>
+
+</nav>
+
+    <h3>Add device:</h3>
+      <form action="/device" method="POST">
+        {% module xsrf_form_html() %}
+	{% include device_form.html %}
+      </form>
+
 {% else %}
 
     <li><a href="/tariffs">&laquo; Manage tariffs</a></li>

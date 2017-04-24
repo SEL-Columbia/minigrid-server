@@ -23,9 +23,9 @@
 	<input type="hidden" name="action" value="write" />
 	<input type="hidden" name="maintenance_card_id" value="{{ maintenance_card.maintenance_card_id }}" />
 	{% if device_active %}
-          <input type="submit" value="Write ID card" />
+          <input type="submit" value="Write Maintenance Card" />
 	{% else %}
-          <input type="submit" value="Write ID card" title="Touch card to reader" disabled/>
+          <input type="submit" value="Write Maintenance Card" title="Touch card to reader" disabled/>
 	{% end %}
       </form>
       <form action="/minigrids/{{ minigrid.minigrid_id }}/maintenance_cards" method="POST">

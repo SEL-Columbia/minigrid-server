@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 
 {% block body %}
+  {% if message is not None %}
+  <p><strong>{{ message }}</strong></p>
+  {% end %}
+
   <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
   <p>ID: {{ minigrid.minigrid_id }}</p>
   <p>Error code: {{ minigrid.error_code }}</p>
