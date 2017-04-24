@@ -26,42 +26,7 @@ footer {
 }
 
 input[type="submit"] {
-    background-color: #2C3031;
-    border-color: #232828;
-    border-radius: 3px;
-    color: white;
-    padding: 4px 10px;
-    margin-top: 10px;
-}
-
-input {
-    height: 35px;
-}
-
-form {
-    background-color: rgba(255, 255, 255, 0.4);
-    display: inline-block;
-}
-
-form>fieldset {
-    padding: 10px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-}
-
-form>fieldset>input,
-form>fieldset>span>select {
-    padding-left: 5px;
-    margin-left: 20px;
-    width: 150px;
-}
-
-form>fieldset>span {
-    height: 35px;
-}
-
-form>input[type="submit"] {
-    margin: 10px auto;
-    display: block;
+    background-color: rgb(39,147,162)s;
 }
 
 
@@ -99,17 +64,14 @@ li#logout {
 }
 
 input#logout {
-    background-color: rgba(0,0,0,0.7);
+    background-color: rgba(0,0,0,0.2);
     padding: 15px 25px;
-    border: none;
-    border-radius: 0px;
-    margin: 0px;
-    height: auto;
+    border:none;
 }
 
 input#logout:hover {
     text-decoration: none;
-    background-color: rgba(0,0,0,0.8);
+    background-color: rgba(0,0,0,0.4);
 }
 
 
@@ -153,7 +115,7 @@ input#logout:hover {
 /*CONTENT*/
 .minigrid-index {
     margin-right: 300px;
-    padding-left: 30px;
+    padding-left: 100px;
     position: relative;
 	display: flex;
 }
@@ -169,11 +131,29 @@ input#logout:hover {
 
 .contentbox {
 	width: 33%;
-	padding: 2%;
+	padding: 2% 5%;
     margin: 0px 10px;
 	color: rgba(0,0,0,0.8);
 }
 
-form#minigrid {
-    width: 250px;
+form#tariff {
+    background-color: rgba(255, 255, 255, 0.4);
+    display: inline-block;
+}
+
+form#tariff>fieldset {
+    padding: 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+form#tariff>fieldset>input {
+    float: right;
+    padding-left: 5px;
+    margin-left: 20px;
+    width: 150px;
+}
+
+form#tariff>input#submit {
+    margin: 10px auto;
+    display: block;
 }
