@@ -13,6 +13,7 @@ from cryptography.hazmat.backends import default_backend
 
 import redis
 
+from sockjs.tornado import SockJSConnection, SockJSRouter
 from sqlalchemy import exists
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DataError, IntegrityError
@@ -687,8 +688,38 @@ class JSONDeviceHandler(BaseHandler):
         self.write(result)
 
 
+class WebsocketDemoHandler(BaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        self.render('websocket-demo.html')
+
+
+class WebsocketConnection(SockJSConnection):
+    """Chat connection implementation"""
+    # Class level variable
+    participants = set()
+
+    def on_open(self, info):
+        # Send that someone joined
+        self.broadcast(self.participants, "Someone joined.")
+
+        # Add client to the clients list
+        self.participants.add(self)
+
+    def on_message(self, message):
+        # Broadcast message
+        self.broadcast(self.participants, message)
+
+    def on_close(self):
+        # Remove client from the clients list and broadcast leave message
+        self.participants.remove(self)
+
+        self.broadcast(self.participants, "Someone left.")
+
+
 application_urls = [
     (r'/', MainHandler),
+    (r'/ws_demo/?', WebsocketDemoHandler),
     (r'/minigrids/(.{36})/?', MinigridHandler),
     (r'/minigrids/(.{36})/vendors/?', MinigridVendorsHandler),
     (r'/minigrids/(.{36})/customers/?', MinigridCustomersHandler),
@@ -704,3 +735,8 @@ application_urls = [
     (r'/cards/?', CardsHandler),
     (r'/verify/?', VerifyLoginHandler),
     (r'/logout/?', LogoutHandler)]
+
+
+def get_urls():
+    sockjs_urls = SockJSRouter(WebsocketConnection, r'/ws/?').urls
+    return application_urls + sockjs_urls
