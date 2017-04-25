@@ -243,14 +243,14 @@ class UsersHandler(BaseHandler):
         self.redirect('/users', message=message)
 
 
-# TODO: this button should do something
-class TechnicianHandler(BaseHandler):
-    """Handlers for technician view."""
-
-    @tornado.web.authenticated
-    def get(self):
-        """Render the technician ID writing form."""
-        self.render('technician.html')
+# TODO: review the concept of a technician for this system
+# class TechnicianHandler(BaseHandler):
+#     """Handlers for technician view."""
+#
+#     @tornado.web.authenticated
+#     def get(self):
+#         """Render the technician ID writing form."""
+#         self.render('technician.html')
 
 
 class DeviceHandler(BaseHandler):
@@ -687,42 +687,6 @@ class JSONDeviceHandler(BaseHandler):
         self.write(result)
 
 
-class EchoHandler(BaseHandler):
-    def check_xsrf_cookie(self):
-        """Disable XSRF check.
-
-        OpenID doesn't reply with _xsrf header.
-        https://github.com/portier/demo-rp/issues/10
-        """
-        pass
-
-    def get(self):
-        self.write(_wrap_binary(cache.get('echoes') or b'<br>'))
-
-    def post(self):
-        echoes = cache.get('echoes') or b'<br>'
-        cache.set('echoes', echoes + self.request.body + b'<br>')
-        self.write(_wrap_binary(self.request.body))
-
-
-class EchoAuthHandler(BaseHandler):
-    def check_xsrf_cookie(self):
-        """Disable XSRF check.
-
-        OpenID doesn't reply with _xsrf header.
-        https://github.com/portier/demo-rp/issues/10
-        """
-        pass
-
-    @tornado.web.authenticated
-    def get(self):
-        self.write(_wrap_binary('POST to echo'))
-
-    @tornado.web.authenticated
-    def post(self):
-        self.write(_wrap_binary(self.request.body))
-
-
 application_urls = [
     (r'/', MainHandler),
     (r'/minigrids/(.{36})/?', MinigridHandler),
@@ -732,12 +696,10 @@ application_urls = [
     (r'/minigrids/(.{36})/write_credit/?', MinigridWriteCreditHandler),
     (r'/device_info/?', DeviceInfoHandler),
     (r'/device_json/?', JSONDeviceHandler),
-    (r'/echo/?', EchoHandler),
-    (r'/echo_auth/?', EchoAuthHandler),
     (r'/tariffs/?', TariffsHandler),
     (r'/minigrids/?', MinigridsHandler),
     (r'/users/?', UsersHandler),
-    (r'/technician/?', TechnicianHandler),
+    # (r'/technician/?', TechnicianHandler),
     (r'/device/?', DeviceHandler),
     (r'/cards/?', CardsHandler),
     (r'/verify/?', VerifyLoginHandler),
