@@ -54,7 +54,7 @@ def main():
     try:
         command = globals()[args.command_name]
         if args.kwarg:
-            command(**dict(kv.split('=') for kv in args.kwarg))
+            command(**dict(kv.split('=', 1) for kv in args.kwarg))
         else:
             command()
     except KeyError:
