@@ -2,6 +2,7 @@
 from binascii import unhexlify
 from collections import OrderedDict
 from datetime import timedelta
+import logging
 import secrets
 from urllib.parse import urlencode
 from uuid import uuid4, UUID
@@ -33,6 +34,12 @@ from minigrid.options import options
 AES = algorithms.AES
 cache = redis.StrictRedis.from_url(options.redis_url)
 broker_url = 'https://broker.portier.io'
+formatter=logging.Formatter(logging.BASIC_FORMAT)
+loghandler = logging.FileHandler('log/card_write.log')
+loghandler.setFormatter(formatter)
+writelogger = logging.getLogger('card_write')
+writelogger.setLevel(logging.INFO)
+writelogger.addHandler(loghandler)
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -326,7 +333,7 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
         """Write a credit card for this minigrid."""
         minigrid = models.get_minigrid(self.session, minigrid_id)
         system = self.session.query(models.System).one()
-        write_credit_card(
+        args = (
             cache,
             minigrid.payment_system.aes_key,
             minigrid.payment_system.payment_id,
@@ -338,6 +345,9 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
             system.tariff_creation_timestamp,
             system.tariff_activation_timestamp,
         )
+        write_credit_card(*args)
+        writelogger.info(f'Attempting to write credit card for minigrid {minigrid_id}')
+        writelogger.info(args)
         message = 'Card written'
         self.redirect(f'/minigrids/{minigrid_id}/write_credit', message=message)
 
@@ -391,7 +401,10 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
             vendor = (
                 self.session.query(models.Vendor)
                 .get(self.get_argument('vendor_id')))
-            write_vendor_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, vendor)
+            args = (cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, vendor)
+            write_vendor_card(*args)
+            writelogger.info(f'Attempting to write vendor id card {vendor.vendor_id} for minigrid {minigrid_id}')
+            writelogger.info(args)
             message = 'Card written'
             self.redirect(f'/minigrids/{minigrid_id}/vendors', message=message)
             #self.render(
@@ -453,7 +466,10 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
             customer = (
                 self.session.query(models.Customer)
                 .get(self.get_argument('customer_id')))
-            write_customer_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, customer)
+            args = (cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, customer)
+            write_customer_card(*args)
+            writelogger.info(f'Attempting to write customer id card {customer.customer_id} for minigrid {minigrid_id}')
+            writelogger.info(args)
             message = 'Card written'
             self.redirect(f'/minigrids/{minigrid_id}/customers', message=message)
             #self.render(
@@ -518,7 +534,10 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
             maintenance_card = (
                 self.session.query(models.MaintenanceCard)
                 .get(self.get_argument('maintenance_card_id')))
-            write_maintenance_card_card(cache, grid.payment_system.aes_key, grid.payment_system.payment_id, maintenance_card)
+            args = (cache, grid.payment_system.aes_key, grid.payment_system.payment_id, maintenance_card)
+            write_maintenance_card_card(*args)
+            writelogger.info(f'Attempting to write maintenance card {maintenance_card.maintenance_card_id} for minigrid {minigrid_id}')
+            writelogger.info(args)
             message = 'Card written'
             self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards', message=message)
             #self.render(
