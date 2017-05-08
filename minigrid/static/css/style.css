@@ -26,7 +26,8 @@ footer {
 }
 
 input[type="submit"] {
-    background-color: rgb(39,147,162)s;
+    background-color: rgb(39,147,162);
+    margin: 10px 0px;
 }
 
 
@@ -67,6 +68,7 @@ input#logout {
     background-color: rgba(0,0,0,0.2);
     padding: 15px 25px;
     border:none;
+    margin: 0px;
 }
 
 input#logout:hover {
