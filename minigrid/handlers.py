@@ -691,7 +691,8 @@ class JSONDeviceHandler(BaseHandler):
 class WebsocketDemoHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        self.render('websocket-demo.html')
+        http_protocol = 'https' if options.minigrid_https else 'http'
+        self.render('websocket-demo.html', http_protocol=http_protocol)
 
 
 class WebsocketConnection(SockJSConnection):

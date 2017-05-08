@@ -2,8 +2,8 @@
 <html>
 <head>
   <!-- @mkc1 please help use webpack instead of loading over the internet -->
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-  <script src="http://cdn.jsdelivr.net/sockjs/0.3/sockjs.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/sockjs/0.3/sockjs.min.js"></script>
   <script>
     $(function() {
       var conn = null;
@@ -21,7 +21,7 @@
             return $(this).attr('id');
         }).get();
 
-        conn = new SockJS('http://' + window.location.host + '/ws', transports);
+	conn = new SockJS('{{ http_protocol }}://' + window.location.host + '/ws', transports);
 
         log('Connecting...');
 
