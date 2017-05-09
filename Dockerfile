@@ -12,4 +12,4 @@ RUN set -x \
   && chown -R minigrid-server:minigrid-server .
 USER minigrid-server
 CMD ["./prod/run.sh"]
-EXPOSE 8888
+EXPOSE 8889
