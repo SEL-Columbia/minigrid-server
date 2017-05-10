@@ -2,8 +2,8 @@ FROM python:3.6
 COPY . /minigrid-server
 WORKDIR /minigrid-server
 RUN set -x \
-  && apt-get update \
-  && apt-get install -y npm \
+  && curl -sL https://deb.nodesource.com/setup_7.x | bash \
+  && apt-get install -y nodejs \
   && rm -rf /var/lib/apt/lists/* \
   && npm install
 RUN set -x \
