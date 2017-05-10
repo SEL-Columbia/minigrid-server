@@ -2,26 +2,32 @@ const path = require('path');
 const webpack = require('webpack');
 
 module.exports = {
-  context: path.resolve(__dirname, './minigrid/static/js'),
   entry: {
-    app: './minigrid_write_credit.js',
+    app: path.resolve(__dirname, 'minigrid/static/src/js/minigrid_write_credit.js'),
   },
   output: {
-    path: path.resolve(__dirname, './minigrid/static/js'),
-    filename: '[name].bundle.js',
+    path: path.resolve(__dirname, 'minigrid/static/bundles/'),
+    filename: 'app.bundle.js',
   },
   module: {
     rules: [
       {
         test: /\.js$/,
-        exclude: /(node_modules|bower_components)/,
+        exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
-          options: {
-            presets: ['env']
-          }
         }
       }
     ]
   },
+  plugins: [
+        new webpack.optimize.UglifyJsPlugin({
+            compress: {
+                warnings: false,
+            },
+            output: {
+                comments: false,
+            },
+        }),
+    ]
 };

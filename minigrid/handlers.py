@@ -21,6 +21,7 @@ from sqlalchemy.orm.exc import NoResultFound, UnmappedInstanceError
 
 from tornado.escape import json_encode, json_decode
 import tornado.web
+import tornado.ioloop
 
 from minigrid.device_interface import (
     _wrap_binary,
@@ -318,9 +319,12 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
     @tornado.web.authenticated
     def get(self, minigrid_id):
         """Render the write credit card form."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
         self.render(
             'minigrid_write_credit.html',
-            minigrid=models.get_minigrid(self.session, minigrid_id))
+            minigrid=models.get_minigrid(self.session, minigrid_id),
+            http_protocol=http_protocol)
 
     @tornado.web.authenticated
     def post(self, minigrid_id):
@@ -678,56 +682,30 @@ class DeviceInfoHandler(BaseHandler):
             cache.delete('device_info')
 
 
-class JSONDeviceHandler(BaseHandler):
-    @tornado.web.authenticated
-    def get(self):
+class JSONDeviceConnection(SockJSConnection):
+    def on_open(self, info):
+        self.timeout = tornado.ioloop.PeriodicCallback(self._send_data, 1000)
+        self.timeout.start()
+
+    def on_close(self):
+        self.timeout.stop()
+
+    def _send_data(self):
         result = {
             'device_active': bool(int(cache.get('device_active') or 0)),
             'received_info': json_decode(cache.get('received_info') or '{}'),
         }
-        self.write(result)
-
-
-class WebsocketDemoHandler(BaseHandler):
-    @tornado.web.authenticated
-    def get(self):
-        http_protocol = 'https' if options.minigrid_https else 'http'
-        self.render('websocket-demo.html', http_protocol=http_protocol)
-
-
-class WebsocketConnection(SockJSConnection):
-    """Chat connection implementation"""
-    # Class level variable
-    participants = set()
-
-    def on_open(self, info):
-        # Send that someone joined
-        self.broadcast(self.participants, "Someone joined.")
-
-        # Add client to the clients list
-        self.participants.add(self)
-
-    def on_message(self, message):
-        # Broadcast message
-        self.broadcast(self.participants, message)
-
-    def on_close(self):
-        # Remove client from the clients list and broadcast leave message
-        self.participants.remove(self)
-
-        self.broadcast(self.participants, "Someone left.")
+        self.send(result['device_active'])
 
 
 application_urls = [
     (r'/', MainHandler),
-    (r'/ws_demo/?', WebsocketDemoHandler),
     (r'/minigrids/(.{36})/?', MinigridHandler),
     (r'/minigrids/(.{36})/vendors/?', MinigridVendorsHandler),
     (r'/minigrids/(.{36})/customers/?', MinigridCustomersHandler),
     (r'/minigrids/(.{36})/maintenance_cards/?', MinigridMaintenanceCardsHandler),
     (r'/minigrids/(.{36})/write_credit/?', MinigridWriteCreditHandler),
     (r'/device_info/?', DeviceInfoHandler),
-    (r'/device_json/?', JSONDeviceHandler),
     (r'/tariffs/?', TariffsHandler),
     (r'/minigrids/?', MinigridsHandler),
     (r'/users/?', UsersHandler),
@@ -739,5 +717,5 @@ application_urls = [
 
 
 def get_urls():
-    sockjs_urls = SockJSRouter(WebsocketConnection, r'/ws/?').urls
+    sockjs_urls = SockJSRouter(JSONDeviceConnection, r'/cardconn/?').urls
     return application_urls + sockjs_urls
