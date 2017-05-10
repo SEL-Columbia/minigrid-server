@@ -5,7 +5,7 @@ services:
       context: ../
     ports:
       - "8889:8889"
-    command: ./dev/run.sh --minigrid_port=8889 --minigrid_website_url=http://localhost:8889 --db_host=db --redis_url=redis://redis:6379/0
+    command: ./dev/run.sh --db_host=db --redis_url=redis://redis:6379/0
     volumes:
       - ../:/minigrid-server
     user: root

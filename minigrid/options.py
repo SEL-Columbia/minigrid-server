@@ -31,11 +31,11 @@ define(
     help='Dangerous option that shows debug information for any error.'
 )
 define(
-    'minigrid_website_url', default='http://localhost:8888',
+    'minigrid_website_url', default='http://localhost:8889',
     help='The URL of this instance of the minigrid server.'
 )
 define('minigrid_https', default=True)
-define('minigrid_port', default='8888')
+define('minigrid_port', default='8889')
 define('db_host', default='localhost')
 define('db_port', default=5432)
 define('db_database', default='minigrid')
