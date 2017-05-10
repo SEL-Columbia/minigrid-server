@@ -3,6 +3,8 @@ from asyncio import get_event_loop
 import logging
 from time import sleep
 
+from sockjs.tornado import SockJSRouter
+
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
@@ -14,7 +16,7 @@ if __name__ == '__main__':  # pragma: nocover
     parse_command_line()
 
 from minigrid import models  # noqa
-from minigrid.handlers import application_urls  # noqa
+from minigrid.handlers import get_urls  # noqa
 from minigrid.options import application_settings, options  # noqa
 
 
@@ -26,7 +28,7 @@ class Application(tornado.web.Application):
         settings = {**application_settings(), **kwargs}
         if settings['debug']:
             logging.info('Debug mode is on')
-        super().__init__(application_urls, **settings)
+        super().__init__(get_urls(), **settings)
         if session is None:
             engine = models.create_engine()
             try:

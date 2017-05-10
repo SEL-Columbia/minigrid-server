@@ -21,6 +21,10 @@
     <p><a href="/">&laquo; Return to minigrid index</a></p>
   </footer>
 
-  <script type="text/javascript" src="{{ static_url('js/minigrid_write_credit.js') }}"></script>
+  <script>
+    var http_protocol = '{{ http_protocol }}';
+  </script>
+
+  <script type="text/javascript" src="{{ static_url('dist/app.bundle.js') }}"></script>
 
 {% end %}
