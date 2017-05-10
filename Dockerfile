@@ -5,7 +5,8 @@ RUN set -x \
   && curl -sL https://deb.nodesource.com/setup_7.x | bash \
   && apt-get install -y nodejs \
   && rm -rf /var/lib/apt/lists/* \
-  && npm install
+  && npm install \
+  && node node_modules/webpack/bin/webpack.js
 RUN set -x \
   && pip install --no-cache-dir -r requirements.txt \
   && useradd -r -d /minigrid-server -s /sbin/nologin minigrid-server \
