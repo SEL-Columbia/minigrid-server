@@ -1,58 +1,66 @@
 {% extends 'base.html' %}
 
 {% block body %}
-  {% if message is not None %}
-    <p><strong>{{ message }}</strong></p>
-  {% end %}
-  <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
-  <p>ID: {{ minigrid.minigrid_id }}</p>
-  {% if received_info %}
-    <p>Card info:</p>
-    <p>{{ received_info }}</p>
-  {% end %}
-  <p>Customers:</p>
-  <ul>
-    {% set zero_customers = True %}
-    {% for customer in minigrid.customers %}
-      {% set zero_customers = False %}
-      <li>
-      <p>Name: {{ customer.customer_name }}</p>
-      <p>User ID: {{ customer.customer_user_id }}</p>
-      <form action="/minigrids/{{ minigrid.minigrid_id }}/customers" method="POST">
-        {% module xsrf_form_html() %}
-	<input type="hidden" name="action" value="write" />
-	<input type="hidden" name="customer_id" value="{{ customer.customer_id }}" />
-	{% if device_active %}
-          <input type="submit" value="Write ID card" />
-	{% else %}
-          <input type="submit" value="Write ID card" title="Touch card to reader" disabled/>
-	{% end %}
-      </form>
-      <form action="/minigrids/{{ minigrid.minigrid_id }}/customers" method="POST">
-        {% module xsrf_form_html() %}
-	<input type="hidden" name="action" value="remove" />
-	<input type="hidden" name="customer_id" value="{{ customer.customer_id }}" />
-        <input type="submit" value="Remove Customer {{ customer.customer_name }}" />
-      </form>
-      </li>
+  <div class="full-page-content">
+    {% if message is not None %}
+      <p><strong>{{ message }}</strong></p>
     {% end %}
-  </ul>
-  {% if zero_customers %}
-    <p>No customers</p>
-  {% end %}
-  <hr>
+    <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
+    <p>ID: {{ minigrid.minigrid_id }}</p>
+    <div class="card-info">
+      <div class="card-info-header">
+        <span>Card Info</span>
+      </div>
+    </div>
+    <p>Customers:</p>
+    <ul>
+      {% set zero_customers = True %}
+      {% for customer in minigrid.customers %}
+        {% set zero_customers = False %}
+        <li>
+        <p>Name: {{ customer.customer_name }}</p>
+        <p>User ID: {{ customer.customer_user_id }}</p>
+        <form action="/minigrids/{{ minigrid.minigrid_id }}/customers" method="POST">
+          {% module xsrf_form_html() %}
+  	<input type="hidden" name="action" value="write" />
+  	<input type="hidden" name="customer_id" value="{{ customer.customer_id }}" />
+  	{% if device_active %}
+            <input type="submit" value="Write ID card" />
+  	{% else %}
+            <input type="submit" value="Write ID card" title="Touch card to reader" disabled/>
+  	{% end %}
+        </form>
+        <form action="/minigrids/{{ minigrid.minigrid_id }}/customers" method="POST">
+          {% module xsrf_form_html() %}
+  	<input type="hidden" name="action" value="remove" />
+  	<input type="hidden" name="customer_id" value="{{ customer.customer_id }}" />
+          <input type="submit" value="Remove Customer {{ customer.customer_name }}" />
+        </form>
+        </li>
+      {% end %}
+    </ul>
+    {% if zero_customers %}
+      <p>No customers</p>
+    {% end %}
+    <hr>
 
-  <p>Add customer:</p>
-  <form action="/minigrids/{{ minigrid.minigrid_id }}/customers?action=create" method="POST">
-    {% module xsrf_form_html() %}
-    <label>Name: <input name="customer_name" required /></label><br>
-    <label>User ID (0000-9999): <input name="customer_user_id" pattern="\d{4}" required /></label><br>
-    <input type="submit" value="Add Customer" />
-  </form>
-  <hr>
+    <p>Add customer:</p>
+    <form action="/minigrids/{{ minigrid.minigrid_id }}/customers?action=create" method="POST">
+      {% module xsrf_form_html() %}
+      <label>Name: <input name="customer_name" required /></label><br>
+      <label>User ID (0000-9999): <input name="customer_user_id" pattern="\d{4}" required /></label><br>
+      <input type="submit" value="Add Customer" />
+    </form>
+    <hr>
+  </div>
 
   <footer>
     <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
     <p><a href="/">&laquo; Return to minigrid index</a></p>
   </footer>
+
+  <script>
+    var http_protocol = '{{ http_protocol }}';
+  </script>
+  <script type="text/javascript" src="{{ static_url('dist/read_card.bundle.js') }}"></script>
 {% end %}

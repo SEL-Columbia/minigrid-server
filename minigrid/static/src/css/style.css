@@ -157,7 +157,6 @@ input#logout:hover {
 .minigrid-index {
     margin-right: 300px;
     padding-left: 60px;
-    position: relative;
 	display: flex;
 }
 
@@ -195,6 +194,7 @@ form#minigrid {
     background-color: rgba(255, 255, 255, 0.3);
     box-shadow: 2px 2px 5px 1px rgba(0, 0, 0, 0.2);
     display: inline-block;
+    text-align: center;
     min-width: 400px;
     margin: 40px 0px;
     padding: 20px;
@@ -211,8 +211,7 @@ form#minigrid {
 }
 
 .card-info-row {
-    display: table-row;
-    width: auto;
+    overflow: auto;
     clear: both;
     border-bottom: 1px solid rgba(0, 0, 0, 0.8);
 }
@@ -226,16 +225,20 @@ form#minigrid {
 .card-info-col {
     display: table-column;
     margin: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
 }
 
 .col-left {
     float: left;
     color: white;
     background-color: rgba(0, 0, 0, 0.8);
-    padding: 5px 10px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .col-right {
+    vertical-align: middle;
     float: right;
 }
 
