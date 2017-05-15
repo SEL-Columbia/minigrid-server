@@ -1,15 +1,24 @@
 {% extends 'base.html' %}
 
 {% block body %}
-  {% if message is not None %}
-    <p><strong>{{ message }}</strong></p>
-  {% end %}
-  <p>Read and validate cards:</p>
-  {% if received_info %}
-    <p>Card info:</p>
-    <p>{{ received_info }}</p>
-  {% else %}
-    <p>No card info received. Is there a card on the device?</p>
-  {% end %}
+  <div class="full-page-content">
+    <div class="center-wrap">
+      {% if message is not None %}
+        <p><strong>{{ message }}</strong></p>
+      {% end %}
+      <h2>Read and validate cards:</h2>
+      <div class="card-info">
+        <div class="card-info-header">
+          <span>Card Info</span>
+        </div>
+      </div>
+    </div>
+  </div>
   <footer><a href="/">&laquo; Return to minigrid index</a></footer>
+
+  <script>
+    var http_protocol = '{{ http_protocol }}';
+  </script>
+  <script type="text/javascript" src="{{ static_url('dist/read_card.bundle.js') }}"></script>
+
 {% end %}

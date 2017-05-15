@@ -286,7 +286,9 @@ class CardsHandler(ReadCardBaseHandler):
     @tornado.web.authenticated
     def get(self):
         """Render the cards form."""
-        self.render('cards.html')
+
+        http_protocol = 'https' if options.minigrid_https else 'http'
+        self.render('cards.html', http_protocol=http_protocol)
 
 
 class MinigridHandler(BaseHandler):
@@ -353,8 +355,11 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
     @tornado.web.authenticated
     def get(self, minigrid_id):
         """Render the vendors view."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
         self.render(
             'minigrid_vendors.html',
+            http_protocol=http_protocol,
             minigrid=models.get_minigrid(self.session, minigrid_id))
 
     @tornado.web.authenticated
@@ -414,8 +419,11 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
     @tornado.web.authenticated
     def get(self, minigrid_id):
         """Render the customers view."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
         self.render(
             'minigrid_customers.html',
+            http_protocol=http_protocol,
             minigrid=models.get_minigrid(self.session, minigrid_id))
 
     @tornado.web.authenticated
@@ -479,8 +487,11 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
     @tornado.web.authenticated
     def get(self, minigrid_id):
         """Render the maintenance cards view."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
         self.render(
             'minigrid_maintenance_cards.html',
+            http_protocol=http_protocol,
             minigrid=models.get_minigrid(self.session, minigrid_id))
 
     @tornado.web.authenticated
@@ -695,7 +706,7 @@ class JSONDeviceConnection(SockJSConnection):
             'device_active': bool(int(cache.get('device_active') or 0)),
             'received_info': json_decode(cache.get('received_info') or '{}'),
         }
-        self.send(result['device_active'])
+        self.send(result)
 
 
 application_urls = [

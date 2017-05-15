@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<div>
+<div class="full-page-content">
   {% if message is not None %}
     <p><strong>{{ message }}</strong></p>
   {% end %}
@@ -38,5 +38,6 @@
     {% include tariff_form.html %}
   {% end %}
   </form>
+  </div>
   <footer><a href="/">&laquo; Return to minigrid index</a></footer>
 {% end %}
