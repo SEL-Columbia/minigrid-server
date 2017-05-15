@@ -286,7 +286,10 @@ class CardsHandler(ReadCardBaseHandler):
     @tornado.web.authenticated
     def get(self):
         """Render the cards form."""
-        self.render('cards.html')
+
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
+        self.render('cards.html', http_protocol=http_protocol)
 
 
 class MinigridHandler(BaseHandler):
@@ -695,7 +698,7 @@ class JSONDeviceConnection(SockJSConnection):
             'device_active': bool(int(cache.get('device_active') or 0)),
             'received_info': json_decode(cache.get('received_info') or '{}'),
         }
-        self.send(result['device_active'])
+        self.send(result)
 
 
 application_urls = [

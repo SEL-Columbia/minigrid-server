@@ -2,7 +2,7 @@
   "name": "minigrid-server",
   "version": "1.0.0",
   "description": "Shared Solar server",
-  "main": "index1.js",
+  "main": "index.js",
   "directories": {
     "test": "tests"
   },

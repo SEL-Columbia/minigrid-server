@@ -5,7 +5,7 @@
     <p><strong>{{ message }}</strong></p>
   {% end %}
   <div class="box-container">
-    <div class="contentbox">
+    <div class="content-box">
       <h3>Devices:</h3>
       <ul>
         {% set zero_devices = True %}
@@ -20,7 +20,7 @@
         <p>No devices</p>
       {% end %}
     </div>
-    <div class="contentbox">
+    <div class="content-box">
     <h3>Add device:</h3>
       <form action="/device" method="POST">
         {% module xsrf_form_html() %}

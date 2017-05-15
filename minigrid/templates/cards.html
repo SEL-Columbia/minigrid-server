@@ -12,4 +12,11 @@
     <p>No card info received. Is there a card on the device?</p>
   {% end %}
   <footer><a href="/">&laquo; Return to minigrid index</a></footer>
+
+  <script>
+    var http_protocol = '{{ http_protocol }}';
+  </script>
+
+   <script type="text/javascript" src="{{ static_url('dist/read_card.bundle.js') }}"></script>
+
 {% end %}
