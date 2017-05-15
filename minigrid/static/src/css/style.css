@@ -22,7 +22,7 @@ h3 {
 }
 
 footer {
-    margin: 20px 0px;
+    margin: 20px;
 }
 
 input[type="submit"] {
@@ -32,6 +32,10 @@ input[type="submit"] {
     color: white;
     padding: 4px 10px;
     margin-top: 10px;
+}
+
+input#card-value[disabled] {
+    display: none;
 }
 
 input {
@@ -93,6 +97,10 @@ li#logout {
     font-weight: 600;
 }
 
+form#logout {
+    padding: 0px;
+}
+
 input#logout {
     background-color: rgba(0,0,0,0.7);
     padding: 15px 25px;
@@ -148,21 +156,27 @@ input#logout:hover {
 /*CONTENT*/
 .minigrid-index {
     margin-right: 300px;
-    padding-left: 30px;
-    position: relative;
+    padding-left: 60px;
 	display: flex;
 }
 
 .content {
-    padding-left: 50px;
     padding-top: 10px;
+}
+
+.full-page-content {
+    padding: 0 20%;
+}
+
+.center-wrap {
+    text-align: center;
 }
 
 .box-container {
     display: flex;
 }
 
-.contentbox {
+.content-box {
 	width: 33%;
 	padding: 2%;
     margin: 0px 10px;
@@ -172,3 +186,72 @@ input#logout:hover {
 form#minigrid {
     width: 250px;
 }
+
+
+/*READ CARD TABLE*/
+
+.card-info {
+    background-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 2px 2px 5px 1px rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    text-align: center;
+    min-width: 400px;
+    margin: 40px 0px;
+    padding: 20px;
+    border-collapse: collapse;
+    border-spacing: 5px;
+}
+
+.card-info-header {
+    font-size: 22px;
+    font-weight: bold;
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 5px;
+    color: white;
+}
+
+.card-info-row {
+    overflow: auto;
+    clear: both;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.8);
+}
+
+#no-card-message {
+    border: none;
+    display: inline-block;
+    margin-top: 20px;
+}
+
+.card-info-col {
+    display: table-column;
+    margin: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.col-left {
+    float: left;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.8);
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.col-right {
+    vertical-align: middle;
+    float: right;
+}
+
+form.credit-form {
+    padding: 15px 20px;
+    margin: auto;
+    margin-top: 50px;
+    display: block;
+    text-align: center;
+    width: 350px
+}
+
+form.credit-form>legend {
+    font-weight: bold;
+}
+

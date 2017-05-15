@@ -1,21 +1,28 @@
 {% extends 'base.html' %}
 
 {% block body %}
-  {% if message is not None %}
-    <p><strong>{{ message }}</strong></p>
-  {% end %}
-  <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
-  <p>ID: {{ minigrid.minigrid_id }}</p>
-  {% if received_info %}
-    <p>Card info:</p>
-    <p>{{ received_info }}</p>
-  {% end %}
-  <p>Write credit card:</p>
-  <form action="/minigrids/{{ minigrid.minigrid_id }}/write_credit" method="POST">
-    {% module xsrf_form_html() %}
-    <label>Card value : <input type="number" step="1" min="0" name="credit_value" required /></label><br>
-    <input id="card-value" type="submit" value="Write credit card" title="Touch card to reader" disabled/>
-  </form>
+  <div class="full-page-content">
+    {% if message is not None %}
+      <p><strong>{{ message }}</strong></p>
+    {% end %}
+    <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
+    <p>ID: {{ minigrid.minigrid_id }}</p>
+    <div class="center-wrap">
+      <div class="credit-form">
+        <form class="credit-form" action="/minigrids/{{ minigrid.minigrid_id }}/write_credit" method="POST">
+          <legend>Write Credit Card:</legend>
+          {% module xsrf_form_html() %}
+          <label>Card value : <input type="number" step="1" min="0" name="credit_value" required /></label><br>
+          <input id="card-value" type="submit" value="Write credit card" title="Touch card to reader" disabled/>
+        </form>
+      </div>
+      <div class="card-info">
+        <div class="card-info-header">
+          <span>Card Info</span>
+        </div>
+      </div>
+    </div>
+  </div>
   <footer>
     <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
     <p><a href="/">&laquo; Return to minigrid index</a></p>
@@ -25,6 +32,6 @@
     var http_protocol = '{{ http_protocol }}';
   </script>
 
-  <script type="text/javascript" src="{{ static_url('dist/app.bundle.js') }}"></script>
+  <script type="text/javascript" src="{{ static_url('dist/write_credit.bundle.js') }}"></script>
 
 {% end %}
