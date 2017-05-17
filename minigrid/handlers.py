@@ -34,7 +34,7 @@ from minigrid.options import options
 AES = algorithms.AES
 cache = redis.StrictRedis.from_url(options.redis_url)
 broker_url = 'https://broker.portier.io'
-formatter=logging.Formatter(logging.BASIC_FORMAT)
+formatter=logging.Formatter(logging.BASIC_FORMAT + ':%(asctime)s')
 loghandler = logging.FileHandler('log/card_write.log')
 loghandler.setFormatter(formatter)
 writelogger = logging.getLogger('card_write')
