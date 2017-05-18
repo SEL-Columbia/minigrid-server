@@ -293,5 +293,6 @@ form#tariffs>fieldset>input {
 }
 
 .flatpickr-time {
+    float: right;
     width: 80px;
 }
