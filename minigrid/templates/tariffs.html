@@ -13,8 +13,8 @@
       {% include tariff_form.html %}
     {% else %}
       <fieldset>
-        <label>Daytime tariff:</label>
-        <input type="number" step="any" min="0" value="{{ system.day_tariff }}" name="day_tariff" required /> USh/Wh
+        <label>Daytime tariff (USh/Wh):</label>
+        <input type="number" step="any" min="0" value="{{ system.day_tariff }}" name="day_tariff" required />
         </fieldset>
       <fieldset>
         <label>Daytime start hour:</label>
@@ -30,7 +30,10 @@
       </fieldset>
       <fieldset>
         <label>Tariff activation date and time:</label>
-        <input type="datetime-local" name="tariff_activation_timestamp" />
+        <div class="date-time-input">
+          <input class="flatpickr flatpickr-date"/>
+          <input class="flatpickr flatpickr-time"/>
+        </div>
       </fieldset>
         <input type="submit" value="Update Tariff Information"/>
     {% end %}
@@ -40,4 +43,6 @@
   </form>
   </div>
   <footer><a href="/">&laquo; Return to minigrid index</a></footer>
+
+  <script type="text/javascript" src="{{ static_url('dist/tariffs.bundle.js') }}"></script>
 {% end %}
