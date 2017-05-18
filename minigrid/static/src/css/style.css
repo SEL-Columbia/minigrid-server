@@ -43,6 +43,13 @@ input {
     border: 1px solid rgba(0, 0, 0, 0.3);
 }
 
+input[type=text]:focus, input[type=number]:focus,
+textarea:focus {
+    box-shadow: none;
+    border-color: #7ACCD7;
+    outline: none;
+}
+
 form {
     background-color: rgba(255, 255, 255, 0.4);
     display: inline-block;
