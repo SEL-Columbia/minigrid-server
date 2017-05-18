@@ -5,44 +5,56 @@
   {% if message is not None %}
     <p><strong>{{ message }}</strong></p>
   {% end %}
-  <h3>Tariff information:</h3>
-  <form id="tariffs" action="/tariffs" method="POST">
-    {% module xsrf_form_html() %}
-  {% try %}
-    {% if system is None %}
-      {% include tariff_form.html %}
-    {% else %}
-      <fieldset>
-        <label>Daytime tariff (USh/Wh):</label>
-        <input type="number" step="any" min="0" value="{{ system.day_tariff }}" name="day_tariff" required />
+  <div class="box-container">
+    <form class="tariffs" action="/tariffs" method="POST">
+      <legend>Tariff information:</legend>
+      {% module xsrf_form_html() %}
+    {% try %}
+      {% if system is None %}
+        {% include tariff_form.html %}
+      {% else %}
+        <fieldset>
+          <label>Daytime tariff (USh/Wh):</label>
+          <input type="number" step="any" min="0" value="{{ system.day_tariff }}" name="day_tariff" required />
+          </fieldset>
+        <fieldset>
+          <label>Daytime start hour:</label>
+          <input type="number" step="1" min="0" max="23" value="{{ system.day_tariff_start }}" name="day_tariff_start" required />
         </fieldset>
-      <fieldset>
-        <label>Daytime start hour:</label>
-        <input type="number" step="1" min="0" max="23" value="{{ system.day_tariff_start }}" name="day_tariff_start" required />
-      </fieldset>
-      <fieldset>
-        <label>Nighttime tariff:</label>
-        <input type="number" step="any" min="0" name="night_tariff" value="{{ system.night_tariff }}" required />
-      </fieldset>
-      <fieldset>
-        <label>Nighttime start hour:</label>
-        <input type="number" step="1" min="0" max="23" value="{{ system.night_tariff_start }}" name="night_tariff_start" required />
-      </fieldset>
-      <fieldset>
-        <label>Tariff activation date and time:</label>
-        <div class="date-time-input">
-          <input class="flatpickr flatpickr-date"/>
-          <input class="flatpickr flatpickr-time"/>
-        </div>
-      </fieldset>
-        <input type="submit" value="Update Tariff Information"/>
+        <fieldset>
+          <label>Nighttime tariff:</label>
+          <input type="number" step="any" min="0" name="night_tariff" value="{{ system.night_tariff }}" required />
+        </fieldset>
+        <fieldset>
+          <label>Nighttime start hour:</label>
+          <input type="number" step="1" min="0" max="23" value="{{ system.night_tariff_start }}" name="night_tariff_start" required />
+        </fieldset>
+        <fieldset>
+          <label>Tariff activation date and time:</label>
+          <div class="date-time-input">
+            <input class="flatpickr flatpickr-date"/>
+            <input class="flatpickr flatpickr-time"/>
+          </div>
+        </fieldset>
+          <input type="submit" value="Update Tariff Information"/>
+      {% end %}
+    {% except NameError %}
+      {% include tariff_form.html %}
     {% end %}
-  {% except NameError %}
-    {% include tariff_form.html %}
-  {% end %}
-  </form>
+      </form>
+    </div>
   </div>
   <footer><a href="/">&laquo; Return to minigrid index</a></footer>
 
-  <script type="text/javascript" src="{{ static_url('dist/tariffs.bundle.js') }}"></script>
+  {% if system is None %}
+    <script>
+        var timestamp = null;
+    </script>
+  {% else %}
+    <script type="text/javascript">
+        var timestamp = "{{system.tariff_activation_timestamp.isoformat()}}";
+    </script>
+  {% end %}
+
+<script type="text/javascript" src="{{ static_url('dist/tariffs.bundle.js') }}"></script>
 {% end %}

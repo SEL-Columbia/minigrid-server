@@ -153,10 +153,10 @@ input#logout:hover {
 }
 
 #tariff-message {
-    color: white;
     font-weight: 700px;
     font-size: 20px;
-    margin: 0 auto;
+    margin-right: 300px;
+    margin-bottom: 10px;
     text-align: center;
 }
 
@@ -164,8 +164,6 @@ input#logout:hover {
 /*CONTENT*/
 .minigrid-index {
     margin-right: 300px;
-    padding-left: 60px;
-	display: flex;
 }
 
 .content {
@@ -182,6 +180,7 @@ input#logout:hover {
 
 .box-container {
     display: flex;
+    justify-content: center;
 }
 
 .content-box {
@@ -256,25 +255,32 @@ form.credit-form {
     margin-top: 50px;
     display: block;
     text-align: center;
-    width: 350px
+    width: 350px;
 }
 
-form.credit-form>legend {
+legend {
     font-weight: bold;
+    text-align: center;
+    padding: 5px;
 }
 
-form#tariffs> {
+form.tariffs> {
     width: 450px;
 }
 
-form#tariffs>fieldset> {
+form.tariffs>legend {
+    padding: 10px;
+    margin-bottom: 0px;
+}
+
+form.tariffs>fieldset> {
     height: 100px;
 }
-form#tariffs>fieldset>label {
+form.tariffs>fieldset>label {
     margin: 7px 10px;
 }
 
-form#tariffs>fieldset>input {
+form.tariffs>fieldset>input {
     float: right;
     width: 80px;
     padding-left: 7px;
@@ -302,4 +308,8 @@ form#tariffs>fieldset>input {
 .flatpickr-time {
     float: right;
     width: 80px;
+}
+
+div.hasTime {
+    width: 80px !important;
 }
