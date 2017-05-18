@@ -88,5 +88,14 @@
 
     <!-- <p>Aggregate data plots:</p>
     <p>TODO: What data? From where?</p> -->
+
 {% end %}
+
+{% if not system %}
+  <script>
+    var timestamp = null;
+  </script>
+  <script type="text/javascript" src="{{ static_url('dist/tariffs.bundle.js') }}"></script>
+{% end %}
+
 {% end %}
