@@ -1,6 +1,21 @@
-<label>Daytime tariff: <input type="number" step="any" min="0" name="day_tariff" required /></label><br>
-<label>Daytime start hour: <input type="number" step="1" min="0" max="23" value="6" name="day_tariff_start" required /></label><br>
-<label>Nighttime tariff: <input type="number" step="any" min="0" name="night_tariff" required /></label><br>
-<label>Nighttime start hour: <input type="number" step="1" min="0" max="23" value="18" name="night_tariff_start" required /></label><br>
-<label>Tariff activation date and time (Default is current time): <input type="datetime-local" name="tariff_activation_timestamp" /></label><br>
+<fieldset>
+	<label>Daytime tariff (USh/Wh):</label>
+	<input type="number" step="any" min="0" name="day_tariff" required />
+</fieldset>
+<fieldset>
+	<label>Daytime start hour:</label>
+	<input type="number" step="1" min="0" max="23" name="day_tariff_start" required />
+</fieldset>
+<fieldset>
+	<label>Nighttime tariff:</label>
+	<input type="number" step="any" min="0" name="night_tariff" required />
+</fieldset>
+<fieldset>
+	<label>Nighttime start hour:</label>
+	<input type="number" step="1" min="0" max="23" name="night_tariff_start" required />
+</fieldset>
+<fieldset>
+	<label>Tariff activation date and time:</label>
+	<input name="tariff_activation_timestamp" class="flatpickr"/>
+</fieldset>
 <input type="submit" value="Initialize Tariff Information" />

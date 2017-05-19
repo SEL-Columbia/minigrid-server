@@ -2,89 +2,100 @@
 
 {% block body %}
 
-<nav class="sidebar">
-  <ul>
-    <li><a href="/users">&laquo; Manage users</a>
+  <nav class="sidebar">
+    <ul>
+      <li><a href="/users">&laquo; Manage users</a>
 
 {% if not system %}
     
-  </ul>
-  <div id="tariff-message">You must initialize the system tariff information.</div>
-</nav>
+    </ul>
+  </nav>
 
-  <div class="content" id="tariff-form">
-      <form action="/tariffs" method="POST">
+  <div id="tariff-message">You must initialize the system tariff information.</div>
+    <div class="minigrid-index box-container">
+      <form class="tariffs" action="/tariffs" method="POST">
         {% module xsrf_form_html() %}
         {% include tariff_form.html %}
       </form>
+    </div>
   </div>
 
 {% elif not any_devices %}
 
-  </ul>
+    </ul>
+  </nav>
+
   <div id="tariff-message">You must add at least one payment system device address.</div>
-
-</nav>
-
-    <h3>Add device:</h3>
+  <div class="minigrid-index box-container">
       <form action="/device" method="POST">
+        <legend>Add Device:</legend>
         {% module xsrf_form_html() %}
-	{% include device_form.html %}
+	     {% include device_form.html %}
       </form>
+  </div>
 
 {% else %}
 
-    <li><a href="/tariffs">&laquo; Manage tariffs</a></li>
-    <!-- <li><a href="/technician">Write technician ID card &raquo;</a></li> -->
-    <li><a href="/device">&laquo; Manage devices</a></li>
-    <li><a href="/cards">&laquo; Read and validate cards</a></li>
-  </ul>
-</nav>
-
-<div class="minigrid-index">
-
-  <div class="content-box">
-    <h3>Minigrids:</h3>
-    <ul>
-      {% set zero_minigrids = True %}
-      {% for grid in minigrids %}
-        {% set zero_minigrids = False %}
-        <li>
-          <p><a href="/minigrids/{{ grid.minigrid_id }}">{{ grid.minigrid_name }} &raquo;</a></p>
-          <!-- <p>Status: {{ grid.status }}</p> -->
-        </li>
-      {% end %}
+      <li><a href="/tariffs">&laquo; Manage tariffs</a></li>
+      <!-- <li><a href="/technician">Write technician ID card &raquo;</a></li> -->
+      <li><a href="/device">&laquo; Manage devices</a></li>
+      <li><a href="/cards">&laquo; Read and validate cards</a></li>
     </ul>
-    {% if zero_minigrids %}
-      <p>No minigrids</p>
-    {% end %}
+  </nav>
+
+  <div class="minigrid-index box-container">
+
+    <div class="content-box">
+      <h3>Minigrids:</h3>
+      <ul>
+        {% set zero_minigrids = True %}
+        {% for grid in minigrids %}
+          {% set zero_minigrids = False %}
+          <li>
+            <p><a href="/minigrids/{{ grid.minigrid_id }}">{{ grid.minigrid_name }} &raquo;</a></p>
+            <!-- <p>Status: {{ grid.status }}</p> -->
+          </li>
+        {% end %}
+      </ul>
+      {% if zero_minigrids %}
+        <p>No minigrids</p>
+      {% end %}
+    </div>
+
+    <div class="content-box">
+
+      {% if message is not None %}
+      <p><strong>Could not create minigrid: {{ message }}</strong></p>
+      {% end %}
+      <h3>Add minigrid:</h3>
+      <form id="minigrid" action="/minigrids" method="POST">
+        {% module xsrf_form_html() %}
+        <fieldset>
+          <label>Name:</label>
+          <br>
+          <input type="text" name="minigrid_name" required />
+        </fieldset>
+        <fieldset>
+          <label>Payment system ID:</label>
+          <br>
+          <input type="text" name="minigrid_payment_id" pattern="[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}" required title="UUID format" />
+        </fieldset>
+        <input type="submit" value="Add Minigrid" />
+      </form>
+
+    </div>
   </div>
-
-  <div class="content-box">
-
-    {% if message is not None %}
-    <p><strong>Could not create minigrid: {{ message }}</strong></p>
-    {% end %}
-    <h3>Add minigrid:</h3>
-    <form id="minigrid" action="/minigrids" method="POST">
-      {% module xsrf_form_html() %}
-      <fieldset>
-        <label>Name:</label>
-        <br>
-        <input name="minigrid_name" required />
-      </fieldset>
-      <fieldset>
-        <label>Payment system ID:</label>
-        <br>
-        <input name="minigrid_payment_id" pattern="[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}" required title="UUID format" />
-      </fieldset>
-      <input type="submit" value="Add Minigrid" />
-    </form>
-
-  </div>
-</div>
 
     <!-- <p>Aggregate data plots:</p>
     <p>TODO: What data? From where?</p> -->
+
 {% end %}
+
+{% if not system %}
+  <script>
+    var timestamp = null;
+  </script>
+  <script type="text/javascript" src="{{ static_url('dist/tariffs.bundle.js') }}"></script>
+{% end %}
+
 {% end %}
