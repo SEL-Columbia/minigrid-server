@@ -10,7 +10,7 @@
       <legend>Tariff information:</legend>
       {% module xsrf_form_html() %}
     {% try %}
-      {% if system is not None %}
+      {% if system is None %}
         {% include tariff_form.html %}
       {% else %}
         <fieldset>
@@ -43,7 +43,7 @@
   </div>
   <footer><a href="/">&laquo; Return to minigrid index</a></footer>
 
-  {% if system is not None %}
+  {% if system is None %}
     <script>
         var timestamp = null;
     </script>
