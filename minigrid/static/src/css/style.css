@@ -286,11 +286,8 @@ form.tariffs>fieldset>input {
     padding-left: 7px;
 }
 
-.date-time-input {
+form.tariffs>fieldset>input.flatpickr {
     float: right;
-}
-
-.flatpickr {
     margin: 2px;
     padding: 7px;
     display: inline !important;
@@ -299,17 +296,5 @@ form.tariffs>fieldset>input {
     border: 1px solid rgba(0, 0, 0, 0.4);
     border-radius: 0px;
     line-height: 0px !important;
-}
-
-.flatpickr-date {
-    width: 138px;
-}
-
-.flatpickr-time {
-    float: right;
-    width: 80px;
-}
-
-div.hasTime {
-    width: 80px !important;
+    width: 150px;
 }

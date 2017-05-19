@@ -10,7 +10,7 @@
       <legend>Tariff information:</legend>
       {% module xsrf_form_html() %}
     {% try %}
-      {% if system is None %}
+      {% if system is not None %}
         {% include tariff_form.html %}
       {% else %}
         <fieldset>
@@ -31,10 +31,7 @@
         </fieldset>
         <fieldset>
           <label>Tariff activation date and time:</label>
-          <div class="date-time-input">
-            <input class="flatpickr flatpickr-date"/>
-            <input class="flatpickr flatpickr-time"/>
-          </div>
+            <input name="tariff_activation_timestamp" class="flatpickr"/>
         </fieldset>
           <input type="submit" value="Update Tariff Information"/>
       {% end %}
@@ -46,7 +43,7 @@
   </div>
   <footer><a href="/">&laquo; Return to minigrid index</a></footer>
 
-  {% if system is None %}
+  {% if system is not None %}
     <script>
         var timestamp = null;
     </script>
