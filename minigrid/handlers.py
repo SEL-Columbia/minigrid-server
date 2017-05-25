@@ -605,6 +605,25 @@ class LogoutHandler(BaseHandler):
         self.redirect('/')
 
 
+def _decrypt(cipher, data):
+    decryptor = cipher.decryptor()
+    return decryptor.update(data) + decryptor.finalize()
+
+
+def _user_or_maintenance_card(binary):
+    result = OrderedDict()
+    result[3] = binary[131:195].decode('ascii')
+    result[4] = binary[196:].decode('ascii')
+    return result
+
+
+def _credit_card(cipher, binary):
+    result = OrderedDict()
+    result[3] = _decrypt(cipher, unhexlify(binary[131:195])).hex()  # contains tariff information
+    result[4] = binary[196:].decode('ascii')
+    return result
+
+
 def _pack_into_dict(session, binary):
     # TODO: here there be dragons...
     try:
@@ -618,36 +637,31 @@ def _pack_into_dict(session, binary):
     if not device_exists:  # TODO: new error class
         raise tornado.web.HTTPError(400, 'bad device id {}'.format(binary[:12]))
     binary = binary[12:]
-    chunks = len(binary) // 33
     result = OrderedDict()
-    for i in range(chunks):
-        block = binary[33*i:33*(i+1)]
-        block_id = int(chr(block[0]), 16)
-        message = block[1:]
-        result[block_id] = message
-    payment_id = str(UUID(result[6].decode('ascii')))
-    # TODO: for a blank one, it will be 202020...?
+    # Is it safe to assume that sector 1 is always first? I hope so
+    sector_1 = unhexlify(binary[1:65])
+    result[1] = sector_1.hex()
+    ## Use this for the future... displaying in the UI
+    system_id = sector_1[:2]
+    application_id = sector_1[2:4]
+    card_type = sector_1[4:5].decode('ascii')
+    offset = sector_1[5:6]
+    length = sector_1[6:8]
+    card_produced_time = sector_1[8:12]
+    card_last_read_time = sector_1[12:16]
+    payment_id = sector_1[16:32].hex()
     payment_system = session.query(models.PaymentSystem).get(payment_id)
     key = payment_system.aes_key
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
-    for block_index, value in result.items():
-        bin_value = unhexlify(value)
-        if block_index == 6:
-            result[block_index] = value.hex()
-        else:
-            decryptor = cipher.decryptor()
-            plaintext = decryptor.update(bin_value) + decryptor.finalize()
-            result[block_index] = plaintext.hex()
-    # Deal with maintenance card, which has a different format
-    # TODO: clean this up
-    if result[4][:2] == '44':
-        new_result = OrderedDict()
-        new_result[4] = result[4]
-        new_result[5] = binary[34:66].hex()
-        block_8_length = int.from_bytes(unhexlify(binary[34:38]), 'big')
-        new_result[6] = result[6]
-        new_result[8] = binary[100:100+block_8_length*32].hex()
-        result = new_result
+    sector_2_enc = unhexlify(binary[66:130])
+    result[2] = _decrypt(cipher, sector_2_enc).hex()  # contains card-specific information
+    if card_type in {'A', 'B', 'D'}:
+        specific_data = _user_or_maintenance_card(binary)
+    elif card_type == 'C':
+        specific_data = _credit_card(cipher, binary)
+    else:
+        raise tornado.web.HTTPError(400, f'bad card type {card_type}')
+    result.update(specific_data)
     return json_encode(result)
 
 

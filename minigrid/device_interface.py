@@ -17,6 +17,31 @@ def _wrap_binary(binary):
 
 def write_vendor_card(cache, key, minigrid_id, payment_id, vendor):
     """Write information to a vendor ID card."""
+    sector_1 = b''.join((
+        b'SI',  # System ID
+        b'AI',  # Application ID
+        b'A',  # A for vendor
+        b'O',  # Offset
+        b'Le',  # Length
+        int(time.time()).to_bytes(4, 'big'),  # card produced time
+        bytes(4),  # card read time TODO
+        uuid.UUID(payment_id).bytes,
+    ))
+    sector_2 = b''.join((
+        vendor.vendor_user_id.encode('ascii'),  # 0000-9999 ASCII
+        uuid.UUID(minigrid_id).bytes,
+        #unhexlify(uuid.UUID(minigrid_id).bytes).hex().upper().encode()
+        bytes(12),
+    ))
+    cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
+    encryptor = cipher.encryptor()
+    sector_2_enc = encryptor.update(sector_2) + encryptor.finalize()
+    payload = sector_1 + sector_2_enc
+    cache.set('device_info', payload, 5)
+
+
+def write_vendor_card_bak(cache, key, minigrid_id, payment_id, vendor):
+    """Write information to a vendor ID card."""
     block_4 = b''.join((
         b'A',  # A for vendor
         vendor.vendor_user_id.encode('ascii'),  # 0000-9999 ASCII
