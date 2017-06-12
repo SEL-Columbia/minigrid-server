@@ -199,5 +199,4 @@ def write_credit_card(
         bytes(13),
         (sum(naive_payload[94:96]) & 0xFF).to_bytes(1, 'big'),
     ))
-    print(actual_payload.hex())
     cache.set('device_info', _wrap_binary(actual_payload), 5)
