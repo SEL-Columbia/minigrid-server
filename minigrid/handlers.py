@@ -368,6 +368,7 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
         grid = models.get_minigrid(self.session, minigrid_id)
         action = self.get_argument('action')
         user_id_exists = 'vendor_vendor_minigrid_id_vendor_user_id_key'
+        http_protocol='https' if options.minigrid_https else 'http'
         if action == 'create':
             try:
                 with models.transaction(self.session) as session:
@@ -382,7 +383,9 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
                 else:
                     message = ' '.join(error.orig.pgerror.split())
                 raise minigrid.error.MinigridHTTPError(
-                    message, 400, 'minigrid_vendors.html', minigrid=grid)
+                    message, 400, 'minigrid_vendors.html', minigrid=grid,
+                    http_protocol=http_protocol,  # lazy fix
+                )
             self.set_status(201)
         elif action == 'remove':
             vendor_id = self.get_argument('vendor_id')
@@ -432,6 +435,7 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
         grid = models.get_minigrid(self.session, minigrid_id)
         action = self.get_argument('action')
         user_id_exists = 'customer_customer_minigrid_id_customer_user_id_key'
+        http_protocol='https' if options.minigrid_https else 'http'
         if action == 'create':
             try:
                 with models.transaction(self.session) as session:
@@ -446,7 +450,9 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
                 else:
                     message = ' '.join(error.orig.pgerror.split())
                 raise minigrid.error.MinigridHTTPError(
-                    message, 400, 'minigrid_customers.html', minigrid=grid)
+                    message, 400, 'minigrid_customers.html', minigrid=grid,
+                    http_protocol=http_protocol,  # lazy fix
+                )
             self.set_status(201)
         elif action == 'remove':
             customer_id = self.get_argument('customer_id')
@@ -500,6 +506,7 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
         grid = models.get_minigrid(self.session, minigrid_id)
         action = self.get_argument('action')
         card_id_exists = 'maintenance_card_maintenance_card_minigrid_id_maintenance_card_card_id_key'
+        http_protocol='https' if options.minigrid_https else 'http'
         if action == 'create':
             try:
                 with models.transaction(self.session) as session:
@@ -514,7 +521,9 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
                 else:
                     message = ' '.join(error.orig.pgerror.split())
                 raise minigrid.error.MinigridHTTPError(
-                    message, 400, 'minigrid_maintenance_cards.html', minigrid=grid)
+                    message, 400, 'minigrid_maintenance_cards.html', minigrid=grid,
+                    http_protocol=http_protocol,  # lazy fix
+                )
             self.set_status(201)
         elif action == 'remove':
             maintenance_card_id = self.get_argument('maintenance_card_id')
@@ -534,7 +543,7 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
             maintenance_card = (
                 self.session.query(models.MaintenanceCard)
                 .get(self.get_argument('maintenance_card_id')))
-            write_maintenance_card_card(cache, grid.payment_system.aes_key, grid.payment_system.payment_id, maintenance_card)
+            write_maintenance_card_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, maintenance_card)
             message = 'Card written'
             self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards', message=message)
             #self.render(
@@ -651,6 +660,9 @@ def _pack_into_dict(session, binary):
     card_last_read_time = sector_1[12:16]
     payment_id = sector_1[16:32].hex()
     payment_system = session.query(models.PaymentSystem).get(payment_id)
+    # TODO: Special case all zeroes
+    if payment_system is None:
+        raise minigrid.error.CardReadError(f'No device with id {payment_id}')
     key = payment_system.aes_key
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     sector_2_enc = unhexlify(binary[66:130])
@@ -698,7 +710,7 @@ class DeviceInfoHandler(BaseHandler):
                 # TODO: clean this up
                 payload = _pack_into_dict(self.session, body)
             except Exception as error:
-                self.write(str(error))
+                cache.set('card_read_error', str(error))
             else:
                 cache.set('received_info', payload, 5)
         device_info = cache.get('device_info')

@@ -27,3 +27,7 @@ class LoginError(MinigridHTTPError):
                  *, reason, **template_kwargs):
         """Create a login error (400 by default)."""
         super().__init__(reason, status_code, template_name, **template_kwargs)
+
+
+class CardReadError(Exception):
+    """Error while reading a card"""
