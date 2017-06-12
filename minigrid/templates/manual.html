@@ -1,0 +1,43 @@
+vendors
+operators
+customers
+
+
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="full-page-content">
+	<h2>User Manual</h2>
+	<p />
+	<h3>Operators</h3>
+
+	<div id="add-user">
+		<p><b>Adding new Vendors and Customers:</b></p>
+		<p>Operators can add new vendors and customers specific to minigrids.</p>
+		<p>On the homepage, click on the minigrid the new vendor/customer will be added to.
+		</p>
+		<p>Once on the minigrid index page, click either "vendor list" or "customer list", depending on the type of user to be added.</p>
+		<p>On the provided form, add the vendor/customer name and ID.
+		The ID must be 4 numbers long and must be unique (it cannot have been used before for another ID card).
+		<br />
+		After entering the information, press the 'Add Vendor' or 'Add Customer' button on the bottom of the form.</p>
+		<p>The new user should appear on the list of vendors/customers.</p>
+	</div>
+
+	<br />
+
+	<div id="id-cards">
+		<p><b>Writing Vendor and Customer ID cards:</b></p>
+		<p>Operators can write new vendor ID cards by accessing the vendor list or customer list page of the respective minigrid.</p>
+		<p>First, make sure the user has been <a href="#add-user">added to the system</a>. An existing user should be displayed in the list of vendors or customer on the respective pages.</p>
+		<p>
+		To write ID cards, put a blank card on the card reader.
+		Find the existing user in the vendors/customers list. Then press the "Write ID card" button directly below the user's listing.
+		</p>
+		<p>The ID card has now been written, and the newly added card information should display on the screen.</p>
+	</div>
+</div>
+<footer><a href="/">&laquo; Return to minigrid index</a></footer>
+
+<script type="text/javascript" src="{{ static_url('dist/tariffs.bundle.js') }}"></script>
+{% end %}
