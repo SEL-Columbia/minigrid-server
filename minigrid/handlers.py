@@ -1,7 +1,7 @@
 """Handlers for the URL endpoints."""
 from binascii import unhexlify
 from collections import OrderedDict
-from datetime import timedelta
+from datetime import datetime, timedelta
 import secrets
 from urllib.parse import urlencode
 from uuid import uuid4, UUID
@@ -633,6 +633,22 @@ def _credit_card(cipher, binary):
     return result
 
 
+_card_type_dict = {
+    'A': 'Vendor ID Card',
+    'B': 'Customer ID Card',
+    'C': 'Credit Card',
+    'D': 'Maintenance Card',
+}
+
+
+_secret_value_type = {
+    'A': 'Vendor User ID',
+    'B': 'Customer User ID',
+    'C': 'Credit Amount',
+    'D': 'Maintenance Card ID',
+}
+
+
 def _pack_into_dict(session, binary):
     # TODO: here there be dragons...
     try:
@@ -654,21 +670,29 @@ def _pack_into_dict(session, binary):
     system_id = sector_1[:2]
     application_id = sector_1[2:4]
     card_type = sector_1[4:5].decode('ascii')
+    result['Card Type'] = _card_type_dict[card_type]
     offset = sector_1[5:6]
     length = sector_1[6:8]
     card_produced_time = sector_1[8:12]
+    result['Card Creation Time'] = datetime.fromtimestamp(int.from_bytes(card_produced_time, 'big')).isoformat()
     card_last_read_time = sector_1[12:16]
+    result['Card Last Read Time'] = datetime.fromtimestamp(int.from_bytes(card_last_read_time, 'big')).isoformat()
     payment_id = sector_1[16:32].hex()
     payment_system = session.query(models.PaymentSystem).get(payment_id)
     # TODO: Special case all zeroes
     if payment_system is None:
         raise minigrid.error.CardReadError(f'No device with id {payment_id}')
+    result['Payment System ID'] = payment_system.payment_id
     key = payment_system.aes_key
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     sector_2_enc = unhexlify(binary[66:130])
-    result[2] = _decrypt(cipher, sector_2_enc).hex()  # contains card-specific information
+    sector_2 = _decrypt(cipher, sector_2_enc)
+    secret_value = sector_2[:4].decode('ascii')
+    result[_secret_value_type[card_type]] = secret_value
+    result[2] = sector_2.hex()  # contains card-specific information
     if card_type in {'A', 'B', 'D'}:
         specific_data = _user_or_maintenance_card(binary)
+        result['Minigrid ID'] = str(UUID(bytes=sector_2[4:20]))
     elif card_type == 'C':
         specific_data = _credit_card(cipher, binary)
     else:
