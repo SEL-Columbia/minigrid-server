@@ -3,7 +3,6 @@ import $ from 'jquery';
 export default function populateCardInfoTable(info) {
     $('.card-info>.card-info-row').remove();
     if (isEmpty(info)) {
-        $('form.credit-form').submit(false);
         $('.card-info').append(`
                 <div class="card-info-row" id="no-card-message">
                     <strong><p>${'No card info received.'}</p><p>${'Is there a card on the device?'}</p></strong>
