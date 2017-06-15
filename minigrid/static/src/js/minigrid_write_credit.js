@@ -7,8 +7,6 @@ import populateCardInfoTable from './populate_card_info.js';
 
 (function(){
     
-    //disable form submit until card is on device
-    $('form.credit-form').submit(false);
     const input = document.getElementById('card-value');
 
     let conn = new SockJS(http_protocol + '://' + window.location.host + '/cardconn');
