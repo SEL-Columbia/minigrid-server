@@ -687,7 +687,11 @@ def _pack_into_dict(session, binary):
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     sector_2_enc = unhexlify(binary[66:130])
     sector_2 = _decrypt(cipher, sector_2_enc)
-    secret_value = sector_2[:4].decode('ascii')
+    raw_secret_value = sector_2[:4]
+    if card_type == 'C':
+        secret_value = int.from_bytes(raw_secret_value, 'big')
+    else:
+        secret_value = raw_secret_value.decode('ascii')
     result[_secret_value_type[card_type]] = secret_value
     result[2] = sector_2.hex()  # contains card-specific information
     if card_type in {'A', 'B', 'D'}:
