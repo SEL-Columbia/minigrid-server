@@ -127,11 +127,113 @@ class System(Base):
         nullable=False, server_default='18')
     tariff_creation_timestamp = sa.Column(
         pg.TIMESTAMP, nullable=False,
-        server_default=func.current_timestamp())
-    tariff_activation_timestamp = sa.Column(
-        pg.TIMESTAMP, nullable=False,
         server_default=func.current_timestamp(),
         onupdate=func.current_timestamp())
+    tariff_activation_timestamp = sa.Column(
+        pg.TIMESTAMP, nullable=False,
+        server_default=func.current_timestamp())
+
+
+class VendorCardHistory(Base):
+    """The model for freshly-minted vendor card records."""
+    __tablename__ = 'vendor_card_history'
+    vendor_card_id = pk()
+    vendor_card_minigrid_id = sa.Column(pg.UUID, nullable=False)
+    vendor_card_vendor_id = sa.Column(pg.UUID, nullable=False)
+    vendor_card_user_id = sa.Column(
+        pg.TEXT, sa.CheckConstraint("vendor_card_user_id ~ '\d{4}'"),
+        nullable=False)
+    vendor_card_created = sa.Column(
+        pg.TIMESTAMP, nullable=False,
+        server_default=func.current_timestamp())
+
+
+class CustomerCardHistory(Base):
+    """The model for freshly-minted customer card records."""
+    __tablename__ = 'customer_card_history'
+    customer_card_id = pk()
+    customer_card_minigrid_id = sa.Column(pg.UUID, nullable=False)
+    customer_card_customer_id = sa.Column(pg.UUID, nullable=False)
+    customer_card_user_id = sa.Column(
+        pg.TEXT, sa.CheckConstraint("customer_card_user_id ~ '\d{4}'"),
+        nullable=False)
+    customer_card_created = sa.Column(
+        pg.TIMESTAMP, nullable=False,
+        server_default=func.current_timestamp())
+
+
+class MaintenanceCardHistory(Base):
+    """The model for freshly-minted maintenance card records."""
+    __tablename__ = 'maintenance_card_history'
+    mc_id = pk()
+    mc_minigrid_id = sa.Column(pg.UUID, nullable=False)
+    mc_maintenance_card_id = sa.Column(pg.UUID, nullable=False)
+    mc_maintenance_card_card_id = sa.Column(
+        pg.TEXT, sa.CheckConstraint("mc_maintenance_card_card_id ~ '\d{4}'"),
+        nullable=False)
+    mc_created = sa.Column(
+        pg.TIMESTAMP, nullable=False,
+        server_default=func.current_timestamp())
+
+
+class CreditCardHistory(Base):
+    """The model for freshly-minted credit card records."""
+    __tablename__ = 'credit_card_history'
+    credit_card_id = pk()
+    credit_minigrid_id = fk('minigrid.minigrid_id')
+    credit_amount = sa.Column(
+        pg.INTEGER,
+        sa.CheckConstraint('credit_amount > 0'),
+        nullable=False)
+    credit_day_tariff = sa.Column(
+        pg.NUMERIC,
+        sa.CheckConstraint('credit_day_tariff > 0'), nullable=False)
+    credit_day_tariff_start = sa.Column(
+        pg.INTEGER,
+        sa.CheckConstraint('credit_day_tariff_start >= 0'),
+        sa.CheckConstraint('credit_day_tariff_start <= 23'),
+        sa.CheckConstraint('credit_day_tariff_start < credit_night_tariff_start'),
+        nullable=False)
+    credit_night_tariff = sa.Column(
+        pg.NUMERIC,
+        sa.CheckConstraint('credit_night_tariff > 0'), nullable=False)
+    credit_night_tariff_start = sa.Column(
+        pg.INTEGER,
+        sa.CheckConstraint('credit_night_tariff_start >= 0'),
+        sa.CheckConstraint('credit_night_tariff_start <= 23'),
+        sa.CheckConstraint('credit_night_tariff_start > credit_day_tariff_start'),
+        nullable=False)
+    credit_tariff_creation_timestamp = sa.Column(
+        pg.TIMESTAMP, nullable=False)
+    credit_tariff_activation_timestamp = sa.Column(
+        pg.TIMESTAMP, nullable=False)
+    credit_card_created = sa.Column(
+        pg.TIMESTAMP, nullable=False,
+        server_default=func.current_timestamp())
+
+
+class SystemHistory(Base):
+    """The model for information retrieved from used credit cards."""
+    __tablename__ = 'system_history'
+    sh_id = pk()
+    sh_credit_card_id = fk('credit_card_history.credit_card_id')
+    sh_meter_id = sa.Column(
+        pg.INTEGER,
+        sa.CheckConstraint('sh_meter_id > 0'), nullable=False)
+    sh_meter_energy_usage = sa.Column(
+        pg.INTEGER,
+        sa.CheckConstraint('sh_meter_energy_usage > 0'), nullable=False)
+    sh_meter_credit = sa.Column(
+        pg.INTEGER,
+        sa.CheckConstraint('sh_meter_credit >= 0'), nullable=False)
+    sh_record_timestamp = sa.Column(
+        pg.TIMESTAMP, nullable=False)
+    sh_created = sa.Column(
+        pg.TIMESTAMP, nullable=False,
+        server_default=func.current_timestamp())
+
+    __table_args__ = (
+        sa.UniqueConstraint('sh_credit_card_id', 'sh_meter_id'),)
 
 
 class Device(Base):
