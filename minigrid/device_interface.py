@@ -225,7 +225,7 @@ def write_credit_card(
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
     with models.transaction(session) as tx_session:
-        tx_session.add(models.CustomerCardHistory(
+        tx_session.add(models.CreditCardHistory(
             credit_card_id=credit_card_id,
             credit_minigrid_id=minigrid_id,
             credit_amount=credit_amount,
