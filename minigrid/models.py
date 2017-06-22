@@ -233,7 +233,7 @@ class SystemHistory(Base):
         server_default=func.current_timestamp())
 
     __table_args__ = (
-        sa.UniqueConstraint('sh_credit_card_id', 'sh_meter_id'))
+        sa.UniqueConstraint('sh_credit_card_id', 'sh_meter_id'),)
 
 
 class Device(Base):

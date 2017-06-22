@@ -221,6 +221,7 @@ def write_credit_card(
         naive_payload[94:96],
         bytes(13),
         (sum(naive_payload[94:96]) & 0xFF).to_bytes(1, 'big'),
+        bytes(32),  # maybe more?
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
     with models.transaction(session) as tx_session:
