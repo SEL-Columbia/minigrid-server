@@ -269,11 +269,11 @@ class Minigrid(Base):
     payment_system = relationship(
         'PaymentSystem', backref=backref('minigrid', uselist=False))
     vendors = relationship(
-        'Vendor', backref='minigrid', order_by='Vendor.vendor_name')
+        'Vendor', backref='minigrid', order_by='Vendor.vendor_user_id')
     customers = relationship(
-        'Customer', backref='minigrid', order_by='Customer.customer_name')
+        'Customer', backref='minigrid', order_by='Customer.customer_user_id')
     maintenance_cards = relationship(
-        'MaintenanceCard', backref='minigrid', order_by='MaintenanceCard.maintenance_card_name')
+        'MaintenanceCard', backref='minigrid', order_by='MaintenanceCard.maintenance_card_card_id')
 
     __table_args__ = (
         sa.UniqueConstraint('minigrid_payment_id'),)
