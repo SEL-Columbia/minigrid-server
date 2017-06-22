@@ -633,7 +633,10 @@ def _user_or_maintenance_card(binary):
 def _credit_card(session, cipher, binary, credit_card_id):
     result = OrderedDict()
     #result[3] = _decrypt(cipher, unhexlify(binary[131:195])).hex()  # contains tariff information
-    sector_4 = unhexlify(binary[196:]).rstrip(b'\x00')
+    raw_sector_4 = unhexlify(binary[196:])
+    if not any(raw_sector_4):
+        return result
+    sector_4 = raw_sector_4.split(b'###')[0][:-2]
     # If card has been used...
     record_timestamp = datetime.fromtimestamp(
         int(sector_4[4:14].decode('ascii'))).isoformat()
@@ -762,7 +765,7 @@ class DeviceInfoHandler(BaseHandler):
                 # TODO: clean this up
                 payload = _pack_into_dict(self.session, body)
             except Exception as error:
-                cache.set('card_read_error', str(error))
+                cache.set('card_read_error', str(error), 5)
             else:
                 cache.set('received_info', payload, 5)
                 cache.delete('card_read_error')
