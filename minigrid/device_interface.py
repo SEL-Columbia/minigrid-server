@@ -6,6 +6,8 @@ import uuid
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
+import minigrid.models as models
+
 
 AES = algorithms.AES
 
@@ -15,7 +17,7 @@ def _wrap_binary(binary):
     return b'qS' + binary.hex().encode('ascii') + b'EL'
 
 
-def write_vendor_card(cache, key, minigrid_id, payment_id, vendor):
+def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
     """Write information to a vendor ID card."""
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
@@ -53,9 +55,15 @@ def write_vendor_card(cache, key, minigrid_id, payment_id, vendor):
         (sum(naive_payload[62:64]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
+    with models.transaction(session) as tx_session:
+        tx_session.add(models.VendorCardHistory(
+            vendor_card_minigrid_id=minigrid_id,
+            vendor_card_vendor_id=vendor.vendor_id,
+            vendor_card_user_id=vendor.vendor_user_id,
+        ))
 
 
-def write_customer_card(cache, key, minigrid_id, payment_id, customer):
+def write_customer_card(session, cache, key, minigrid_id, payment_id, customer):
     """Write information to a customer ID card."""
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
@@ -93,9 +101,15 @@ def write_customer_card(cache, key, minigrid_id, payment_id, customer):
         (sum(naive_payload[62:64]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
+    with models.transaction(session) as tx_session:
+        tx_session.add(models.CustomerCardHistory(
+            customer_card_minigrid_id=minigrid_id,
+            customer_card_customer_id=customer.customer_id,
+            customer_card_user_id=customer.customer_user_id,
+        ))
 
 
-def write_maintenance_card_card(cache, key, minigrid_id, payment_id, maintenance_card):
+def write_maintenance_card_card(session, cache, key, minigrid_id, payment_id, maintenance_card):
     """Write information to a maintenance card card."""
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
@@ -133,6 +147,12 @@ def write_maintenance_card_card(cache, key, minigrid_id, payment_id, maintenance
         (sum(naive_payload[62:64]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
+    with models.transaction(session) as tx_session:
+        tx_session.add(models.MaintenanceCardHistory(
+            mc_minigrid_id=minigrid_id,
+            mc_maintenance_card_id=maintenance_card.maintenance_card_id,
+            mc_maintenance_card_card_id=maintenance_card.maintenance_card_card_id,
+        ))
 
 
 def _hour_on_epoch_day(hour_int):
@@ -140,7 +160,9 @@ def _hour_on_epoch_day(hour_int):
 
 
 def write_credit_card(
+        session,
         cache, key,
+        minigrid_id,
         payment_id, credit_amount,
         day_tariff, day_tariff_start,
         night_tariff, night_tariff_start,
@@ -156,9 +178,10 @@ def write_credit_card(
         bytes(4),  # card read time TODO
         uuid.UUID(payment_id).bytes,
     ))
+    credit_card_id = uuid.uuid4()
     sector_2 = b''.join((
         credit_amount.to_bytes(4, 'big'),  # 4 byte unsigned int
-        uuid.uuid4().bytes,
+        credit_card_id.bytes,
         bytes(12),
     ))
     sector_3 = b''.join((
@@ -200,3 +223,15 @@ def write_credit_card(
         (sum(naive_payload[94:96]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
+    with models.transaction(session) as tx_session:
+        tx_session.add(models.CustomerCardHistory(
+            credit_card_id=credit_card_id,
+            credit_minigrid_id=minigrid_id,
+            credit_amount=credit_amount,
+            credit_day_tariff=day_tariff,
+            credit_day_tariff_start=day_tariff_start,
+            credit_night_tariff=night_tariff,
+            credit_night_tariff_start=night_tariff_start,
+            credit_tariff_creation_timestamp=tariff_creation_timestamp,
+            credit_tariff_activation_timestamp=tariff_activation_timestamp,
+        ))

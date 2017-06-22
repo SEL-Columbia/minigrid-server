@@ -336,8 +336,10 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
         minigrid = models.get_minigrid(self.session, minigrid_id)
         system = self.session.query(models.System).one()
         write_credit_card(
+            self.session,
             cache,
             minigrid.payment_system.aes_key,
+            minigrid_id,
             minigrid.payment_system.payment_id,
             int(self.get_argument('credit_value')),
             system.day_tariff,
@@ -406,7 +408,7 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
             vendor = (
                 self.session.query(models.Vendor)
                 .get(self.get_argument('vendor_id')))
-            write_vendor_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, vendor)
+            write_vendor_card(self.session, cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, vendor)
             message = 'Card written'
             self.redirect(f'/minigrids/{minigrid_id}/vendors', message=message)
             #self.render(
@@ -474,7 +476,7 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
             customer = (
                 self.session.query(models.Customer)
                 .get(self.get_argument('customer_id')))
-            write_customer_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, customer)
+            write_customer_card(self.session, cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, customer)
             message = 'Card written'
             self.redirect(f'/minigrids/{minigrid_id}/customers', message=message)
             #self.render(
@@ -545,7 +547,7 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
             maintenance_card = (
                 self.session.query(models.MaintenanceCard)
                 .get(self.get_argument('maintenance_card_id')))
-            write_maintenance_card_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, maintenance_card)
+            write_maintenance_card_card(self.session, cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, maintenance_card)
             message = 'Card written'
             self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards', message=message)
             #self.render(
@@ -628,10 +630,25 @@ def _user_or_maintenance_card(binary):
     return result
 
 
-def _credit_card(cipher, binary):
+def _credit_card(session, cipher, binary, credit_card_id):
     result = OrderedDict()
     #result[3] = _decrypt(cipher, unhexlify(binary[131:195])).hex()  # contains tariff information
-    #result[4] = binary[196:].decode('ascii')
+    sector_4 = unhexlify(binary[196:]).rstrip(b'\x00')
+    # If card has been used...
+    record_timestamp = datetime.fromtimestamp(
+        int(sector_4[4:14].decode('ascii'))).isoformat()
+    result['Timestamp of Recorded Data'] = record_timestamp
+    meter_records = sector_4[15:].decode('ascii').split()
+    for record in meter_records:
+        meter_id, usage, credit = record.split(',')
+        with models.transaction(session) as tx_session:
+            tx_session.add(models.SystemHistory(
+                sh_credit_card_id=credit_card_id,
+                sh_meter_id=meter_id,
+                sh_meter_energy_usage=usage,
+                sh_meter_credit=credit,
+                sh_record_timestamp=record_timestamp,
+            ))
     return result
 
 
@@ -700,10 +717,12 @@ def _pack_into_dict(session, binary):
         secret_value = raw_secret_value.decode('ascii')
     result[_secret_value_type[card_type]] = secret_value
     if card_type in {'A', 'B', 'D'}:
-        specific_data = _user_or_maintenance_card(binary)
         result['Minigrid ID'] = str(UUID(bytes=sector_2[4:20]))
+        specific_data = _user_or_maintenance_card(binary)
     elif card_type == 'C':
-        specific_data = _credit_card(cipher, binary)
+        cc_id = str(UUID(bytes=sector_2[4:20]))
+        result['Credit Card ID'] = cc_id
+        specific_data = _credit_card(session, cipher, binary, cc_id)
     else:
         raise tornado.web.HTTPError(400, f'bad card type {card_type}')
     result.update(specific_data)
