@@ -92,6 +92,8 @@ class ReadCardBaseHandler(BaseHandler):
             kwargs['device_active'] = cache.get('device_active')
         if 'received_info' not in kwargs:
             kwargs['received_info'] = cache.get('received_info')
+        if 'card_read_error' not in kwargs:
+            kwargs['card_read_error'] = cache.get('card_read_error')
         super().render(*args, **kwargs)
 
 
@@ -669,7 +671,12 @@ def _pack_into_dict(session, binary):
     system_id = sector_1[:2]
     application_id = sector_1[2:4]
     card_type = sector_1[4:5].decode('ascii')
-    result['Card Type'] = _card_type_dict[card_type]
+    try:
+        result['Card Type'] = _card_type_dict[card_type]
+    except KeyError:
+        if card_type == '\x00':
+            raise minigrid.error.CardReadError('This card appears blank')
+        raise minigrid.error.CardReadError(f'This card appears to have the invalid card type {card_type}')
     offset = sector_1[5:6]
     length = sector_1[6:8]
     card_produced_time = sector_1[8:12]
@@ -739,6 +746,7 @@ class DeviceInfoHandler(BaseHandler):
                 cache.set('card_read_error', str(error))
             else:
                 cache.set('received_info', payload, 5)
+                cache.delete('card_read_error')
         device_info = cache.get('device_info')
         if device_info is not None:
             self.write(device_info)
@@ -757,6 +765,7 @@ class JSONDeviceConnection(SockJSConnection):
         result = {
             'device_active': bool(int(cache.get('device_active') or 0)),
             'received_info': json_decode(cache.get('received_info') or '{}'),
+            'card_read_error': (cache.get('card_read_error') or b'').decode(),
         }
         self.send(result)
 
