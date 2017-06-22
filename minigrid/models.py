@@ -214,7 +214,7 @@ class CreditCardHistory(Base):
 
 class SystemHistory(Base):
     """The model for information retrieved from used credit cards."""
-    ___tablename__ = 'system_history'
+    __tablename__ = 'system_history'
     sh_id = pk()
     sh_credit_card_id = fk('credit_card_history.credit_card_id')
     sh_meter_id = sa.Column(
