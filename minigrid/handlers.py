@@ -621,15 +621,15 @@ def _decrypt(cipher, data):
 
 def _user_or_maintenance_card(binary):
     result = OrderedDict()
-    result[3] = binary[131:195].decode('ascii')
-    result[4] = binary[196:].decode('ascii')
+    #result[3] = binary[131:195].decode('ascii')
+    #result[4] = binary[196:].decode('ascii')
     return result
 
 
 def _credit_card(cipher, binary):
     result = OrderedDict()
-    result[3] = _decrypt(cipher, unhexlify(binary[131:195])).hex()  # contains tariff information
-    result[4] = binary[196:].decode('ascii')
+    #result[3] = _decrypt(cipher, unhexlify(binary[131:195])).hex()  # contains tariff information
+    #result[4] = binary[196:].decode('ascii')
     return result
 
 
@@ -665,7 +665,6 @@ def _pack_into_dict(session, binary):
     result = OrderedDict()
     # Is it safe to assume that sector 1 is always first? I hope so
     sector_1 = unhexlify(binary[1:65])
-    result[1] = sector_1.hex()
     ## Use this for the future... displaying in the UI
     system_id = sector_1[:2]
     application_id = sector_1[2:4]
@@ -693,7 +692,6 @@ def _pack_into_dict(session, binary):
     else:
         secret_value = raw_secret_value.decode('ascii')
     result[_secret_value_type[card_type]] = secret_value
-    result[2] = sector_2.hex()  # contains card-specific information
     if card_type in {'A', 'B', 'D'}:
         specific_data = _user_or_maintenance_card(binary)
         result['Minigrid ID'] = str(UUID(bytes=sector_2[4:20]))
