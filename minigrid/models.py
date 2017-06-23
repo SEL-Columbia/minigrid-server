@@ -222,7 +222,7 @@ class SystemHistory(Base):
         sa.CheckConstraint('sh_meter_id > 0'), nullable=False)
     sh_meter_energy_usage = sa.Column(
         pg.INTEGER,
-        sa.CheckConstraint('sh_meter_energy_usage > 0'), nullable=False)
+        sa.CheckConstraint('sh_meter_energy_usage >= 0'), nullable=False)
     sh_meter_credit = sa.Column(
         pg.INTEGER,
         sa.CheckConstraint('sh_meter_credit >= 0'), nullable=False)

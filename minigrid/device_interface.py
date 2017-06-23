@@ -6,6 +6,8 @@ import uuid
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
+from sqlalchemy.dialects.postgresql import insert
+
 import minigrid.models as models
 
 
@@ -221,18 +223,22 @@ def write_credit_card(
         naive_payload[94:96],
         bytes(13),
         (sum(naive_payload[94:96]) & 0xFF).to_bytes(1, 'big'),
-        bytes(32),  # maybe more?
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
+    data = {
+        'credit_card_id': str(credit_card_id),
+        'credit_minigrid_id': minigrid_id,
+        'credit_amount': credit_amount,
+        'credit_day_tariff': day_tariff,
+        'credit_day_tariff_start': day_tariff_start,
+        'credit_night_tariff': night_tariff,
+        'credit_night_tariff_start': night_tariff_start,
+        'credit_tariff_creation_timestamp': tariff_creation_timestamp,
+        'credit_tariff_activation_timestamp': tariff_activation_timestamp,
+    }
+    statement = (
+        insert(models.CreditCardHistory)
+        .values(**data)
+        .on_conflict_do_nothing())
     with models.transaction(session) as tx_session:
-        tx_session.add(models.CreditCardHistory(
-            credit_card_id=credit_card_id,
-            credit_minigrid_id=minigrid_id,
-            credit_amount=credit_amount,
-            credit_day_tariff=day_tariff,
-            credit_day_tariff_start=day_tariff_start,
-            credit_night_tariff=night_tariff,
-            credit_night_tariff_start=night_tariff_start,
-            credit_tariff_creation_timestamp=tariff_creation_timestamp,
-            credit_tariff_activation_timestamp=tariff_activation_timestamp,
-        ))
+        tx_session.execute(statement)
