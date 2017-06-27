@@ -144,6 +144,12 @@ input#logout:hover {
     border-bottom: solid 3px;
 }
 
+.sidebar>ul>li#manual {
+    margin-top: 15px;
+    border-top: solid 3px;
+    border-bottom: solid 3px;
+}
+
 .sidebar>ul>li>a{
     display: block;
     height: 40px;
