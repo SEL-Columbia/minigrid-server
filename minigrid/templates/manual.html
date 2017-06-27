@@ -1,8 +1,3 @@
-vendors
-operators
-customers
-
-
 {% extends 'base.html' %}
 
 {% block body %}
@@ -13,11 +8,36 @@ customers
 
 	<div id="tariff-info">
 		<p><b>Adding or Updating Tariff Information:</b></p>
-		<p>Operators must add the system tariff information. The tariff form can be found by clicking the "Manage tariffs" tab on the homepage sidebar.</p>
-		<p>If the tariff information has not been initialized, operators will be prompted with an empty form. The tariff activation date and time will default to the current date and time.</p>
-		<p>When initializing or updating the daytime tariff and nighttime tariff should be specified in Ugandan shillings per watt-hour.</p>
-		<p>To add or update the tariff activation date and time, click the currently displayed date and time and a calendar will display. Choose the day of activation from the calendar, then below, choose the activation time.</p>
-		<p>The start-time for both the daytime and nighttime tariff, as well as the tariff activation time, should be given based on a 24-hour clock format. (For example, the operator would specify 17 to refer to 17:00, or 5:00 PM).</p>
+		<p>
+			Operators must add the system tariff information. The tariff form can be found by clicking the "Manage tariffs" tab on the homepage sidebar.
+			<br />
+			<img src="{{ static_url('img/sidebar.png') }}" style="width:300px;">
+		</p>
+
+		<p>
+			If the tariff information has not been initialized, operators will be prompted with an empty form. The tariff activation date and time will default to the current date and time.
+			<br />
+			<img src="{{ static_url('img/emptytariff.png') }}" style="width:400px;">
+		</p>
+		<p>
+			When initializing or updating the daytime tariff and nighttime tariff should be specified in Ugandan shillings per watt-hour.
+		</p>
+		<p>
+			To add or update the tariff activation date and time, click the currently displayed date and time and a calendar will display. Choose the day of activation from the calendar, then below, choose the activation time.
+			<br />
+			<img src="{{ static_url('img/calendar.png') }}" style="width:500px;">
+		</p>
+		<p>
+			The start-time for both the daytime and nighttime tariff, as well as the tariff activation time, should be given based on a 24-hour clock format, corresponging to UTC/GMT. (For example, the operator would specify 17 to refer to 17:00 GMT, or 5:00 PM GMT).
+		</p>
+		<p>
+			Click 'Initialize Tariff Information' to save the information. Once saved, the message 'Updated tariff information' should appear at the top of the page, and the form should auto-fill with the current tariff information anytime the operator visits the tariff page.
+			<br />
+		</p>
+		<p>
+			To update the tariff information, simply fill out the same form with the new values, then click 'Update Tariff Information.' The message 'Updated tariff information' should appear at the top of the page, and the previous information should now be written over.
+			<br />
+		</p>
 	</div>
 
 	<br />
@@ -27,11 +47,19 @@ customers
 		<p>Operators can add new vendors and customers specific to minigrids.</p>
 		<p>On the homepage, click on the minigrid the new vendor/customer will be added to.
 		</p>
-		<p>Once on the minigrid index page, click either "vendor list" or "customer list", depending on the type of user to be added.</p>
-		<p>On the provided form, add the vendor/customer name and ID.
-		The ID must be 4 numbers long and must be unique (it cannot have been used before for another ID card).
-		<br />
-		After entering the information, press the 'Add Vendor' or 'Add Customer' button on the bottom of the form.</p>
+		<p>
+			Once on the minigrid index page, click either "vendor list" or "customer list", depending on the type of user to be added.
+			<br />
+			<img src="{{ static_url('img/vendorlist.png') }}" style="width:200px;">
+		</p>
+		<p>
+			On the provided form, add the vendor/customer name and ID.
+			The ID must be 4 numbers long and must be unique (it cannot have been used before for another ID card).
+			<br />
+			<img src="{{ static_url('img/addcustomer.png') }}" style="width:400px;">
+			<br />
+			After entering the information, press the 'Add Vendor' or 'Add Customer' button on the bottom of the form.
+		</p>
 		<p>The new user should appear on the list of vendors/customers.</p>
 	</div>
 
@@ -39,16 +67,67 @@ customers
 
 	<div id="id-cards">
 		<p><b>Writing Vendor and Customer ID cards:</b></p>
-		<p>Operators can write new vendor ID cards by accessing the vendor list page or write new customer ID cards accessing the customer list page of the respective minigrid.</p>
-		<p>First, make sure the user has been <a href="#add-user">added to the system</a>. An existing user should be displayed in the list of vendors or customer on the respective pages.</p>
 		<p>
-		To write ID cards, put a blank card on the card reader.
-		Find the existing user in the vendors/customers list. Then press the "Write ID card" button directly below the user's listing.
+			Operators can write new vendor ID cards by accessing the vendor list page or write new customer ID cards accessing the customer or vendor list page of the respective minigrid.
+			<br />
+			<img src="{{ static_url('img/vendorlist.png') }}" style="width:200px;">
 		</p>
-		<p>The ID card has now been written, and the newly added card information should display on the screen.</p>
+		<p>
+			First, make sure the user has been <a href="#add-user">added to the system</a>. An existing user should be displayed in the list of vendors or customer on the respective pages.
+		</p>
+		<p>
+			To write ID cards, put a card on the card reader device.
+			Find the existing user in the vendors/customers list. Then press the "Write ID card" button directly below the user's listing.
+		</p>
+		<p>
+			The ID card has now been written, and the newly added card information should display on the screen.
+		</p>
+	</div>
+
+	<br />
+
+	<div id="credit-cards">
+		<p><b>Writing credit cards:</b></p>
+		<p>
+			Operators can write new credit cards by accessing the 'Write credit card' page of the respective minigrid.
+			<br />
+			<img src="{{ static_url('img/sidebar.png') }}" style="width:300px;">
+		</p>
+		<p>
+			To write credit cards, put a card on the card reader device.
+			<br />
+			If there is no card information being read, the user will be prompted to check if there is a card on the device. A user cannot write a credit card until a valid card is placed on the device.
+			<br />
+			<img src="{{ static_url('img/nocard.png') }}" style="width:400px;">
+			<br />
+			Once the device reads the card, a 'Write credit card' button will appear below the input box of the credit form. Enter the credit amount to be added to the card, then click the 'Write credit card' button on below the credit input form.
+			<br />
+			<img src="{{ static_url('img/writecreditcard.png') }}" style="width:300px;">
+		</p>
+		<p>
+			The 'Card written' message should display at the top of the page. The ID card has now been written, and the newly added card information should display on the screen.
+			<br />
+			<img src="{{ static_url('img/creditcard.png') }}" style="width:400px;">
+		</p>
+	</div>
+
+	<div id="customer-credit">
+		<p><b>Adding credit to a customer:</b></p>
+		<p>Scan the vendor id card.</p>
+		<p>Scan the credit card.</p>
+		<p>Press the top button.</p>
+		<p>Scan the vendor card again, and the displayed credit amount should be increased by the recently added credit.</p>
+		<p>The full credit amount has now been transferred from the credit card to the vendor account.</p>
+		<p>When scanning the credit card again, a 'Previously Used' message should display.</p>
+	</div>
+
+
+
+	<div id="vendor-credit">
+		<p><b>Adding credit to a vendor:</b></p>
+		<p>Make sure controller is turned on and connected to the ethernet cable.</p>
 	</div>
 </div>
 <footer><a href="/">&laquo; Return to minigrid index</a></footer>
 
-<script type="text/javascript" src="{{ static_url('dist/tariffs.bundle.js') }}"></script>
 {% end %}

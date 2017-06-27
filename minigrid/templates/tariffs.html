@@ -10,7 +10,7 @@
       <legend>Tariff information:</legend>
       {% module xsrf_form_html() %}
     {% try %}
-      {% if system is None %}
+      {% if system is not None %}
         {% include tariff_form.html %}
       {% else %}
         <fieldset>
