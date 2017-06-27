@@ -792,6 +792,17 @@ class JSONDeviceConnection(SockJSConnection):
         self.send(result)
 
 
+class ManualHandler(BaseHandler):
+    """Handlers for cards view."""
+
+    @tornado.web.authenticated
+    def get(self):
+        """Render the cards form."""
+
+        http_protocol = 'https' if options.minigrid_https else 'http'
+        self.render('manual.html', http_protocol=http_protocol)
+
+
 application_urls = [
     (r'/', MainHandler),
     (r'/minigrids/(.{36})/?', MinigridHandler),
@@ -807,7 +818,8 @@ application_urls = [
     (r'/device/?', DeviceHandler),
     (r'/cards/?', CardsHandler),
     (r'/verify/?', VerifyLoginHandler),
-    (r'/logout/?', LogoutHandler)]
+    (r'/logout/?', LogoutHandler),
+    (r'/manual/?', ManualHandler)]
 
 
 def get_urls():
