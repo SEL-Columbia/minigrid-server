@@ -298,3 +298,15 @@ form.tariffs>fieldset>input.flatpickr {
     line-height: 0px !important;
     width: 150px;
 }
+
+div.manual {
+    background-color: rgba(255, 255, 255, 0.3);
+    margin: 10px 0px;
+    padding: 15px 25px;
+}
+
+div.manual>p>img {
+    border: 2px solid rgba(0, 0, 0, 0.4);
+    display: block;
+    margin: 5px auto 15px auto;
+}
