@@ -2,12 +2,11 @@
 
 {% block body %}
 <div class="full-page-content">
-	<h2>User Manual</h2>
+	<h2>User Manual - Operator Interface</h2>
 	<p />
-	<h3>Operators</h3>
 
 	<div class="manual" id="contents">
-		<p><b>Table of Contents:</b></p>
+		<h3><b>Table of Contents:</b></h3>
 		<p>
 			<b>System Management</b>
 			<br /><a href="#manage-users">1. Manage users</a>
@@ -16,13 +15,14 @@
 			<br />&emsp;<a href="#updating-tariff">2.2 Update tariff information</a>
 			<br /><a href="#devices">3. Manage devices</a>
 			<br /><a href="#read-cards">4. Read and validate cards</a>
+			<br /><a href="#add-minigrid">5. Add minigrid</a>
 		</p>
 		<p>
 			<b>Minigrid Management</b>
-			<br /><a href="#add-user">5. Manage vendors and customers</a>
-			<br />&emsp;<a href="#add-user">5.1 Adding vendors and customers</a>
-			<br />&emsp;<a href="#id-cards">5.2 Writing vendor and customer ID cards</a>
-			<br /><a href="#credit-cards">6. Writing credit cards</a>
+			<br /><a href="#add-user">6. Manage vendors and customers</a>
+			<br />&emsp;<a href="#add-user">6.1 Adding vendors and customers</a>
+			<br />&emsp;<a href="#id-cards">6.2 Writing vendor and customer ID cards</a>
+			<br /><a href="#credit-cards">7. Writing credit cards</a>
 		</p>
 	</div>
 
@@ -44,8 +44,6 @@
 			The newly added user should display in the list on the left. They may now attempt to log-in to the interface.
 		</p>
 	</div>
-
-	<br />
 
 	<div class="manual" id="tariff-info">
 		<p><b>Adding or Updating Tariff Information:</b></p>
@@ -76,15 +74,14 @@
 			Click <b>'Initialize Tariff Information'</b> to save the information. Once saved, the message 'Updated tariff information' should appear at the top of the page, and the form should auto-fill with the current tariff information anytime the operator visits the tariff page.
 			<br />
 		</p>
-		<p>
+		<br />
 		<p id="updating-tariff"><b>Updating Tariff Information:</b></p>
+		<p>
 			To update the tariff information, simply fill out the same form, which should be pre-filled with the existing information. Enter the new values, then click <b>'Update Tariff Information'</b>. The message 'Updated tariff information' should appear at the top of the page, and the previous information should now be written over.
 			<br />
 			<img src="{{ static_url('img/updatedtariffform.png') }}" style="width:400px;">
 		</p>
 	</div>
-
-	<br />
 
 	<div class="manual" id="devices">
 		<p><b>Manage Devices:</b></p>
@@ -103,8 +100,6 @@
 			Click the <b>'Add device'</b> button. The newly added device should appear on the list at the left of the page.
 		</p>
 	</div>
-
-	<br />
 
 	<div class="manual" id="read-cards">
 		<p><b>Read and validate cards:</b></p>
@@ -126,7 +121,25 @@
 		</p>
 	</div>
 
-	<br />
+	<div class="manual" id="add-minigrid">
+		<p><b>Manage Users:</b></p>
+		<p>
+			Operators can add new minigrids to the system.
+			<br />
+			A list of existing minigrids and an 'Add minigrid' form should display on the home screen after logging in.
+			<br>
+			<img src="{{ static_url('img/addminigrid.png') }}" style="width:500px;">
+			This page can also be found by clicking 'SharedSolar Minigrid Management' on the header.
+			<br>
+			<img src="{{ static_url('img/header.png') }}" style="width:300px;">
+		</p>
+		<p>
+			To add a minigrid, fill out the 'Add minigrid' form, including the desired name for the minigrid and the payment system ID. The payment system ID must correspond to an already existing payment system.
+		</p>
+		<p>
+			After the form has been filled out, click the <b>'Add minigrid'</b> button below the form. The newly added minigrid should display on the minigrid list to the left of the page.
+		</p>
+	</div>
 
 	<div class="manual" id="add-user">
 		<p><b>Adding new Vendors and Customers:</b></p>
@@ -154,8 +167,6 @@
 		</p>
 	</div>
 
-	<br />
-
 	<div class="manual" id="id-cards">
 		<p><b>Writing Vendor and Customer ID cards:</b></p>
 		<p>
@@ -168,6 +179,11 @@
 		</p>
 		<p>
 			To write ID cards, put a card on the card reader device.
+			Either a blank card or a card that already contains information can be used.
+			A message stating that the card is blank or the existing card information should display on the screen.
+			<p>
+				<b>Note: If the card being used has previously been writing and contains information, proceeding to write an ID card will write over the existing information on the card.</b>
+			</p>
 			Find the existing user in the vendors/customers list. Then press the <b>'Write ID card'</b> button directly below the user's listing.
 			<br />
 			<img src="{{ static_url('img/writecustomer.png') }}" style="width:350px;">
@@ -179,8 +195,6 @@
 		</p>
 	</div>
 
-	<br />
-
 	<div class="manual" id="credit-cards">
 		<p><b>Writing credit cards:</b></p>
 		<p>
@@ -190,7 +204,11 @@
 		</p>
 		<p>
 			To write credit cards, put a card on the card reader device.
-			<br />
+			Either a blank card or a card that already contains information can be used.
+			A message stating that the card is blank or the existing card information should display on the screen.
+			<p>
+				<b>Note: If the card being used has previously been writing and contains information, proceeding to write the credit card will write over the existing information on the card.</b>
+			</p>
 			If there is no card information being read, the user will be prompted to check if there is a card on the device. A user cannot write a credit card until a valid card is placed on the device.
 			<br />
 			<img src="{{ static_url('img/nocard.png') }}" style="width:400px;">
