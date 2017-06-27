@@ -188,9 +188,9 @@ def write_credit_card(
     ))
     sector_3 = b''.join((
         _hour_on_epoch_day(day_tariff_start),  # tariff 1 validate time
-        (int(day_tariff * 100)).to_bytes(4, 'big'),  # day tariff in cents
+        (int(day_tariff)).to_bytes(4, 'big'),  # day tariff in cents
         _hour_on_epoch_day(night_tariff_start),  # tariff 2 validate time
-        (int(night_tariff * 100)).to_bytes(4, 'big'),  # night tariff in cents
+        (int(night_tariff)).to_bytes(4, 'big'),  # night tariff in cents
         int(tariff_creation_timestamp.timestamp()).to_bytes(4, 'big'),
         int(tariff_activation_timestamp.timestamp()).to_bytes(4, 'big'),
         bytes(8),
