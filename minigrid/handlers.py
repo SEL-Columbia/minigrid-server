@@ -1,7 +1,7 @@
 """Handlers for the URL endpoints."""
 from binascii import unhexlify
 from collections import OrderedDict
-from datetime import timedelta
+from datetime import datetime, timedelta
 import secrets
 from urllib.parse import urlencode
 from uuid import uuid4, UUID
@@ -92,6 +92,8 @@ class ReadCardBaseHandler(BaseHandler):
             kwargs['device_active'] = cache.get('device_active')
         if 'received_info' not in kwargs:
             kwargs['received_info'] = cache.get('received_info')
+        if 'card_read_error' not in kwargs:
+            kwargs['card_read_error'] = cache.get('card_read_error')
         super().render(*args, **kwargs)
 
 
@@ -334,8 +336,10 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
         minigrid = models.get_minigrid(self.session, minigrid_id)
         system = self.session.query(models.System).one()
         write_credit_card(
+            self.session,
             cache,
             minigrid.payment_system.aes_key,
+            minigrid_id,
             minigrid.payment_system.payment_id,
             int(self.get_argument('credit_value')),
             system.day_tariff,
@@ -368,6 +372,7 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
         grid = models.get_minigrid(self.session, minigrid_id)
         action = self.get_argument('action')
         user_id_exists = 'vendor_vendor_minigrid_id_vendor_user_id_key'
+        http_protocol='https' if options.minigrid_https else 'http'
         if action == 'create':
             try:
                 with models.transaction(self.session) as session:
@@ -382,7 +387,9 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
                 else:
                     message = ' '.join(error.orig.pgerror.split())
                 raise minigrid.error.MinigridHTTPError(
-                    message, 400, 'minigrid_vendors.html', minigrid=grid)
+                    message, 400, 'minigrid_vendors.html', minigrid=grid,
+                    http_protocol=http_protocol,  # lazy fix
+                )
             self.set_status(201)
         elif action == 'remove':
             vendor_id = self.get_argument('vendor_id')
@@ -401,7 +408,7 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
             vendor = (
                 self.session.query(models.Vendor)
                 .get(self.get_argument('vendor_id')))
-            write_vendor_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, vendor)
+            write_vendor_card(self.session, cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, vendor)
             message = 'Card written'
             self.redirect(f'/minigrids/{minigrid_id}/vendors', message=message)
             #self.render(
@@ -432,6 +439,7 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
         grid = models.get_minigrid(self.session, minigrid_id)
         action = self.get_argument('action')
         user_id_exists = 'customer_customer_minigrid_id_customer_user_id_key'
+        http_protocol='https' if options.minigrid_https else 'http'
         if action == 'create':
             try:
                 with models.transaction(self.session) as session:
@@ -446,7 +454,9 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
                 else:
                     message = ' '.join(error.orig.pgerror.split())
                 raise minigrid.error.MinigridHTTPError(
-                    message, 400, 'minigrid_customers.html', minigrid=grid)
+                    message, 400, 'minigrid_customers.html', minigrid=grid,
+                    http_protocol=http_protocol,  # lazy fix
+                )
             self.set_status(201)
         elif action == 'remove':
             customer_id = self.get_argument('customer_id')
@@ -466,7 +476,7 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
             customer = (
                 self.session.query(models.Customer)
                 .get(self.get_argument('customer_id')))
-            write_customer_card(cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, customer)
+            write_customer_card(self.session, cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, customer)
             message = 'Card written'
             self.redirect(f'/minigrids/{minigrid_id}/customers', message=message)
             #self.render(
@@ -500,6 +510,7 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
         grid = models.get_minigrid(self.session, minigrid_id)
         action = self.get_argument('action')
         card_id_exists = 'maintenance_card_maintenance_card_minigrid_id_maintenance_card_card_id_key'
+        http_protocol='https' if options.minigrid_https else 'http'
         if action == 'create':
             try:
                 with models.transaction(self.session) as session:
@@ -514,7 +525,9 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
                 else:
                     message = ' '.join(error.orig.pgerror.split())
                 raise minigrid.error.MinigridHTTPError(
-                    message, 400, 'minigrid_maintenance_cards.html', minigrid=grid)
+                    message, 400, 'minigrid_maintenance_cards.html', minigrid=grid,
+                    http_protocol=http_protocol,  # lazy fix
+                )
             self.set_status(201)
         elif action == 'remove':
             maintenance_card_id = self.get_argument('maintenance_card_id')
@@ -534,7 +547,7 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
             maintenance_card = (
                 self.session.query(models.MaintenanceCard)
                 .get(self.get_argument('maintenance_card_id')))
-            write_maintenance_card_card(cache, grid.payment_system.aes_key, grid.payment_system.payment_id, maintenance_card)
+            write_maintenance_card_card(self.session, cache, grid.payment_system.aes_key, minigrid_id, grid.payment_system.payment_id, maintenance_card)
             message = 'Card written'
             self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards', message=message)
             #self.render(
@@ -605,6 +618,59 @@ class LogoutHandler(BaseHandler):
         self.redirect('/')
 
 
+def _decrypt(cipher, data):
+    decryptor = cipher.decryptor()
+    return decryptor.update(data) + decryptor.finalize()
+
+
+def _user_or_maintenance_card(binary):
+    result = OrderedDict()
+    #result[3] = binary[131:195].decode('ascii')
+    #result[4] = binary[196:].decode('ascii')
+    return result
+
+
+def _credit_card(session, cipher, binary, credit_card_id):
+    result = OrderedDict()
+    #result[3] = _decrypt(cipher, unhexlify(binary[131:195])).hex()  # contains tariff information
+    raw_sector_4 = unhexlify(binary[196:])
+    if not any(raw_sector_4):
+        return result
+    sector_4 = raw_sector_4.split(b'###')[0][:-2]
+    # If card has been used...
+    record_timestamp = datetime.fromtimestamp(
+        int(sector_4[4:14].decode('ascii'))).isoformat()
+    result['Timestamp of Recorded Data'] = record_timestamp
+    meter_records = sector_4[15:].decode('ascii').split()
+    for record in meter_records:
+        meter_id, usage, credit = record.split(',')
+        with models.transaction(session) as tx_session:
+            tx_session.add(models.SystemHistory(
+                sh_credit_card_id=credit_card_id,
+                sh_meter_id=meter_id,
+                sh_meter_energy_usage=usage,
+                sh_meter_credit=credit,
+                sh_record_timestamp=record_timestamp,
+            ))
+    return result
+
+
+_card_type_dict = {
+    'A': 'Vendor ID Card',
+    'B': 'Customer ID Card',
+    'C': 'Credit Card',
+    'D': 'Maintenance Card',
+}
+
+
+_secret_value_type = {
+    'A': 'Vendor User ID',
+    'B': 'Customer User ID',
+    'C': 'Credit Amount',
+    'D': 'Maintenance Card ID',
+}
+
+
 def _pack_into_dict(session, binary):
     # TODO: here there be dragons...
     try:
@@ -618,36 +684,51 @@ def _pack_into_dict(session, binary):
     if not device_exists:  # TODO: new error class
         raise tornado.web.HTTPError(400, 'bad device id {}'.format(binary[:12]))
     binary = binary[12:]
-    chunks = len(binary) // 33
     result = OrderedDict()
-    for i in range(chunks):
-        block = binary[33*i:33*(i+1)]
-        block_id = int(chr(block[0]), 16)
-        message = block[1:]
-        result[block_id] = message
-    payment_id = str(UUID(result[6].decode('ascii')))
-    # TODO: for a blank one, it will be 202020...?
+    # Is it safe to assume that sector 1 is always first? I hope so
+    sector_1 = unhexlify(binary[1:65])
+    ## Use this for the future... displaying in the UI
+    system_id = sector_1[:2]
+    application_id = sector_1[2:4]
+    card_type = sector_1[4:5].decode('ascii')
+    try:
+        result['Card Type'] = _card_type_dict[card_type]
+    except KeyError:
+        if card_type == '\x00':
+            raise minigrid.error.CardReadError('This card appears blank')
+        raise minigrid.error.CardReadError(f'This card appears to have the invalid card type {card_type}')
+    offset = sector_1[5:6]
+    length = sector_1[6:8]
+    card_produced_time = sector_1[8:12]
+    result['Card Creation Time'] = datetime.fromtimestamp(int.from_bytes(card_produced_time, 'big')).isoformat()
+    card_last_read_time = sector_1[12:16]
+    result['Card Last Read Time'] = datetime.fromtimestamp(int.from_bytes(card_last_read_time, 'big')).isoformat()
+    payment_id = sector_1[16:32].hex()
     payment_system = session.query(models.PaymentSystem).get(payment_id)
+    # TODO: Special case all zeroes
+    if payment_system is None:
+        raise minigrid.error.CardReadError(f'No device with id {payment_id}')
+    result['Payment System ID'] = payment_system.payment_id
     key = payment_system.aes_key
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
-    for block_index, value in result.items():
-        bin_value = unhexlify(value)
-        if block_index == 6:
-            result[block_index] = value.hex()
-        else:
-            decryptor = cipher.decryptor()
-            plaintext = decryptor.update(bin_value) + decryptor.finalize()
-            result[block_index] = plaintext.hex()
-    # Deal with maintenance card, which has a different format
-    # TODO: clean this up
-    if result[4][:2] == '44':
-        new_result = OrderedDict()
-        new_result[4] = result[4]
-        new_result[5] = binary[34:66].hex()
-        block_8_length = int.from_bytes(unhexlify(binary[34:38]), 'big')
-        new_result[6] = result[6]
-        new_result[8] = binary[100:100+block_8_length*32].hex()
-        result = new_result
+    sector_2_enc = unhexlify(binary[66:130])
+    sector_2 = _decrypt(cipher, sector_2_enc)
+    raw_secret_value = sector_2[:4]
+    if card_type == 'C':
+        secret_value = int.from_bytes(raw_secret_value, 'big')
+    else:
+        secret_value = raw_secret_value.decode('ascii')
+    result[_secret_value_type[card_type]] = secret_value
+    if card_type in {'A', 'B', 'D'}:
+        result['Minigrid ID'] = str(UUID(bytes=sector_2[4:20]))
+        specific_data = _user_or_maintenance_card(binary)
+    elif card_type == 'C':
+        cc_id = str(UUID(bytes=sector_2[4:20]))
+        result['Credit Card ID'] = cc_id
+        specific_data = _credit_card(session, cipher, binary, cc_id)
+    else:
+        raise tornado.web.HTTPError(400, f'bad card type {card_type}')
+    result.update(specific_data)
     return json_encode(result)
 
 
@@ -684,9 +765,10 @@ class DeviceInfoHandler(BaseHandler):
                 # TODO: clean this up
                 payload = _pack_into_dict(self.session, body)
             except Exception as error:
-                self.write(str(error))
+                cache.set('card_read_error', str(error), 5)
             else:
                 cache.set('received_info', payload, 5)
+                cache.delete('card_read_error')
         device_info = cache.get('device_info')
         if device_info is not None:
             self.write(device_info)
@@ -705,6 +787,7 @@ class JSONDeviceConnection(SockJSConnection):
         result = {
             'device_active': bool(int(cache.get('device_active') or 0)),
             'received_info': json_decode(cache.get('received_info') or '{}'),
+            'card_read_error': (cache.get('card_read_error') or b'').decode(),
         }
         self.send(result)
 

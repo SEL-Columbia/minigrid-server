@@ -2,7 +2,7 @@
 echo "Installing dependencies..."
 pip install -r requirements.txt 1&> /dev/null
 npm install
-node node_modules/webpack/bin/webpack.js --cache=False 1&> /dev/null
+node node_modules/webpack/bin/webpack.js
 echo "Installing dependencies done"
 python server.py \
   --application_debug=True \
