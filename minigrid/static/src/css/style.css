@@ -71,6 +71,15 @@ form>input[type="submit"] {
     display: block;
 }
 
+form#log-in {
+    text-align: center;
+    width: 300px;
+    margin: auto;
+    display: block;
+    padding-top: 20px;
+    padding-bottom: 10px;
+}
+
 
 /* NAVBAR */
 .navbar-custom {

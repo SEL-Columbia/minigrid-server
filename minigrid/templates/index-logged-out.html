@@ -4,7 +4,7 @@
   {% if message is not None %}
   <p><strong>Login unsuccessful: {{ message }}</strong></p>
   {% end %}
-  <form action="/?next={{ next_page }}" method="POST">
+  <form id="log-in" action="/?next={{ next_page }}" method="POST">
     {% module xsrf_form_html() %}
     E-mail: <input type="email" name="email" />
     <input type="submit" value="Log In" />
