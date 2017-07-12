@@ -30,10 +30,14 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
         bytes(4),  # card read time TODO
         uuid.UUID(payment_id).bytes,
     ))
-    sector_2 = b''.join((
+    sector_2_content = b''.join((
         vendor.vendor_user_id.encode('ascii'),  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
-        bytes(12),
+        bytes(11),
+    ))
+    sector_2 = b''.join((
+        sector_2_content,
+        (sum(sector_2_content) & 0xFF).to_bytes(1, 'big'),
     ))
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     encryptor = cipher.encryptor()
@@ -77,10 +81,14 @@ def write_customer_card(
         bytes(4),  # card read time TODO
         uuid.UUID(payment_id).bytes,
     ))
-    sector_2 = b''.join((
+    sector_2_content = b''.join((
         customer.customer_user_id.encode('ascii'),  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
-        bytes(12),
+        bytes(11),
+    ))
+    sector_2 = b''.join((
+        sector_2_content,
+        (sum(sector_2_content) & 0xFF).to_bytes(1, 'big'),
     ))
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     encryptor = cipher.encryptor()
@@ -125,10 +133,14 @@ def write_maintenance_card_card(
         uuid.UUID(payment_id).bytes,
     ))
     mc_id = maintenance_card.maintenance_card_card_id.encode('ascii')
-    sector_2 = b''.join((
+    sector_2_content = b''.join((
         mc_id,  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
-        bytes(12),
+        bytes(11),
+    ))
+    sector_2 = b''.join((
+        sector_2_content,
+        (sum(sector_2_content) & 0xFF).to_bytes(1, 'big'),
     ))
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     encryptor = cipher.encryptor()
@@ -184,19 +196,27 @@ def write_credit_card(
         uuid.UUID(payment_id).bytes,
     ))
     credit_card_id = uuid.uuid4()
-    sector_2 = b''.join((
+    sector_2_content = b''.join((
         credit_amount.to_bytes(4, 'big'),  # 4 byte unsigned int
         credit_card_id.bytes,
-        bytes(12),
+        bytes(11),
     ))
-    sector_3 = b''.join((
+    sector_2 = b''.join((
+        sector_2_content,
+        (sum(sector_2_content) & 0xFF).to_bytes(1, 'big'),
+    ))
+    sector_3_content = b''.join((
         _hour_on_epoch_day(day_tariff_start),  # tariff 1 validate time
         (int(day_tariff)).to_bytes(4, 'big'),  # day tariff in cents
         _hour_on_epoch_day(night_tariff_start),  # tariff 2 validate time
         (int(night_tariff)).to_bytes(4, 'big'),  # night tariff in cents
         int(tariff_creation_timestamp.timestamp()).to_bytes(4, 'big'),
         int(tariff_activation_timestamp.timestamp()).to_bytes(4, 'big'),
-        bytes(8),
+        bytes(7),
+    ))
+    sector_3 = b''.join((
+        sector_3_content,
+        (sum(sector_3_content) & 0xFF).to_bytes(1, 'big'),
     ))
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     encryptor2 = cipher.encryptor()

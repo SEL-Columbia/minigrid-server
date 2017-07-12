@@ -632,7 +632,12 @@ class LogoutHandler(BaseHandler):
 
 def _decrypt(cipher, data):
     decryptor = cipher.decryptor()
-    return decryptor.update(data) + decryptor.finalize()
+    plaintext = decryptor.update(data) + decryptor.finalize()
+    checksum = (sum(plaintext[:-1]) & 0xFF).to_bytes(1, 'big')
+    if checksum != plaintext[-1]:
+        raise minigrid.error.CardReadError(
+            'Checksum error in encrypted data. Try reading the card again.')
+    return plaintext
 
 
 def _user_or_maintenance_card(binary):
