@@ -136,6 +136,7 @@ class System(Base):
 
 class VendorCardHistory(Base):
     """The model for freshly-minted vendor card records."""
+
     __tablename__ = 'vendor_card_history'
     vendor_card_id = pk()
     vendor_card_minigrid_id = sa.Column(pg.UUID, nullable=False)
@@ -150,6 +151,7 @@ class VendorCardHistory(Base):
 
 class CustomerCardHistory(Base):
     """The model for freshly-minted customer card records."""
+
     __tablename__ = 'customer_card_history'
     customer_card_id = pk()
     customer_card_minigrid_id = sa.Column(pg.UUID, nullable=False)
@@ -164,6 +166,7 @@ class CustomerCardHistory(Base):
 
 class MaintenanceCardHistory(Base):
     """The model for freshly-minted maintenance card records."""
+
     __tablename__ = 'maintenance_card_history'
     mc_id = pk()
     mc_minigrid_id = sa.Column(pg.UUID, nullable=False)
@@ -178,6 +181,7 @@ class MaintenanceCardHistory(Base):
 
 class CreditCardHistory(Base):
     """The model for freshly-minted credit card records."""
+
     __tablename__ = 'credit_card_history'
     credit_card_id = pk()
     credit_minigrid_id = fk('minigrid.minigrid_id')
@@ -216,6 +220,7 @@ class CreditCardHistory(Base):
 
 class SystemHistory(Base):
     """The model for information retrieved from used credit cards."""
+
     __tablename__ = 'system_history'
     sh_id = pk()
     sh_credit_card_id = fk('credit_card_history.credit_card_id')
@@ -237,6 +242,7 @@ class SystemHistory(Base):
 
 class Device(Base):
     """The model for a device."""
+
     __tablename__ = 'device'
     address = sa.Column(
         pg.BYTEA, sa.CheckConstraint("length(address) = 6"),

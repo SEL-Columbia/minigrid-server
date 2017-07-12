@@ -30,4 +30,4 @@ class LoginError(MinigridHTTPError):
 
 
 class CardReadError(Exception):
-    """Error while reading a card"""
+    """Error while reading a card."""

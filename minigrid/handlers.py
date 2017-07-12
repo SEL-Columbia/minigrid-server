@@ -258,6 +258,7 @@ class UsersHandler(BaseHandler):
 
 class DeviceHandler(BaseHandler):
     """Handlers for device view."""
+
     @tornado.web.authenticated
     def get(self):
         """Render the device form."""
@@ -286,7 +287,6 @@ class CardsHandler(ReadCardBaseHandler):
     @tornado.web.authenticated
     def get(self):
         """Render the cards form."""
-
         http_protocol = 'https' if options.minigrid_https else 'http'
         self.render('cards.html', http_protocol=http_protocol)
 
@@ -750,6 +750,8 @@ def _pack_into_dict(session, binary):
 
 
 class DeviceInfoHandler(BaseHandler):
+    """Handlers for the operator module."""
+
     def check_xsrf_cookie(self):
         """Disable XSRF check.
 
@@ -759,6 +761,7 @@ class DeviceInfoHandler(BaseHandler):
         pass
 
     def get(self):
+        """Return the device info."""
         cache.set('device_active', 1, 5)
         cache.set('received_info', self.request.query_arguments, 5)
         device_info = cache.get('device_info')
@@ -767,6 +770,7 @@ class DeviceInfoHandler(BaseHandler):
             cache.delete('device_info')
 
     def post(self):
+        """Process the operator module's request."""
         body = self.request.body
         # TODO: after successfully writing a card, the response is "success"
         # try:
@@ -794,11 +798,15 @@ class DeviceInfoHandler(BaseHandler):
 
 
 class JSONDeviceConnection(SockJSConnection):
+    """Handlers for SockJS real-time card reader functionality."""
+
     def on_open(self, info):
+        """Send data every so often."""
         self.timeout = tornado.ioloop.PeriodicCallback(self._send_data, 1000)
         self.timeout.start()
 
     def on_close(self):
+        """Stop sending data."""
         self.timeout.stop()
 
     def _send_data(self):
@@ -816,7 +824,6 @@ class ManualHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         """Render the cards form."""
-
         http_protocol = 'https' if options.minigrid_https else 'http'
         self.render('manual.html', http_protocol=http_protocol)
 
@@ -842,5 +849,6 @@ application_urls = [
 
 
 def get_urls():
+    """Gather all the URLs for the Tornado Application object."""
     sockjs_urls = SockJSRouter(JSONDeviceConnection, r'/cardconn/?').urls
     return application_urls + sockjs_urls

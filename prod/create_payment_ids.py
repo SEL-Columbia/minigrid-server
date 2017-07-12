@@ -20,7 +20,7 @@ def _aes_key():
 
 
 def main():
-    """Generate 100,000 AES keys"""
+    """Generate 100,000 AES keys."""
     parser = argparse.ArgumentParser()
     _, others = parser.parse_known_args()
     from minigrid.options import parse_command_line
