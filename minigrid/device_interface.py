@@ -1,5 +1,4 @@
 """Functions for interacting with devices."""
-from binascii import unhexlify
 import time
 import uuid
 
@@ -65,7 +64,8 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
         ))
 
 
-def write_customer_card(session, cache, key, minigrid_id, payment_id, customer):
+def write_customer_card(
+        session, cache, key, minigrid_id, payment_id, customer):
     """Write information to a customer ID card."""
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
@@ -111,7 +111,8 @@ def write_customer_card(session, cache, key, minigrid_id, payment_id, customer):
         ))
 
 
-def write_maintenance_card_card(session, cache, key, minigrid_id, payment_id, maintenance_card):
+def write_maintenance_card_card(
+        session, cache, key, minigrid_id, payment_id, maintenance_card):
     """Write information to a maintenance card card."""
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
@@ -123,8 +124,9 @@ def write_maintenance_card_card(session, cache, key, minigrid_id, payment_id, ma
         bytes(4),  # card read time TODO
         uuid.UUID(payment_id).bytes,
     ))
+    mc_id = maintenance_card.maintenance_card_card_id.encode('ascii')
     sector_2 = b''.join((
-        maintenance_card.maintenance_card_card_id.encode('ascii'),  # 0000-9999 ASCII
+        mc_id,  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
         bytes(12),
     ))
@@ -149,11 +151,12 @@ def write_maintenance_card_card(session, cache, key, minigrid_id, payment_id, ma
         (sum(naive_payload[62:64]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
+    mmcci = maintenance_card.maintenance_card_card_id
     with models.transaction(session) as tx_session:
         tx_session.add(models.MaintenanceCardHistory(
             mc_minigrid_id=minigrid_id,
             mc_maintenance_card_id=maintenance_card.maintenance_card_id,
-            mc_maintenance_card_card_id=maintenance_card.maintenance_card_card_id,
+            mc_maintenance_card_card_id=mmcci,
         ))
 
 

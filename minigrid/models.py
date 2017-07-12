@@ -192,7 +192,8 @@ class CreditCardHistory(Base):
         pg.INTEGER,
         sa.CheckConstraint('credit_day_tariff_start >= 0'),
         sa.CheckConstraint('credit_day_tariff_start <= 23'),
-        sa.CheckConstraint('credit_day_tariff_start < credit_night_tariff_start'),
+        sa.CheckConstraint(
+            'credit_day_tariff_start < credit_night_tariff_start'),
         nullable=False)
     credit_night_tariff = sa.Column(
         pg.NUMERIC,
@@ -201,7 +202,8 @@ class CreditCardHistory(Base):
         pg.INTEGER,
         sa.CheckConstraint('credit_night_tariff_start >= 0'),
         sa.CheckConstraint('credit_night_tariff_start <= 23'),
-        sa.CheckConstraint('credit_night_tariff_start > credit_day_tariff_start'),
+        sa.CheckConstraint(
+            'credit_night_tariff_start > credit_day_tariff_start'),
         nullable=False)
     credit_tariff_creation_timestamp = sa.Column(
         pg.TIMESTAMP, nullable=False)
@@ -238,7 +240,7 @@ class Device(Base):
     __tablename__ = 'device'
     address = sa.Column(
         pg.BYTEA, sa.CheckConstraint("length(address) = 6"),
-        primary_key = True)
+        primary_key=True)
 
 
 class PaymentSystem(Base):
@@ -270,7 +272,8 @@ class Minigrid(Base):
     customers = relationship(
         'Customer', backref='minigrid', order_by='Customer.customer_user_id')
     maintenance_cards = relationship(
-        'MaintenanceCard', backref='minigrid', order_by='MaintenanceCard.maintenance_card_card_id')
+        'MaintenanceCard', backref='minigrid',
+        order_by='MaintenanceCard.maintenance_card_card_id')
 
     __table_args__ = (
         sa.UniqueConstraint('minigrid_payment_id'),)
@@ -326,5 +329,7 @@ class MaintenanceCard(Base):
         nullable=False)
 
     __table_args__ = (
-        sa.UniqueConstraint('maintenance_card_minigrid_id', 'maintenance_card_card_id'),
-        sa.UniqueConstraint('maintenance_card_minigrid_id', 'maintenance_card_name'))
+        sa.UniqueConstraint(
+            'maintenance_card_minigrid_id', 'maintenance_card_card_id'),
+        sa.UniqueConstraint(
+            'maintenance_card_minigrid_id', 'maintenance_card_name'))

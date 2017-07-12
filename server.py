@@ -3,8 +3,6 @@ from asyncio import get_event_loop
 import logging
 from time import sleep
 
-from sockjs.tornado import SockJSRouter
-
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
