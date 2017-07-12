@@ -21,7 +21,7 @@ class TestMinigrid(Test):
     def setUp(self):
         super().setUp()
         with models.transaction(self.session) as session:
-            session.add(models.Minigrid(minigrid_name='a', aes_key='b'))
+            session.add(models.Minigrid(minigrid_name='a'))
 
     def test_get_minigrid_regular(self):
         minigrid = self.session.query(models.Minigrid).one()
