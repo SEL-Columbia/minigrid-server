@@ -738,6 +738,15 @@ def _pack_into_dict(session, binary):
     raw_secret_value = sector_2[:4]
     if card_type == 'C':
         secret_value = int.from_bytes(raw_secret_value, 'big')
+        card_produce_time = datetime.fromtimestamp(
+            int.from_bytes(sector_2[20:24], 'big'))
+        current_timestamp = datetime.now()
+        delta = current_timestamp - card_produce_time
+        if delta.days > 90:
+            result['Expiration status'] = f'Expired {delta.days - 90} days ago'
+        else:
+            result['Expiration status'] = (
+                f'Valid for {90 - delta.days} more days')
     else:
         secret_value = raw_secret_value.decode('ascii')
     result[_secret_value_type[card_type]] = secret_value
