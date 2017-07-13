@@ -740,6 +740,7 @@ def _pack_into_dict(session, binary):
         secret_value = int.from_bytes(raw_secret_value, 'big')
         card_produce_time = datetime.fromtimestamp(
             int.from_bytes(sector_2[20:24], 'big'))
+        result['Card Creation Time'] = card_produce_time.isoformat()
         current_timestamp = datetime.now()
         delta = current_timestamp - card_produce_time
         if delta.days > 90:
