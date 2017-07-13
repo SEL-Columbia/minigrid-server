@@ -185,13 +185,14 @@ def write_credit_card(
         night_tariff, night_tariff_start,
         tariff_creation_timestamp, tariff_activation_timestamp):
     """Write information to a credit card."""
+    card_produce_time = int(time.time()).to_bytes(4, 'big')
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
         b'\x00\x01',  # Application ID
         b'C',  # C for credit
         b'\x08',  # Offset
         b'\x00\xf4',  # Length
-        int(time.time()).to_bytes(4, 'big'),  # card produced time
+        card_produce_time,  # card produced time
         bytes(4),  # card read time TODO
         uuid.UUID(payment_id).bytes,
     ))
@@ -199,7 +200,8 @@ def write_credit_card(
     sector_2_content = b''.join((
         credit_amount.to_bytes(4, 'big'),  # 4 byte unsigned int
         credit_card_id.bytes,
-        bytes(11),
+        card_produce_time,  # check for expiration
+        bytes(7),
     ))
     sector_2 = b''.join((
         sector_2_content,
