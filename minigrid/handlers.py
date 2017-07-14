@@ -642,16 +642,16 @@ def _decrypt(cipher, data):
 
 def _user_or_maintenance_card(binary):
     result = OrderedDict()
-    # result[3] = binary[131:195].decode('ascii')
-    # result[4] = binary[196:].decode('ascii')
+    # result[3] = binary[183:273].decode('ascii')
+    # result[4] = binary[274:].decode('ascii')
     return result
 
 
 def _credit_card(session, cipher, binary, credit_card_id):
     result = OrderedDict()
     # result[3] contains tariff information
-    # result[3] = _decrypt(cipher, unhexlify(binary[131:195])).hex()
-    raw_sector_4 = unhexlify(binary[196:])
+    # result[3] = _decrypt(cipher, unhexlify(binary[183:273])).hex()
+    raw_sector_4 = unhexlify(binary[274:])
     if not any(raw_sector_4):
         return result
     sector_4 = raw_sector_4.split(b'###')[0][:-2]
@@ -705,7 +705,7 @@ def _pack_into_dict(session, binary):
     binary = binary[12:]
     result = OrderedDict()
     # Is it safe to assume that sector 1 is always first? I hope so
-    sector_1 = unhexlify(binary[1:65])
+    sector_1 = unhexlify(binary[1:91])
     # Use this for the future... displaying in the UI
     # system_id = sector_1[:2]
     # application_id = sector_1[2:4]
@@ -733,7 +733,7 @@ def _pack_into_dict(session, binary):
     result['Payment System ID'] = payment_system.payment_id
     key = payment_system.aes_key
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
-    sector_2_enc = unhexlify(binary[66:130])
+    sector_2_enc = unhexlify(binary[92:156])
     sector_2 = _decrypt(cipher, sector_2_enc)
     raw_secret_value = sector_2[:4]
     if card_type == 'C':
