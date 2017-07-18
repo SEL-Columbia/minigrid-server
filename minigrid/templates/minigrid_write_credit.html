@@ -14,9 +14,9 @@
           {% module xsrf_form_html() %}
           <label>Card value : <input type="number" step="1" min="0" name="credit_value" required /></label><br>
 	  {% if device_active %}
-              <input id="card-value" type="submit" value="Write credit card" />
+              <input class="card-value" type="submit" value="Write credit card" />
 	  {% else %}
-              <input id="card-value" type="submit" value="Write credit card" title="Touch card to reader" disabled/>
+              <input class="card-value" type="submit" value="Write credit card" title="Touch card to reader" disabled/>
 	  {% end %}
         </form>
       </div>
@@ -36,6 +36,6 @@
     var http_protocol = '{{ http_protocol }}';
   </script>
 
-  <script type="text/javascript" src="{{ static_url('dist/write_credit.bundle.js') }}"></script>
+  <script type="text/javascript" src="{{ static_url('dist/write_card.bundle.js') }}"></script>
 
 {% end %}
