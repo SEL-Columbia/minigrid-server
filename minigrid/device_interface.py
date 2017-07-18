@@ -1,5 +1,4 @@
 """Functions for interacting with devices."""
-from binascii import unhexlify
 import time
 import uuid
 
@@ -31,10 +30,14 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
         bytes(4),  # card read time TODO
         uuid.UUID(payment_id).bytes,
     ))
-    sector_2 = b''.join((
+    sector_2_content = b''.join((
         vendor.vendor_user_id.encode('ascii'),  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
-        bytes(12),
+        bytes(11),
+    ))
+    sector_2 = b''.join((
+        sector_2_content,
+        (sum(sector_2_content) & 0xFF).to_bytes(1, 'big'),
     ))
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     encryptor = cipher.encryptor()
@@ -65,7 +68,8 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
         ))
 
 
-def write_customer_card(session, cache, key, minigrid_id, payment_id, customer):
+def write_customer_card(
+        session, cache, key, minigrid_id, payment_id, customer):
     """Write information to a customer ID card."""
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
@@ -77,10 +81,14 @@ def write_customer_card(session, cache, key, minigrid_id, payment_id, customer):
         bytes(4),  # card read time TODO
         uuid.UUID(payment_id).bytes,
     ))
-    sector_2 = b''.join((
+    sector_2_content = b''.join((
         customer.customer_user_id.encode('ascii'),  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
-        bytes(12),
+        bytes(11),
+    ))
+    sector_2 = b''.join((
+        sector_2_content,
+        (sum(sector_2_content) & 0xFF).to_bytes(1, 'big'),
     ))
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     encryptor = cipher.encryptor()
@@ -111,7 +119,8 @@ def write_customer_card(session, cache, key, minigrid_id, payment_id, customer):
         ))
 
 
-def write_maintenance_card_card(session, cache, key, minigrid_id, payment_id, maintenance_card):
+def write_maintenance_card_card(
+        session, cache, key, minigrid_id, payment_id, maintenance_card):
     """Write information to a maintenance card card."""
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
@@ -123,10 +132,15 @@ def write_maintenance_card_card(session, cache, key, minigrid_id, payment_id, ma
         bytes(4),  # card read time TODO
         uuid.UUID(payment_id).bytes,
     ))
-    sector_2 = b''.join((
-        maintenance_card.maintenance_card_card_id.encode('ascii'),  # 0000-9999 ASCII
+    mc_id = maintenance_card.maintenance_card_card_id.encode('ascii')
+    sector_2_content = b''.join((
+        mc_id,  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
-        bytes(12),
+        bytes(11),
+    ))
+    sector_2 = b''.join((
+        sector_2_content,
+        (sum(sector_2_content) & 0xFF).to_bytes(1, 'big'),
     ))
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     encryptor = cipher.encryptor()
@@ -149,11 +163,12 @@ def write_maintenance_card_card(session, cache, key, minigrid_id, payment_id, ma
         (sum(naive_payload[62:64]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
+    mmcci = maintenance_card.maintenance_card_card_id
     with models.transaction(session) as tx_session:
         tx_session.add(models.MaintenanceCardHistory(
             mc_minigrid_id=minigrid_id,
             mc_maintenance_card_id=maintenance_card.maintenance_card_id,
-            mc_maintenance_card_card_id=maintenance_card.maintenance_card_card_id,
+            mc_maintenance_card_card_id=mmcci,
         ))
 
 
@@ -170,30 +185,40 @@ def write_credit_card(
         night_tariff, night_tariff_start,
         tariff_creation_timestamp, tariff_activation_timestamp):
     """Write information to a credit card."""
+    card_produce_time = int(time.time()).to_bytes(4, 'big')
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
         b'\x00\x01',  # Application ID
         b'C',  # C for credit
         b'\x08',  # Offset
         b'\x00\xf4',  # Length
-        int(time.time()).to_bytes(4, 'big'),  # card produced time
+        card_produce_time,  # card produced time
         bytes(4),  # card read time TODO
         uuid.UUID(payment_id).bytes,
     ))
     credit_card_id = uuid.uuid4()
-    sector_2 = b''.join((
+    sector_2_content = b''.join((
         credit_amount.to_bytes(4, 'big'),  # 4 byte unsigned int
         credit_card_id.bytes,
-        bytes(12),
+        card_produce_time,  # check for expiration
+        bytes(7),
     ))
-    sector_3 = b''.join((
+    sector_2 = b''.join((
+        sector_2_content,
+        (sum(sector_2_content) & 0xFF).to_bytes(1, 'big'),
+    ))
+    sector_3_content = b''.join((
         _hour_on_epoch_day(day_tariff_start),  # tariff 1 validate time
         (int(day_tariff)).to_bytes(4, 'big'),  # day tariff in cents
         _hour_on_epoch_day(night_tariff_start),  # tariff 2 validate time
         (int(night_tariff)).to_bytes(4, 'big'),  # night tariff in cents
         int(tariff_creation_timestamp.timestamp()).to_bytes(4, 'big'),
         int(tariff_activation_timestamp.timestamp()).to_bytes(4, 'big'),
-        bytes(8),
+        bytes(7),
+    ))
+    sector_3 = b''.join((
+        sector_3_content,
+        (sum(sector_3_content) & 0xFF).to_bytes(1, 'big'),
     ))
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     encryptor2 = cipher.encryptor()
