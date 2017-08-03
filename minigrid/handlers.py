@@ -652,11 +652,11 @@ def _user_or_maintenance_card(binary):
 def _credit_card(session, cipher, binary, credit_card_id):
     result = OrderedDict()
     raw_sector_3 = unhexlify(binary[183:273])
-    logging.info(f'Sector 3: {raw_sector_3}')
+    # logging.info(f'Sector 3: {raw_sector_3}')
     # result[3] contains tariff information
     # result[3] = _decrypt(cipher, unhexlify(binary[183:273])).hex()
     raw_sector_4 = unhexlify(binary[274:])
-    logging.info(f'Raw Sector 4: {raw_sector_4}')
+    # logging.info(f'Raw Sector 4: {raw_sector_4}')
     if not any(raw_sector_4):
         return result
     sector_4 = raw_sector_4.split(b'###')[0][:-2]
@@ -702,10 +702,11 @@ def _pack_into_dict(session, binary):
     try:
         # Checks device address in first 12 characters
         device_address = unhexlify(binary[:12])
+        logging.info(f'Device Address: {device_address}')
         device_exists = session.query(
             exists().where(models.Device.address == device_address)).scalar()
     except Exception as error:
-        import logging
+        import logging # remove
         logging.error(str(error))
         device_exists = False
     if not device_exists:  # TODO: new error class
@@ -715,11 +716,12 @@ def _pack_into_dict(session, binary):
     result = OrderedDict()
     # Is it safe to assume that sector 1 is always first? I hope so
     sector_1 = unhexlify(binary[1:91]) # Sector label is one character, ignore it, take 90 after as sector 1
-    logging.info(f'Sector 1: {sector_1}')
+    # logging.info(f'Sector 1: {sector_1}')
     # Use this for the future... displaying in the UI
     # system_id = sector_1[:2]
     # application_id = sector_1[2:4]
     card_type = sector_1[4:5].decode('ascii')
+    logging.info(f'Card Type: {card_type}')
     try:
         result['Card Type'] = _card_type_dict[card_type]
     except KeyError:
@@ -730,9 +732,11 @@ def _pack_into_dict(session, binary):
     # offset = sector_1[5:6]
     # length = sector_1[6:8]
     card_produced_time = sector_1[8:12]
+    logging.info(f'Card Produce Time Unencrypted: {card_produced_time}')
     result['Card Creation Time'] = datetime.fromtimestamp(
         int.from_bytes(card_produced_time, 'big')).isoformat()
     card_last_read_time = sector_1[12:16]
+    logging.info(f'Card Last Read Time: {card_last_read_time}')
     result['Card Last Read Time'] = datetime.fromtimestamp(
         int.from_bytes(card_last_read_time, 'big')).isoformat()
     payment_id = sector_1[16:32].hex()
@@ -744,14 +748,15 @@ def _pack_into_dict(session, binary):
     key = payment_system.aes_key
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     sector_2_enc = unhexlify(binary[92:156])
-    logging.info(f'Sector 2 Encrypted: {sector_2_enc}')
+    # logging.info(f'Sector 2 Encrypted: {sector_2_enc}')
     sector_2 = _decrypt(cipher, sector_2_enc)
-    logging.info(f'Sector 2: {sector_2}')
+    # logging.info(f'Sector 2: {sector_2}')
     raw_secret_value = sector_2[:4]
     if card_type == 'C':
         secret_value = int.from_bytes(raw_secret_value, 'big')
         card_produce_time = datetime.fromtimestamp(
             int.from_bytes(sector_2[20:24], 'big'))
+        logging.info(f'Card Produce Time Encrypted: {card_produce_time}')
         result['Card Creation Time'] = card_produce_time.isoformat()
         current_timestamp = datetime.now()
         delta = current_timestamp - card_produce_time
