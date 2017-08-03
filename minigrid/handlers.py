@@ -6,6 +6,8 @@ import secrets
 from urllib.parse import urlencode
 from uuid import uuid4, UUID
 
+import logging
+
 from asyncio_portier import get_verified_email
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -649,12 +651,16 @@ def _user_or_maintenance_card(binary):
 
 def _credit_card(session, cipher, binary, credit_card_id):
     result = OrderedDict()
+    raw_sector_3 = unhexlify(binary[183:273])
+    logging.info(f'Sector 3: {raw_sector_3}')
     # result[3] contains tariff information
     # result[3] = _decrypt(cipher, unhexlify(binary[183:273])).hex()
     raw_sector_4 = unhexlify(binary[274:])
+    logging.info(f'Raw Sector 4: {raw_sector_4}')
     if not any(raw_sector_4):
         return result
     sector_4 = raw_sector_4.split(b'###')[0][:-2]
+    logging.info(f'Sector 4: {sector_4}')
     # If card has been used...
     record_timestamp = datetime.fromtimestamp(
         int(sector_4[4:14].decode('ascii'))).isoformat()
@@ -691,7 +697,10 @@ _secret_value_type = {
 
 def _pack_into_dict(session, binary):
     # TODO: here there be dragons...
+    import logging
+    logging.info(f'Card Contents: {binary}')
     try:
+        # Checks device address in first 12 characters
         device_address = unhexlify(binary[:12])
         device_exists = session.query(
             exists().where(models.Device.address == device_address)).scalar()
@@ -702,10 +711,11 @@ def _pack_into_dict(session, binary):
     if not device_exists:  # TODO: new error class
         raise tornado.web.HTTPError(
             400, 'bad device id {}'.format(binary[:12]))
-    binary = binary[12:]
+    binary = binary[12:] # Remove device address form binary
     result = OrderedDict()
     # Is it safe to assume that sector 1 is always first? I hope so
-    sector_1 = unhexlify(binary[1:91])
+    sector_1 = unhexlify(binary[1:91]) # Sector label is one character, ignore it, take 90 after as sector 1
+    logging.info(f'Sector 1: {sector_1}')
     # Use this for the future... displaying in the UI
     # system_id = sector_1[:2]
     # application_id = sector_1[2:4]
@@ -734,7 +744,9 @@ def _pack_into_dict(session, binary):
     key = payment_system.aes_key
     cipher = Cipher(AES(key), modes.ECB(), backend=default_backend())
     sector_2_enc = unhexlify(binary[92:156])
+    logging.info(f'Sector 2 Encrypted: {sector_2_enc}')
     sector_2 = _decrypt(cipher, sector_2_enc)
+    logging.info(f'Sector 2: {sector_2}')
     raw_secret_value = sector_2[:4]
     if card_type == 'C':
         secret_value = int.from_bytes(raw_secret_value, 'big')
@@ -802,6 +814,7 @@ class DeviceInfoHandler(BaseHandler):
                 # TODO: clean this up
                 payload = _pack_into_dict(self.session, body)
             except Exception as error:
+                logging.info(f'Error: {error}')
                 cache.set('card_read_error', str(error), 5)
             else:
                 cache.set('received_info', payload, 5)

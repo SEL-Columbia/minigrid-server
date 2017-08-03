@@ -192,7 +192,7 @@ def write_credit_card(
         b'C',  # C for credit
         b'\x08',  # Offset
         b'\x00\xf4',  # Length
-        card_produce_time,  # card produced time
+        b'\x00\x00\x00\x00',  # old card produce time section
         bytes(4),  # card read time TODO
         uuid.UUID(payment_id).bytes,
     ))
