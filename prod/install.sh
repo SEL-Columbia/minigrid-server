@@ -95,7 +95,7 @@ $SUDO docker run -it --rm -p 443:443 -p 80:80 \
   -v "/etc/letsencrypt:/etc/letsencrypt:Z" \
   -v "/var/lib/letsencrypt:/var/lib/letsencrypt:Z" \
   -v "/var/log:/var/log:Z" \
-  quay.io/letsencrypt/letsencrypt:latest certonly --standalone $DOMAIN_ARGS
+  certbot/certbot certonly --standalone $DOMAIN_ARGS
 
 # Run openssl dhparam
 printf "========================================\n"
