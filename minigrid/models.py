@@ -315,6 +315,12 @@ class Customer(Base):
     customer_user_id = sa.Column(
         pg.TEXT, sa.CheckConstraint("customer_user_id ~ '\d{4}'"),
         nullable=False)
+    customer_current_limit = sa.Column(
+        pg.TEXT, sa.CheckConstraint("customer_current_limit != ''"),
+        nullable=False)
+    customer_energy_limit = sa.Column(
+        pg.TEXT, sa.CheckConstraint("customer_energy_limit != ''"),
+        nullable=False)
 
     __table_args__ = (
         sa.UniqueConstraint('customer_minigrid_id', 'customer_user_id'),
