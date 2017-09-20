@@ -448,7 +448,9 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
                 with models.transaction(self.session) as session:
                     grid.customers.append(models.Customer(
                         customer_user_id=self.get_argument('customer_user_id'),
-                        customer_name=self.get_argument('customer_name')))
+                        customer_name=self.get_argument('customer_name'),
+                        customer_current_limit=self.get_argument('customer_current_limit'),
+                        customer_energy_limit=self.get_argument('customer_energy_limit')))
             except (IntegrityError, DataError) as error:
                 if 'customer_name_key' in error.orig.pgerror:
                     message = 'A customer with that name already exists'

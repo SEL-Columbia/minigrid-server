@@ -316,10 +316,10 @@ class Customer(Base):
         pg.TEXT, sa.CheckConstraint("customer_user_id ~ '\d{4}'"),
         nullable=False)
     customer_current_limit = sa.Column(
-        pg.TEXT, sa.CheckConstraint("customer_current_limit != ''"),
+        pg.TEXT, sa.CheckConstraint("customer_current_limit != '\d{1,}'"),
         nullable=False)
     customer_energy_limit = sa.Column(
-        pg.TEXT, sa.CheckConstraint("customer_energy_limit != ''"),
+        pg.TEXT, sa.CheckConstraint("customer_energy_limit != '\d{1,}'"),
         nullable=False)
 
     __table_args__ = (
