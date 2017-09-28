@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import secrets
 from urllib.parse import urlencode
 from uuid import uuid4, UUID
+import struct
 
 import logging
 
@@ -770,6 +771,9 @@ def _pack_into_dict(session, binary):
     else:
         secret_value = raw_secret_value.decode('ascii')
     result[_secret_value_type[card_type]] = secret_value
+    if card_type == 'B':
+        result['Current Limit'] = struct.unpack('f', sector_2[20:24])
+        result['Energy Limit'] = struct.unpack('f', sector_2[24:28])
     if card_type in {'A', 'B', 'D'}:
         result['Minigrid ID'] = str(UUID(bytes=sector_2[4:20]))
         specific_data = _user_or_maintenance_card(binary)

@@ -1,6 +1,7 @@
 """Functions for interacting with devices."""
 import time
 import uuid
+import struct
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
@@ -84,9 +85,9 @@ def write_customer_card(
     sector_2_content = b''.join((
         customer.customer_user_id.encode('ascii'),  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
-        (customer.customer_current_limit).to_bytes(2, 'big'),  # Current Limit
-        (customer.customer_energy_limit).to_bytes(2, 'big'),  # Energy Limit
-        bytes(7),
+        struct.pack('f', float(customer.customer_current_limit)),  # Current Limit
+        struct.pack('f', float(customer.customer_energy_limit)),  # Energy Limit
+        bytes(3),
     ))
     sector_2 = b''.join((
         sector_2_content,
