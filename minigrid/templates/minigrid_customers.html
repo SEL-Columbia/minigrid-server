@@ -51,7 +51,7 @@
       {% module xsrf_form_html() %}
       <label>Name: <input name="customer_name" required /></label><br>
       <label>User ID (0000-9999): <input name="customer_user_id" pattern="\d{4}" required /></label><br>
-      <label>Current Limit (A): <input type="number" step="1" min="0" name="customer_current_limit" required /></label><br>
+      <label>Current Limit (A): <input type="number" step="0.01" min="0" name="customer_current_limit" required /></label><br>
       <label>Energy Limit (Wh): <input type="number" step="1" min="0" name="customer_energy_limit" required /></label><br>
       <input type="submit" value="Add Customer" />
     </form>
