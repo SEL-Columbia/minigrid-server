@@ -84,8 +84,8 @@ def write_customer_card(
     sector_2_content = b''.join((
         customer.customer_user_id.encode('ascii'),  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
-        (int(customer.customer_current_limit*100)).to_bytes(4, 'big'),  # Current Limit
-        (int(customer.customer_energy_limit)).to_bytes(4, 'big'),       # Energy Limit
+        (int(float(customer.customer_current_limit)*100)).to_bytes(4, 'big'),  # Current Limit
+        (int(customer.customer_energy_limit)).to_bytes(4, 'big'),              # Energy Limit
         bytes(3),
     ))
     sector_2 = b''.join((
