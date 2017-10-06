@@ -771,8 +771,8 @@ def _pack_into_dict(session, binary):
         secret_value = raw_secret_value.decode('ascii')
     result[_secret_value_type[card_type]] = secret_value
     if card_type == 'B':
-        result['Current Limit'] = int.from_bytes(sector_2[20:24], 'big')/100
-        result['Energy Limit'] = int.from_bytes(sector_2[24:28], 'big')
+        result['Current Limit (A)'] = int.from_bytes(sector_2[20:24], 'big')/100
+        result['Energy Limit (Wh)'] = int.from_bytes(sector_2[24:28], 'big')
     if card_type in {'A', 'B', 'D'}:
         result['Minigrid ID'] = str(UUID(bytes=sector_2[4:20]))
         specific_data = _user_or_maintenance_card(binary)
@@ -782,6 +782,12 @@ def _pack_into_dict(session, binary):
         specific_data = _credit_card(session, cipher, binary, cc_id)
     else:
         raise tornado.web.HTTPError(400, f'bad card type {card_type}')
+    if card_type == 'C':
+        application_flag = sector_1[32:33].hex()
+        if application_flag == '00':
+            result['Credit Status'] = 'Unused'
+        elif application_flag == '01':
+            result['Credit Status'] = 'Previously Used'
     result.update(specific_data)
     return json_encode(result)
 

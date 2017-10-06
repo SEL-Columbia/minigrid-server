@@ -27,8 +27,10 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
         b'\x08',  # Offset
         b'\x00\x14',  # Length
         int(time.time()).to_bytes(4, 'big'),  # card produced time
-        bytes(4),  # card read time TODO
+        bytes(4),  # card read time, set as zeros
         uuid.UUID(payment_id).bytes,
+        b'\x00', # Application Flag, has the card been used? Initially no
+        bytes(12),
     ))
     sector_2_content = b''.join((
         vendor.vendor_user_id.encode('ascii'),  # 0000-9999 ASCII
@@ -48,16 +50,15 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
         (sum(naive_payload[:15]) & 0xFF).to_bytes(1, 'big'),
         naive_payload[15:30],
         (sum(naive_payload[15:30]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[30:32],
+        naive_payload[30:45],
+        (sum(naive_payload[30:45]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[45:60],
+        (sum(naive_payload[45:60]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[60:75],
+        (sum(naive_payload[60:75]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[75:77],
         bytes(13),
-        (sum(naive_payload[30:32]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[32:47],
-        (sum(naive_payload[32:47]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[47:62],
-        (sum(naive_payload[47:62]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[62:64],
-        bytes(13),
-        (sum(naive_payload[62:64]) & 0xFF).to_bytes(1, 'big'),
+        (sum(naive_payload[75:77]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
     with models.transaction(session) as tx_session:
@@ -78,14 +79,16 @@ def write_customer_card(
         b'\x08',  # Offset
         b'\x00\x14',  # Length
         int(time.time()).to_bytes(4, 'big'),  # card produced time
-        bytes(4),  # card read time TODO
+        bytes(4),  # card read time, set as zeros
         uuid.UUID(payment_id).bytes,
+        b'\x00', # Application Flag, has the card been used? Initially no
+        bytes(12),
     ))
     sector_2_content = b''.join((
         customer.customer_user_id.encode('ascii'),  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
-        (int(float(customer.customer_current_limit)*100)).to_bytes(4, 'big'),  # Current Limit
-        (int(customer.customer_energy_limit)).to_bytes(4, 'big'),              # Energy Limit
+        int(float(customer.customer_current_limit)*100).to_bytes(4, 'big'),  # Current Limit
+        int(customer.customer_energy_limit).to_bytes(4, 'big'),              # Energy Limit
         bytes(3),
     ))
     sector_2 = b''.join((
@@ -101,16 +104,15 @@ def write_customer_card(
         (sum(naive_payload[:15]) & 0xFF).to_bytes(1, 'big'),
         naive_payload[15:30],
         (sum(naive_payload[15:30]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[30:32],
+        naive_payload[30:45],
+        (sum(naive_payload[30:45]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[45:60],
+        (sum(naive_payload[45:60]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[60:75],
+        (sum(naive_payload[60:75]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[75:77],
         bytes(13),
-        (sum(naive_payload[30:32]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[32:47],
-        (sum(naive_payload[32:47]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[47:62],
-        (sum(naive_payload[47:62]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[62:64],
-        bytes(13),
-        (sum(naive_payload[62:64]) & 0xFF).to_bytes(1, 'big'),
+        (sum(naive_payload[75:77]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
     with models.transaction(session) as tx_session:
@@ -131,8 +133,10 @@ def write_maintenance_card_card(
         b'\x08',  # Offset
         b'\x00\xd0',  # Length
         int(time.time()).to_bytes(4, 'big'),  # card produced time
-        bytes(4),  # card read time TODO
+        bytes(4),  # card read time, set as zeros
         uuid.UUID(payment_id).bytes,
+        b'\x00', # Application Flag, has the card been used?
+        bytes(12),
     ))
     mc_id = maintenance_card.maintenance_card_card_id.encode('ascii')
     sector_2_content = b''.join((
@@ -153,16 +157,15 @@ def write_maintenance_card_card(
         (sum(naive_payload[:15]) & 0xFF).to_bytes(1, 'big'),
         naive_payload[15:30],
         (sum(naive_payload[15:30]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[30:32],
+        naive_payload[30:45],
+        (sum(naive_payload[30:45]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[45:60],
+        (sum(naive_payload[45:60]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[60:75],
+        (sum(naive_payload[60:75]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[75:77],
         bytes(13),
-        (sum(naive_payload[30:32]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[32:47],
-        (sum(naive_payload[32:47]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[47:62],
-        (sum(naive_payload[47:62]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[62:64],
-        bytes(13),
-        (sum(naive_payload[62:64]) & 0xFF).to_bytes(1, 'big'),
+        (sum(naive_payload[75:77]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
     mmcci = maintenance_card.maintenance_card_card_id
@@ -195,8 +198,10 @@ def write_credit_card(
         b'\x08',  # Offset
         b'\x00\xf4',  # Length
         b'\x00\x00\x00\x00',  # old card produce time section
-        bytes(4),  # card read time TODO
+        bytes(4),  # card read time, set as zeros
         uuid.UUID(payment_id).bytes,
+        b'\x00', # Application Flag, has the card been used?
+        bytes(12),
     ))
     credit_card_id = uuid.uuid4()
     sector_2_content = b''.join((
@@ -233,23 +238,22 @@ def write_credit_card(
         (sum(naive_payload[:15]) & 0xFF).to_bytes(1, 'big'),
         naive_payload[15:30],
         (sum(naive_payload[15:30]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[30:32],
+        naive_payload[30:45],
+        (sum(naive_payload[30:45]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[45:60],
+        (sum(naive_payload[45:60]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[60:75],
+        (sum(naive_payload[60:75]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[75:77],
         bytes(13),
-        (sum(naive_payload[30:32]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[32:47],
-        (sum(naive_payload[32:47]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[47:62],
-        (sum(naive_payload[47:62]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[62:64],
+        (sum(naive_payload[75:77]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[77:92],
+        (sum(naive_payload[77:92]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[92:107],
+        (sum(naive_payload[92:107]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[107:109],
         bytes(13),
-        (sum(naive_payload[62:64]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[64:79],
-        (sum(naive_payload[64:79]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[79:94],
-        (sum(naive_payload[79:94]) & 0xFF).to_bytes(1, 'big'),
-        naive_payload[94:96],
-        bytes(13),
-        (sum(naive_payload[94:96]) & 0xFF).to_bytes(1, 'big'),
+        (sum(naive_payload[107:109]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
     data = {
