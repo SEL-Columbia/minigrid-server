@@ -784,6 +784,7 @@ def _pack_into_dict(session, binary):
         raise tornado.web.HTTPError(400, f'bad card type {card_type}')
     if card_type == 'C':
         application_flag = sector_1[32:33].hex()
+        logging.info(f'Application Flag: {application_flag}')
         if application_flag == '00':
             result['Credit Status'] = 'Unused'
         elif application_flag == '01':
