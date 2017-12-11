@@ -29,7 +29,7 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
         int(time.time()).to_bytes(4, 'big'),  # card produced time
         bytes(4),  # card read time, set as zeros
         uuid.UUID(payment_id).bytes,
-        b'\x00', # Application Flag, has the card been used? Initially no
+        b'\x00',  # Application Flag, has the card been used? Initially no
         bytes(12),
     ))
     sector_2_content = b''.join((
@@ -81,14 +81,14 @@ def write_customer_card(
         int(time.time()).to_bytes(4, 'big'),  # card produced time
         bytes(4),  # card read time, set as zeros
         uuid.UUID(payment_id).bytes,
-        b'\x00', # Application Flag, has the card been used? Initially no
+        b'\x00',  # Application Flag, has the card been used? Initially no
         bytes(12),
     ))
     sector_2_content = b''.join((
         customer.customer_user_id.encode('ascii'),  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
-        int(customer.customer_current_limit).to_bytes(4, 'big'),  # Current Limit mA
-        int(customer.customer_energy_limit).to_bytes(4, 'big'),   # Energy Limit Wh
+        int(customer.customer_current_limit).to_bytes(4, 'big'),  # Limit mA
+        int(customer.customer_energy_limit).to_bytes(4, 'big'),   # Limit Wh
         bytes(3),
     ))
     sector_2 = b''.join((
@@ -135,7 +135,7 @@ def write_maintenance_card_card(
         int(time.time()).to_bytes(4, 'big'),  # card produced time
         bytes(4),  # card read time, set as zeros
         uuid.UUID(payment_id).bytes,
-        b'\x00', # Application Flag, has the card been used?
+        b'\x00',  # Application Flag, has the card been used?
         bytes(12),
     ))
     mc_id = maintenance_card.maintenance_card_card_id.encode('ascii')
@@ -200,7 +200,7 @@ def write_credit_card(
         b'\x00\x00\x00\x00',  # old card produce time section
         bytes(4),  # card read time, set as zeros
         uuid.UUID(payment_id).bytes,
-        b'\x00', # Application Flag, has the card been used?
+        b'\x00',  # Application Flag, has the card been used?
         bytes(12),
     ))
     credit_card_id = uuid.uuid4()
