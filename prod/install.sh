@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Minigrid Server installer for version 0.2.3
+# Minigrid Server installer for version 0.2.4
 set -e
 
 # Do you have docker installed?
@@ -108,8 +108,8 @@ $SUDO openssl dhparam -out /etc/letsencrypt/live/$LETSENCRYPT_DIR/dhparam.pem 20
 printf "========================================\n"
 printf " Generating configuration               \n"
 printf "========================================\n"
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.2.3/prod/docker-compose.yml > docker-compose.yml
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.2.3/prod/nginx.conf > nginx.conf
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.2.4/prod/docker-compose.yml > docker-compose.yml
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.2.4/prod/nginx.conf > nginx.conf
 
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g docker-compose.yml
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g nginx.conf
@@ -148,7 +148,7 @@ printf "========================================\n"
 # the container can't run the docker command properly.
 # So /tmp/renewed serves as a sentinel
 CRON_CMD="mkdir -p /tmp/letsencrypt && "\
-"docker run -it --rm --name certbot"\
+"docker run -i --rm --name certbot"\
 " -v /etc/letsencrypt:/etc/letsencrypt:Z"\
 " -v /var/lib/letsencrypt:/var/lib/letsencrypt:Z"\
 " -v /tmp:/tmp:Z"\

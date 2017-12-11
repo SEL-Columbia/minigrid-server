@@ -20,6 +20,8 @@
         <li>
         <p>Name: {{ customer.customer_name }}</p>
         <p>User ID: {{ customer.customer_user_id }}</p>
+        <p>Current Limit (mA): {{ customer.customer_current_limit }}</p>
+        <p>Energy Limit (Wh): {{ customer.customer_energy_limit }}</p>
         <form action="/minigrids/{{ minigrid.minigrid_id }}/customers" method="POST">
           {% module xsrf_form_html() %}
         	<input type="hidden" name="action" value="write" />
@@ -49,6 +51,8 @@
       {% module xsrf_form_html() %}
       <label>Name: <input name="customer_name" required /></label><br>
       <label>User ID (0000-9999): <input name="customer_user_id" pattern="\d{4}" required /></label><br>
+      <label>Current Limit (mA): <input type="number" step="1" min="0" name="customer_current_limit" required /></label><br>
+      <label>Energy Limit (Wh): <input type="number" step="1" min="0" name="customer_energy_limit" required /></label><br>
       <input type="submit" value="Add Customer" />
     </form>
     <hr>

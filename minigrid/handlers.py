@@ -448,7 +448,9 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
                 with models.transaction(self.session) as session:
                     grid.customers.append(models.Customer(
                         customer_user_id=self.get_argument('customer_user_id'),
-                        customer_name=self.get_argument('customer_name')))
+                        customer_name=self.get_argument('customer_name'),
+                        customer_current_limit=self.get_argument('customer_current_limit'),
+                        customer_energy_limit=self.get_argument('customer_energy_limit')))
             except (IntegrityError, DataError) as error:
                 if 'customer_name_key' in error.orig.pgerror:
                     message = 'A customer with that name already exists'
@@ -768,6 +770,9 @@ def _pack_into_dict(session, binary):
     else:
         secret_value = raw_secret_value.decode('ascii')
     result[_secret_value_type[card_type]] = secret_value
+    if card_type == 'B':
+        result['Current Limit (mA)'] = int.from_bytes(sector_2[20:24], 'big')
+        result['Energy Limit (Wh)'] = int.from_bytes(sector_2[24:28], 'big')
     if card_type in {'A', 'B', 'D'}:
         result['Minigrid ID'] = str(UUID(bytes=sector_2[4:20]))
         specific_data = _user_or_maintenance_card(binary)
@@ -777,6 +782,13 @@ def _pack_into_dict(session, binary):
         specific_data = _credit_card(session, cipher, binary, cc_id)
     else:
         raise tornado.web.HTTPError(400, f'bad card type {card_type}')
+    if card_type == 'C':
+        application_flag = sector_1[32:33].hex()
+        logging.info(f'Application Flag: {application_flag}')
+        if application_flag == '00':
+            result['Credit Status'] = 'Unused'
+        elif application_flag == '01':
+            result['Credit Status'] = 'Previously Used'
     result.update(specific_data)
     return json_encode(result)
 
