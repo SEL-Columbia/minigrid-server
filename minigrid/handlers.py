@@ -655,7 +655,7 @@ def _user_or_maintenance_card(binary):
 
 def _credit_card(session, cipher, binary, credit_card_id):
     result = OrderedDict()
-    #raw_sector_3 = unhexlify(binary[183:273])
+    # raw_sector_3 = unhexlify(binary[183:273])
     # logging.info(f'Sector 3: {raw_sector_3}')
     # result[3] contains tariff information
     # result[3] = _decrypt(cipher, unhexlify(binary[183:273])).hex()
