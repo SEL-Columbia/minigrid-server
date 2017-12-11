@@ -148,7 +148,7 @@ printf "========================================\n"
 # the container can't run the docker command properly.
 # So /tmp/renewed serves as a sentinel
 CRON_CMD="mkdir -p /tmp/letsencrypt && "\
-"docker run -it --rm --name certbot"\
+"docker run -i --rm --name certbot"\
 " -v /etc/letsencrypt:/etc/letsencrypt:Z"\
 " -v /var/lib/letsencrypt:/var/lib/letsencrypt:Z"\
 " -v /tmp:/tmp:Z"\
