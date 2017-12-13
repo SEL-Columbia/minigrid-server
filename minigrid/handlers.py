@@ -449,8 +449,10 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
                     grid.customers.append(models.Customer(
                         customer_user_id=self.get_argument('customer_user_id'),
                         customer_name=self.get_argument('customer_name'),
-                        customer_current_limit=self.get_argument('customer_current_limit'),
-                        customer_energy_limit=self.get_argument('customer_energy_limit')))
+                        customer_current_limit=self.get_argument(
+                            'customer_current_limit'),
+                        customer_energy_limit=self.get_argument(
+                            'customer_energy_limit')))
             except (IntegrityError, DataError) as error:
                 if 'customer_name_key' in error.orig.pgerror:
                     message = 'A customer with that name already exists'
@@ -653,7 +655,7 @@ def _user_or_maintenance_card(binary):
 
 def _credit_card(session, cipher, binary, credit_card_id):
     result = OrderedDict()
-    raw_sector_3 = unhexlify(binary[183:273])
+    # raw_sector_3 = unhexlify(binary[183:273])
     # logging.info(f'Sector 3: {raw_sector_3}')
     # result[3] contains tariff information
     # result[3] = _decrypt(cipher, unhexlify(binary[183:273])).hex()
@@ -708,16 +710,17 @@ def _pack_into_dict(session, binary):
         device_exists = session.query(
             exists().where(models.Device.address == device_address)).scalar()
     except Exception as error:
-        import logging # remove
+        import logging  # remove
         logging.error(str(error))
         device_exists = False
     if not device_exists:  # TODO: new error class
         raise tornado.web.HTTPError(
             400, 'bad device id {}'.format(binary[:12]))
-    binary = binary[12:] # Remove device address form binary
+    binary = binary[12:]  # Remove device address form binary
     result = OrderedDict()
     # Is it safe to assume that sector 1 is always first? I hope so
-    sector_1 = unhexlify(binary[1:91]) # Sector label is one character, ignore it, take 90 after as sector 1
+    # Sector label is one character, ignore it, take 90 after as sector 1
+    sector_1 = unhexlify(binary[1:91])
     # logging.info(f'Sector 1: {sector_1}')
     # Use this for the future... displaying in the UI
     # system_id = sector_1[:2]
