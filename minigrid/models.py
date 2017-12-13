@@ -316,11 +316,11 @@ class Customer(Base):
         pg.TEXT, sa.CheckConstraint("customer_user_id ~ '\d{4}'"),
         nullable=False)
     customer_current_limit = sa.Column(
-        pg.TEXT,
+        pg.INTEGER,
         sa.CheckConstraint("customer_current_limit >= 0"),
         nullable=False)
     customer_energy_limit = sa.Column(
-        pg.TEXT,
+        pg.INTEGER,
         sa.CheckConstraint("customer_energy_limit >= 0"),
         nullable=False)
 
