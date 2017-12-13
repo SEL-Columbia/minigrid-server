@@ -715,8 +715,8 @@ class TestMinigridCustomersHandler(HTTPTest):
         get_current_user.return_value = self.user
         response = self.fetch(
             f'/minigrids/{self.minigrid.minigrid_id}/customers?'
-            'action=create&customer_name=c2&customer_user_id=0001&\
-            customer_current_limit=1000&customer_energy_limit=2500',
+            'action=create&customer_name=c2&customer_user_id=0001'
+            '&customer_current_limit=1000&customer_energy_limit=2500',
             method='POST', body='')
         self.assertResponseCode(response, 200)
         customer = (
@@ -730,8 +730,8 @@ class TestMinigridCustomersHandler(HTTPTest):
         with ExpectLog('tornado.access', '400'):
             response = self.fetch(
                 f'/minigrids/{self.minigrid.minigrid_id}/customers?'
-                'action=create&customer_name=c&customer_user_id=0001&\
-                customer_current_limit=1000&customer_energy_limit=2500',
+                'action=create&customer_name=c&customer_user_id=0001'
+                '&customer_current_limit=1000&customer_energy_limit=2500',
                 method='POST', body='')
         self.assertResponseCode(response, 400)
         self.assertIn(
@@ -743,8 +743,8 @@ class TestMinigridCustomersHandler(HTTPTest):
         with ExpectLog('tornado.access', '400'):
             response = self.fetch(
                 f'/minigrids/{self.minigrid.minigrid_id}/customers?'
-                'action=create&customer_name=c2&customer_user_id=0000\
-                customer_current_limit=1000&customer_energy_limit=2500',
+                'action=create&customer_name=c2&customer_user_id=0000'
+                '&customer_current_limit=1000&customer_energy_limit=2500',
                 method='POST', body='')
         self.assertResponseCode(response, 400)
         self.assertIn(
@@ -757,8 +757,8 @@ class TestMinigridCustomersHandler(HTTPTest):
         with ExpectLog('tornado.access', '400'):
             response = self.fetch(
                 f'/minigrids/{self.minigrid.minigrid_id}/customers?'
-                'action=create&customer_name=&customer_user_id=0001\
-                customer_current_limit=1000&customer_energy_limit=2500',
+                'action=create&customer_name=&customer_user_id=0001'
+                '&customer_current_limit=1000&customer_energy_limit=2500',
                 method='POST', body='')
         self.assertResponseCode(response, 400)
         self.assertIn('customer_customer_name_check', response.body.decode())
