@@ -326,7 +326,9 @@ class Customer(Base):
 
     __table_args__ = (
         sa.UniqueConstraint('customer_minigrid_id', 'customer_user_id'),
-        sa.UniqueConstraint('customer_minigrid_id', 'customer_name'))
+        sa.UniqueConstraint('customer_minigrid_id', 'customer_name')),
+        sa.UniqueConstraint('customer_minigrid_id', 'customer_current_limit')),
+        sa.UniqueConstraint('customer_minigrid_id', 'customer_energy_limit'))
 
 
 class MaintenanceCard(Base):
