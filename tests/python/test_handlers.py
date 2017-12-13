@@ -682,7 +682,8 @@ class TestMinigridCustomersHandler(HTTPTest):
             session.add(models.System(day_tariff=1, night_tariff=1))
             self.minigrid = models.Minigrid(minigrid_name='a')
             self.customer = models.Customer(
-                customer_name='c', customer_user_id='0000')
+                customer_name='c', customer_user_id='0000',
+                customer_current_limit=1000, customer_energy_limit=2500)
             self.minigrid.customers.append(self.customer)
             session.add(self.minigrid)
             session.add(models.Device(address=bytes(6)))
