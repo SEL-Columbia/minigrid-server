@@ -710,7 +710,6 @@ def _pack_into_dict(session, binary):
         device_exists = session.query(
             exists().where(models.Device.address == device_address)).scalar()
     except Exception as error:
-        import logging  # remove
         logging.error(str(error))
         device_exists = False
     if not device_exists:  # TODO: new error class
@@ -723,8 +722,12 @@ def _pack_into_dict(session, binary):
     sector_1 = unhexlify(binary[1:91])
     # logging.info(f'Sector 1: {sector_1}')
     # Use this for the future... displaying in the UI
-    # system_id = sector_1[:2]
+    system_id = sector_1[:2].decode('ascii')
     # application_id = sector_1[2:4]
+    if system_id == 'up':
+        logging.info(f'Operator Box is {system_id}')
+        result['Connected Device'] = device_address.hex()
+        return json_encode(result)
     card_type = sector_1[4:5].decode('ascii')
     logging.info(f'Card Type: {card_type}')
     try:
