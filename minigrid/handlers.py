@@ -901,7 +901,7 @@ application_urls = [
     (r'/minigrids/(.{36})/customers/?', MinigridCustomersHandler),
     (r'/minigrids/(.{36})/maintenance_cards/?', _mmch),
     (r'/minigrids/(.{36})/write_credit/?', MinigridWriteCreditHandler),
-    (r'/minigrids/(.{36})/write_credit/history/?', \
+    (r'/minigrids/(.{36})/write_credit/history/?',
         MinigridWriteCreditHistoryHandler),
     (r'/device_info/?', DeviceInfoHandler),
     (r'/tariffs/?', TariffsHandler),
