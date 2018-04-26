@@ -7,6 +7,7 @@
     {% end %}
     <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
     <p>ID: {{ minigrid.minigrid_id }}</p>
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}/write_credit/history">{{ minigrid.minigrid_name }} Credit Card History &raquo;</a></p>
     <div class="center-wrap">
       <div class="credit-form">
         <form class="credit-form" action="/minigrids/{{ minigrid.minigrid_id }}/write_credit" method="POST">

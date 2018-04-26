@@ -13,7 +13,7 @@
     <p>Payment system ID: {{ minigrid.minigrid_payment_id }}</p>
     <form action="/minigrids/{{ minigrid.minigrid_id }}" method="POST">
       {% module xsrf_form_html() %}
-      <label>New payment system ID (note that this will change the encryption key): <input type="text" 
+      <label>New payment system ID (note that this will change the encryption key): <input type="text"
       name="minigrid_payment_id" pattern="[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}" required title="UUID format" /></label><br>
       <input type="submit" value="Update Payment System ID" />
     </form>
@@ -25,9 +25,9 @@
     <p><a href="/minigrids/{{ minigrid.minigrid_id }}/write_credit">Write credit card &raquo;</a></p>
     <hr>
 
-    <p>Data:</p>
+    <!--<p>Data:</p>
     <p>TODO: What data? From where?</p>
-    <hr>
+    <hr> -->
 
   </div>
 

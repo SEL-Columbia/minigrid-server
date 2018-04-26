@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  <div class="full-page-content">
+    {% if message is not None %}
+      <p><strong>{{ message }}</strong></p>
+    {% end %}
+    <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
+    <p>ID: {{ minigrid.minigrid_id }}</p>
+    <p>History:</p>
+    <ul>
+      {% set zero_history = True %}
+      {% for credit_card_history in minigrid.credit_card_history %}
+        {% set zero_history = False %}
+        <li>
+        <p>Creation Time: {{ credit_card_history.credit_card_created }}</p>
+        <p>Amount: {{ credit_card_history.credit_amount }}</p>
+        </li>
+      {% end %}
+    </ul>
+    {% if zero_history %}
+      <p>No history</p>
+    {% end %}
+  </div>
+  <footer>
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}/write_credit">&laquo; Write Credit Card</a></p>
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
+    <p><a href="/">&laquo; Return to minigrid index</a></p>
+  </footer>
+
+  <script>
+    var http_protocol = '{{ http_protocol }}';
+  </script>
+
+  <script type="text/javascript" src="{{ static_url('dist/write_card.bundle.js') }}"></script>
+
+{% end %}

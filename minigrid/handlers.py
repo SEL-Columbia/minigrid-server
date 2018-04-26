@@ -353,6 +353,18 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
         self.redirect(
             f'/minigrids/{minigrid_id}/write_credit', message=message)
 
+class MinigridWriteCreditHistoryHandler(BaseHandler):
+    """Handlers for credit card history view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the credit card history form."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
+        self.render(
+            'minigrid_credit_history.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id),
+            http_protocol=http_protocol)
 
 class MinigridVendorsHandler(ReadCardBaseHandler):
     """Handlers for vendors view."""
@@ -887,6 +899,7 @@ application_urls = [
     (r'/minigrids/(.{36})/customers/?', MinigridCustomersHandler),
     (r'/minigrids/(.{36})/maintenance_cards/?', _mmch),
     (r'/minigrids/(.{36})/write_credit/?', MinigridWriteCreditHandler),
+    (r'/minigrids/(.{36})/write_credit/history/?', MinigridWriteCreditHistoryHandler),
     (r'/device_info/?', DeviceInfoHandler),
     (r'/tariffs/?', TariffsHandler),
     (r'/minigrids/?', MinigridsHandler),

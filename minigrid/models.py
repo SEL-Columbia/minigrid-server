@@ -280,6 +280,9 @@ class Minigrid(Base):
     maintenance_cards = relationship(
         'MaintenanceCard', backref='minigrid',
         order_by='MaintenanceCard.maintenance_card_card_id')
+    credit_card_history = relationship(
+        'CreditCardHistory', backref='minigrid',
+        order_by='CreditCardHistory.credit_tariff_creation_timestamp')
 
     __table_args__ = (
         sa.UniqueConstraint('minigrid_payment_id'),)
