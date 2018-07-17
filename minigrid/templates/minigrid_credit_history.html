@@ -10,7 +10,7 @@
     <p>History:</p>
     <ul>
       {% set zero_history = True %}
-      {% for credit_card_history in minigrid.credit_card_history %}
+      {% for credit_card_history in minigrid.credit_card_history reversed %}
         {% set zero_history = False %}
         <li>
         <p>Creation Time: {{ credit_card_history.credit_card_created }}</p>

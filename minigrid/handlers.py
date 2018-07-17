@@ -731,6 +731,7 @@ def _pack_into_dict(session, binary):
             400, 'bad device id {}'.format(binary[:12]))
     binary = binary[12:]  # Remove device address form binary
     result = OrderedDict()
+    result['Connected Device'] = device_address.hex()
     # Is it safe to assume that sector 1 is always first? I hope so
     # Sector label is one character, ignore it, take 90 after as sector 1
     sector_1 = unhexlify(binary[1:91])
@@ -740,7 +741,6 @@ def _pack_into_dict(session, binary):
     # application_id = sector_1[2:4]
     if system_id == 'up':
         logging.info(f'Operator Box is {system_id}')
-        result['Connected Device'] = device_address.hex()
         return json_encode(result)
     card_type = sector_1[4:5].decode('ascii')
     logging.info(f'Card Type: {card_type}')
@@ -843,9 +843,17 @@ class DeviceInfoHandler(BaseHandler):
         # except Exception as error:
         #     self.write(str(error))
         # body = binary[12:]
-        cache.set('device_active', 1, 5)
         if len(body) > 0:
             try:
+                sector_1 = unhexlify(body[1:91])
+                # logging.info(f'sector_1: {sector_1}')
+                # logging.info(f'sector_1[6:8]: {sector_1[6:8]}')
+                system_id = sector_1[6:8].decode('ascii')
+                logging.info(f'system_id: {system_id}')
+                if system_id == 'up':
+                    cache.set('device_active', 0, 5)
+                else:
+                    cache.set('device_active', 1, 5)
                 # Failure to read the card should be displayed somehow, but
                 # shouldn't prevent overwriting the card
                 # TODO: clean this up

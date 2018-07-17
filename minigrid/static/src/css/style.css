@@ -264,6 +264,22 @@ form#minigrid {
     float: right;
 }
 
+.device-info {
+    background-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 2px 2px 5px 1px rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    text-align: center;
+    min-width: 400px;
+    margin: 40px 0px 0px 0px;
+    padding: 20px;
+    border-collapse: collapse;
+    border-spacing: 5px;
+}
+
+.device-hr {
+	margin: 0px;
+}
+
 form.credit-form {
     padding: 15px 20px;
     margin: auto;
