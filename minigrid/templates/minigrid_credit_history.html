@@ -10,7 +10,7 @@
     <p>History:</p>
     <ul>
       {% set zero_history = True %}
-      {% for credit_card_history in minigrid.credit_card_history reversed %}
+      {% for credit_card_history in reversed(minigrid.credit_card_history) %}
         {% set zero_history = False %}
         <li>
         <p>Creation Time: {{ credit_card_history.credit_card_created }}</p>
@@ -27,11 +27,5 @@
     <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
     <p><a href="/">&laquo; Return to minigrid index</a></p>
   </footer>
-
-  <script>
-    var http_protocol = '{{ http_protocol }}';
-  </script>
-
-  <script type="text/javascript" src="{{ static_url('dist/write_card.bundle.js') }}"></script>
 
 {% end %}

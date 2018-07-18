@@ -49,5 +49,4 @@ import populateCardDeviceTable from './populate_device_info.js';
             conn = null;
         };
 
-
 })();
