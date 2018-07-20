@@ -31,3 +31,8 @@ class LoginError(MinigridHTTPError):
 
 class CardReadError(Exception):
     """Error while reading a card."""
+
+class CardWriteError(Exception):
+    """Error while writing a card."""
+
+    
