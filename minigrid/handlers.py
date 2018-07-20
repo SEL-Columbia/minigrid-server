@@ -38,6 +38,22 @@ cache = redis.StrictRedis.from_url(options.redis_url)
 broker_url = 'https://broker.portier.io'
 
 
+_card_type_dict = {
+    'A': 'Vendor ID Card',
+    'B': 'Customer ID Card',
+    'C': 'Credit Card',
+    'D': 'Maintenance Card',
+}
+
+
+_secret_value_type = {
+    'A': 'Vendor User ID',
+    'B': 'Customer User ID',
+    'C': 'Credit Amount',
+    'D': 'Maintenance Card ID',
+}
+
+
 class BaseHandler(tornado.web.RequestHandler):
     """The base class for all handlers."""
 
@@ -335,13 +351,14 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
         """Write a credit card for this minigrid."""
         minigrid = models.get_minigrid(self.session, minigrid_id)
         system = self.session.query(models.System).one()
+        credit_write = int(self.get_argument('credit_value'))
         write_credit_card(
             self.session,
             cache,
             minigrid.payment_system.aes_key,
             minigrid_id,
             minigrid.payment_system.payment_id,
-            int(self.get_argument('credit_value')),
+            credit_write,
             system.day_tariff,
             system.day_tariff_start,
             system.night_tariff,
@@ -349,9 +366,32 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
             system.tariff_creation_timestamp,
             system.tariff_activation_timestamp,
         )
-        message = 'Card written'
-        self.redirect(
-            f'/minigrids/{minigrid_id}/write_credit', message=message)
+        try:
+            # Checks written credit with read credit
+            logging.info(f'Credit to be Stored: {credit_write}')
+            #cache.set('received_info', payload, 5)
+            #cache.delete('card_read_error')
+            device_info = json_decode(cache.get('received_info'))
+            logging.info(f'Credit device info: {device_info}')
+            card_type = device_info['Card Type']
+            logging.info(f'Card Type Value (Credit): {card_type}')
+            for type, value in _card_type_dict.items():
+                if value == card_type:
+                    logging.info(f'Card Type (Credit): {type}')
+                    cached_credit = device_info[_secret_value_type[type]]
+                    #if type == 'C' && cached_credit == credit_write:
+                    if type == 'C':
+                        logging.info(f'Cached Credit: {cached_credit}')
+                        # needs to be fixed
+                        while cached_credit != credit_write:
+                            device_info = json_decode(cache.get('received_info'))
+                            cached_credit = device_info[_secret_value_type[type]]
+                        logging.info(f'Card Written: {cached_credit}')
+                        message = 'Card written'
+                        self.redirect(
+                            f'/minigrids/{minigrid_id}/write_credit', message=message)
+        except Exception as error:
+            logging.error(str(error))
 
 
 class MinigridWriteCreditHistoryHandler(BaseHandler):
@@ -695,22 +735,6 @@ def _credit_card(session, cipher, binary, credit_card_id):
                 sh_record_timestamp=record_timestamp,
             ))
     return result
-
-
-_card_type_dict = {
-    'A': 'Vendor ID Card',
-    'B': 'Customer ID Card',
-    'C': 'Credit Card',
-    'D': 'Maintenance Card',
-}
-
-
-_secret_value_type = {
-    'A': 'Vendor User ID',
-    'B': 'Customer User ID',
-    'C': 'Credit Amount',
-    'D': 'Maintenance Card ID',
-}
 
 
 def _pack_into_dict(session, binary):
