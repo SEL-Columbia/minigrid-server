@@ -7,6 +7,8 @@ from cryptography.hazmat.backends import default_backend
 
 from sqlalchemy.dialects.postgresql import insert
 
+from tornado.escape import json_encode, json_decode
+
 import minigrid.models as models
 
 
@@ -256,6 +258,10 @@ def write_credit_card(
         (sum(naive_payload[107:109]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 5)
+    write_result = OrderedDict()
+    write_result['credit_amount'] = credit_amount
+    write_result['credit_card_id'] = credit_card_id
+    cache.set('write_info', json_encode(write_result), 5)
     data = {
         'credit_card_id': str(credit_card_id),
         'credit_minigrid_id': minigrid_id,

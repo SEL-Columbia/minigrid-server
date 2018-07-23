@@ -109,6 +109,8 @@ class ReadCardBaseHandler(BaseHandler):
             kwargs['device_active'] = cache.get('device_active')
         if 'received_info' not in kwargs:
             kwargs['received_info'] = cache.get('received_info')
+        if 'write_info' not in kwargs:
+            kwargs['write_info'] = cache.get('write_info')
         if 'card_read_error' not in kwargs:
             kwargs['card_read_error'] = cache.get('card_read_error')
         super().render(*args, **kwargs)
@@ -366,32 +368,25 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
             system.tariff_creation_timestamp,
             system.tariff_activation_timestamp,
         )
-        try:
-            # Checks written credit with read credit
-            logging.info(f'Credit to be Stored: {credit_write}')
-            #cache.set('received_info', payload, 5)
-            #cache.delete('card_read_error')
-            device_info = json_decode(cache.get('received_info'))
-            logging.info(f'Credit device info: {device_info}')
-            card_type = device_info['Card Type']
-            logging.info(f'Card Type Value (Credit): {card_type}')
-            for type, value in _card_type_dict.items():
-                if value == card_type:
-                    logging.info(f'Card Type (Credit): {type}')
-                    cached_credit = device_info[_secret_value_type[type]]
-                    #if type == 'C' && cached_credit == credit_write:
-                    if type == 'C':
-                        logging.info(f'Cached Credit: {cached_credit}')
-                        # needs to be fixed
-                        while cached_credit != credit_write:
-                            device_info = json_decode(cache.get('received_info'))
-                            cached_credit = device_info[_secret_value_type[type]]
-                        logging.info(f'Card Written: {cached_credit}')
-                        message = 'Card written'
-                        self.redirect(
-                            f'/minigrids/{minigrid_id}/write_credit', message=message)
-        except Exception as error:
-            logging.error(str(error))
+        # try:
+        #     Checks written credit with read credit
+        #     logging.info(f'Credit to be Stored: {credit_write}')
+        #     device_info = json_decode(cache.get('received_info'))
+        #     logging.info(f'Credit device info: {device_info}')
+        #     card_type = device_info['Card Type']
+        #     logging.info(f'Card Type Value (Credit): {card_type}')
+        #     for type, value in _card_type_dict.items():
+        #         if value == card_type:
+        #             logging.info(f'Card Type (Credit): {type}')
+        #             cached_credit = device_info[_secret_value_type[type]]
+        #             if type == 'C':
+        #                 logging.info(f'Cached Credit: {cached_credit}')
+        #                 write_result = OrderedDict()
+        #                 write_result['Credit'] = credit_write
+        #                 cache.set('write_info', json_encode(write_result), 10)
+        # except Exception as error:
+        #     logging.error(str(error))
+        self.redirect(f'/minigrids/{minigrid_id}/write_credit')
 
 
 class MinigridWriteCreditHistoryHandler(BaseHandler):
@@ -724,6 +719,7 @@ def _credit_card(session, cipher, binary, credit_card_id):
         int(sector_4[4:14].decode('ascii'))).isoformat()
     result['Timestamp of Recorded Data'] = record_timestamp
     meter_records = sector_4[15:].decode('ascii').split()
+    logging.info(f'meter_records: {meter_records}')
     for record in meter_records:
         meter_id, usage, credit = record.split(',')
         with models.transaction(session) as tx_session:
@@ -836,6 +832,35 @@ def _pack_into_dict(session, binary):
     result.update(specific_data)
     return json_encode(result)
 
+def VerifyWittenCard():
+    # Check if a card has actually been written by reading it
+    # notify on success or failure?
+    write_result = json_decode(cache.get('write_info'))
+    device_info = json_decode(cache.get('received_info'))
+    for type, value in _card_type_dict.items():
+        if type == 'A':
+            pass
+        else if type == 'B':
+            pass
+        else if type == 'C':
+            credit_write = write_result['Credit']
+            credit_card_id_write = write_result['credit_card_id']
+            cached_credit = device_info['Credit Amount']
+            cached_credit_card_id = device_info['credit_card_id']
+            if cached_credit == credit_write && cached_credit_card_id == credit_card_id_write:
+                cache.set('notification', 'Credit Card Written', 10)
+                logging.info(f'Credit Card Written: {cached_credit}')
+                cache.delete('write_info')
+            else:
+                pass
+                # check time left? Retry number? ((Failed notifiaction?))
+        else if type == 'D':
+            pass
+        else:
+            # Error case
+            cache.set('notification', 'Invalid Card Type', 10)
+            logging.info(f'Credit Card Written: {cached_credit}')
+            cache.delete('write_info')
 
 class DeviceInfoHandler(BaseHandler):
     """Handlers for the operator module."""
@@ -910,6 +935,7 @@ class JSONDeviceConnection(SockJSConnection):
         result = {
             'device_active': bool(int(cache.get('device_active') or 0)),
             'received_info': json_decode(cache.get('received_info') or '{}'),
+            'write_info': json_decode(cache.get('write_info') or '{}'),
             'card_read_error': (cache.get('card_read_error') or b'').decode(),
         }
         self.send(result)
