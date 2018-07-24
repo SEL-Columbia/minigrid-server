@@ -111,6 +111,8 @@ class ReadCardBaseHandler(BaseHandler):
             kwargs['received_info'] = cache.get('received_info')
         if 'write_info' not in kwargs:
             kwargs['write_info'] = cache.get('write_info')
+        if 'notification' not in kwargs:
+            kwargs['notification'] = cache.get('notification')
         if 'card_read_error' not in kwargs:
             kwargs['card_read_error'] = cache.get('card_read_error')
         super().render(*args, **kwargs)
@@ -832,35 +834,51 @@ def _pack_into_dict(session, binary):
     result.update(specific_data)
     return json_encode(result)
 
-def VerifyWittenCard():
+
+def _verify_written_card():
     # Check if a card has actually been written by reading it
-    # notify on success or failure?
-    write_result = json_decode(cache.get('write_info'))
-    device_info = json_decode(cache.get('received_info'))
+    # notify on success or failure
+    if cache.get('write_info') and cache.get('received_info'):
+        write_result = json_decode(cache.get('write_info'))
+        device_info = json_decode(cache.get('received_info'))
+    else:
+        return
+    card_type = device_info['Card Type']
+    notify = OrderedDict()
     for type, value in _card_type_dict.items():
-        if type == 'A':
-            pass
-        else if type == 'B':
-            pass
-        else if type == 'C':
-            credit_write = write_result['Credit']
-            credit_card_id_write = write_result['credit_card_id']
-            cached_credit = device_info['Credit Amount']
-            cached_credit_card_id = device_info['credit_card_id']
-            if cached_credit == credit_write && cached_credit_card_id == credit_card_id_write:
-                cache.set('notification', 'Credit Card Written', 10)
-                logging.info(f'Credit Card Written: {cached_credit}')
-                cache.delete('write_info')
-            else:
+        if value == card_type:
+            logging.info(f'Verify Written Card: {type}')
+            cached_marker = device_info[_secret_value_type[type]]
+            if type == 'A':
                 pass
-                # check time left? Retry number? ((Failed notifiaction?))
-        else if type == 'D':
-            pass
-        else:
-            # Error case
-            cache.set('notification', 'Invalid Card Type', 10)
-            logging.info(f'Credit Card Written: {cached_credit}')
-            cache.delete('write_info')
+            elif type == 'B':
+                pass
+            elif type == 'C':
+                credit_write = write_result['credit_amount']
+                credit_card_id_write = write_result['credit_card_id']
+                cached_credit_card_id = device_info['Credit Card ID']
+                logging.info(f'cached_marker: {cached_marker}')
+                logging.info(f'credit_write: {credit_write}')
+                logging.info(f'cached_credit_card_id: {cached_credit_card_id}')
+                logging.info(f'credit_card_id_write: {credit_card_id_write}')
+                if cached_marker == credit_write and cached_credit_card_id == credit_card_id_write:
+                    notify['notification'] = 'Credit Card Written'
+                    notify['type'] = 'alert-success'
+                    logging.info(f'Credit Card Written: {cached_marker}')
+                    cache.delete('write_info')
+                else:
+                    pass
+                    # check time left? Retry number? ((Failed notification?))
+            elif type == 'D':
+                pass
+            else:
+                # Error case
+                notify['notification'] = 'Invalid Card Type'
+                notify['type'] = 'alert-danger'
+                logging.info(f'Invalid Card Type: {type}')
+                cache.delete('write_info')
+        cache.set('notification', json_encode(notify), 10)
+
 
 class DeviceInfoHandler(BaseHandler):
     """Handlers for the operator module."""
@@ -885,6 +903,7 @@ class DeviceInfoHandler(BaseHandler):
     def post(self):
         """Process the operator module's request."""
         body = self.request.body
+        _verify_written_card()
         # TODO: after successfully writing a card, the response is "success"
         # try:
         #     # TODO: deal with multi-user -- exclusive lock?
@@ -936,6 +955,7 @@ class JSONDeviceConnection(SockJSConnection):
             'device_active': bool(int(cache.get('device_active') or 0)),
             'received_info': json_decode(cache.get('received_info') or '{}'),
             'write_info': json_decode(cache.get('write_info') or '{}'),
+            'notification': json_decode(cache.get('notification') or '{}'),
             'card_read_error': (cache.get('card_read_error') or b'').decode(),
         }
         self.send(result)

@@ -15,8 +15,8 @@ export default function populateNotification(info, alert_error) {
     else {
         console.log('alert',info);
         $('.notification-alert').append(`
-            <div class="alert-row alert alert-warning">
-                <strong>${info}</strong>
+            <div class="alert-row alert ${info['type']}">
+                <strong>${info['notification']}</strong>
             </div>
         `);
     }

@@ -2,6 +2,8 @@
 import time
 import uuid
 
+from collections import OrderedDict
+
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
@@ -11,6 +13,7 @@ from tornado.escape import json_encode, json_decode
 
 import minigrid.models as models
 
+import logging
 
 AES = algorithms.AES
 
@@ -192,6 +195,7 @@ def write_credit_card(
         night_tariff, night_tariff_start,
         tariff_creation_timestamp, tariff_activation_timestamp):
     """Write information to a credit card."""
+    logging.info('write_credit_card()')
     card_produce_time = int(time.time()).to_bytes(4, 'big')
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
@@ -257,11 +261,15 @@ def write_credit_card(
         bytes(13),
         (sum(naive_payload[107:109]) & 0xFF).to_bytes(1, 'big'),
     ))
-    cache.set('device_info', _wrap_binary(actual_payload), 5)
+    cache.set('device_info', _wrap_binary(actual_payload), 10)
     write_result = OrderedDict()
     write_result['credit_amount'] = credit_amount
-    write_result['credit_card_id'] = credit_card_id
-    cache.set('write_info', json_encode(write_result), 5)
+    write_result['credit_card_id'] = str(credit_card_id)
+    cache.set('write_info', json_encode(write_result), 10)
+    notify = OrderedDict()
+    notify['notification'] = 'Writing Credit Card...'
+    notify['type'] = 'alert-warning'
+    cache.set('notification', json_encode(notify), 10)
     data = {
         'credit_card_id': str(credit_card_id),
         'credit_minigrid_id': minigrid_id,
