@@ -38,6 +38,10 @@ cache = redis.StrictRedis.from_url(options.redis_url)
 broker_url = 'https://broker.portier.io'
 
 
+pubsub = cache.pubsub()
+pubsub.subscribe("*")
+
+
 _card_type_dict = {
     'A': 'Vendor ID Card',
     'B': 'Customer ID Card',
@@ -370,24 +374,6 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
             system.tariff_creation_timestamp,
             system.tariff_activation_timestamp,
         )
-        # try:
-        #     Checks written credit with read credit
-        #     logging.info(f'Credit to be Stored: {credit_write}')
-        #     device_info = json_decode(cache.get('received_info'))
-        #     logging.info(f'Credit device info: {device_info}')
-        #     card_type = device_info['Card Type']
-        #     logging.info(f'Card Type Value (Credit): {card_type}')
-        #     for type, value in _card_type_dict.items():
-        #         if value == card_type:
-        #             logging.info(f'Card Type (Credit): {type}')
-        #             cached_credit = device_info[_secret_value_type[type]]
-        #             if type == 'C':
-        #                 logging.info(f'Cached Credit: {cached_credit}')
-        #                 write_result = OrderedDict()
-        #                 write_result['Credit'] = credit_write
-        #                 cache.set('write_info', json_encode(write_result), 10)
-        # except Exception as error:
-        #     logging.error(str(error))
         self.redirect(f'/minigrids/{minigrid_id}/write_credit')
 
 
@@ -838,46 +824,85 @@ def _pack_into_dict(session, binary):
 def _verify_written_card():
     # Check if a card has actually been written by reading it
     # notify on success or failure
+    notify = OrderedDict()
+    try:
+        # -2 on pttl not set or expired? deleted?
+        logging.info(f'PubSub Notification: {pubsub.get_message()}')
+        logging.info(f'PubSub pttl(write_info): {cache.pttl("write_info")}')
+    except Exception as error:
+         logging.error(str(error))
     if cache.get('write_info') and cache.get('received_info'):
         write_result = json_decode(cache.get('write_info'))
         device_info = json_decode(cache.get('received_info'))
     else:
         return
     card_type = device_info['Card Type']
-    notify = OrderedDict()
     for type, value in _card_type_dict.items():
         if value == card_type:
             logging.info(f'Verify Written Card: {type}')
             cached_marker = device_info[_secret_value_type[type]]
             if type == 'A':
-                pass
+                credit_write = write_result['credit_amount']
+                credit_card_id_write = write_result['credit_card_id']
+                cached_credit_card_id = device_info['Credit Card ID']
+                if cached_marker == credit_write and cached_credit_card_id == credit_card_id_write:
+                    notify['notification'] = 'Credit Card Written'
+                    notify['type'] = 'alert-success'
+                    cache.set('notification', json_encode(notify), 10)
+                    logging.info(f'Credit Card Written: {cached_marker}')
+                    cache.delete('write_info')
+                else:
+                    pass
+                    # check time left? Retry number? ((Failed notification?))
             elif type == 'B':
-                pass
+                credit_write = write_result['credit_amount']
+                credit_card_id_write = write_result['credit_card_id']
+                cached_credit_card_id = device_info['Credit Card ID']
+                if cached_marker == credit_write and cached_credit_card_id == credit_card_id_write:
+                    notify['notification'] = 'Credit Card Written'
+                    notify['type'] = 'alert-success'
+                    cache.set('notification', json_encode(notify), 10)
+                    logging.info(f'Credit Card Written: {cached_marker}')
+                    cache.delete('write_info')
+                else:
+                    pass
+                    # check time left? Retry number? ((Failed notification?))
             elif type == 'C':
                 credit_write = write_result['credit_amount']
                 credit_card_id_write = write_result['credit_card_id']
                 cached_credit_card_id = device_info['Credit Card ID']
-                logging.info(f'cached_marker: {cached_marker}')
-                logging.info(f'credit_write: {credit_write}')
-                logging.info(f'cached_credit_card_id: {cached_credit_card_id}')
-                logging.info(f'credit_card_id_write: {credit_card_id_write}')
+                # logging.info(f'cached_marker: {cached_marker}')
+                # logging.info(f'credit_write: {credit_write}')
+                # logging.info(f'cached_credit_card_id: {cached_credit_card_id}')
+                # logging.info(f'credit_card_id_write: {credit_card_id_write}')
                 if cached_marker == credit_write and cached_credit_card_id == credit_card_id_write:
                     notify['notification'] = 'Credit Card Written'
                     notify['type'] = 'alert-success'
+                    cache.set('notification', json_encode(notify), 10)
                     logging.info(f'Credit Card Written: {cached_marker}')
                     cache.delete('write_info')
                 else:
                     pass
                     # check time left? Retry number? ((Failed notification?))
             elif type == 'D':
-                pass
+                credit_write = write_result['credit_amount']
+                credit_card_id_write = write_result['credit_card_id']
+                cached_credit_card_id = device_info['Credit Card ID']
+                if cached_marker == credit_write and cached_credit_card_id == credit_card_id_write:
+                    notify['notification'] = 'Credit Card Written'
+                    notify['type'] = 'alert-success'
+                    cache.set('notification', json_encode(notify), 10)
+                    logging.info(f'Credit Card Written: {cached_marker}')
+                    cache.delete('write_info')
+                else:
+                    pass
+                    # check time left? Retry number? ((Failed notification?))
             else:
                 # Error case
                 notify['notification'] = 'Invalid Card Type'
                 notify['type'] = 'alert-danger'
                 logging.info(f'Invalid Card Type: {type}')
                 cache.delete('write_info')
-        cache.set('notification', json_encode(notify), 10)
 
 
 class DeviceInfoHandler(BaseHandler):
@@ -893,8 +918,8 @@ class DeviceInfoHandler(BaseHandler):
 
     def get(self):
         """Return the device info."""
-        cache.set('device_active', 1, 5)
-        cache.set('received_info', self.request.query_arguments, 5)
+        cache.set('device_active', 1, 10)
+        cache.set('received_info', self.request.query_arguments, 10)
         device_info = cache.get('device_info')
         if device_info is not None:
             self.write(device_info)
@@ -903,7 +928,6 @@ class DeviceInfoHandler(BaseHandler):
     def post(self):
         """Process the operator module's request."""
         body = self.request.body
-        _verify_written_card()
         # TODO: after successfully writing a card, the response is "success"
         # try:
         #     # TODO: deal with multi-user -- exclusive lock?
@@ -919,23 +943,24 @@ class DeviceInfoHandler(BaseHandler):
                 system_id = sector_1[6:8].decode('ascii')
                 logging.info(f'system_id: {system_id}')
                 if system_id == 'up':
-                    cache.set('device_active', 0, 5)
+                    cache.set('device_active', 0, 10)
                 else:
-                    cache.set('device_active', 1, 5)
+                    cache.set('device_active', 1, 10)
                 # Failure to read the card should be displayed somehow, but
                 # shouldn't prevent overwriting the card
                 # TODO: clean this up
                 payload = _pack_into_dict(self.session, body)
             except Exception as error:
                 logging.info(f'Error: {error}')
-                cache.set('card_read_error', str(error), 5)
+                cache.set('card_read_error', str(error), 10)
             else:
-                cache.set('received_info', payload, 5)
+                cache.set('received_info', payload, 10)
                 cache.delete('card_read_error')
         device_info = cache.get('device_info')
         if device_info is not None:
             self.write(device_info)
             cache.delete('device_info')
+        _verify_written_card()
 
 
 class JSONDeviceConnection(SockJSConnection):

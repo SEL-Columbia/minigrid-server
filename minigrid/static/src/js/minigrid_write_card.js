@@ -19,6 +19,7 @@ import populateNotification from './populate_notification.js';
         let device_active;
         let device_connect_error;
         let alert_error;
+        let last_received;
 
         console.log('Connecting...');
 
@@ -45,6 +46,10 @@ import populateNotification from './populate_notification.js';
                     if (e.data['device_active']) input.disabled = false;
                     else input.disabled = true;
                 });
+                populateCardInfoTable(received_info, card_read_error);
+            }
+            else if (e.data['received_info']!==last_received) {
+                last_received = e.data['received_info'];
                 populateCardInfoTable(received_info, card_read_error);
             };
         };

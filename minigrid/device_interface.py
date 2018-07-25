@@ -65,7 +65,7 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
         bytes(13),
         (sum(naive_payload[75:77]) & 0xFF).to_bytes(1, 'big'),
     ))
-    cache.set('device_info', _wrap_binary(actual_payload), 5)
+    cache.set('device_info', _wrap_binary(actual_payload), 30)
     with models.transaction(session) as tx_session:
         tx_session.add(models.VendorCardHistory(
             vendor_card_minigrid_id=minigrid_id,
@@ -119,7 +119,7 @@ def write_customer_card(
         bytes(13),
         (sum(naive_payload[75:77]) & 0xFF).to_bytes(1, 'big'),
     ))
-    cache.set('device_info', _wrap_binary(actual_payload), 5)
+    cache.set('device_info', _wrap_binary(actual_payload), 30)
     with models.transaction(session) as tx_session:
         tx_session.add(models.CustomerCardHistory(
             customer_card_minigrid_id=minigrid_id,
@@ -172,7 +172,7 @@ def write_maintenance_card_card(
         bytes(13),
         (sum(naive_payload[75:77]) & 0xFF).to_bytes(1, 'big'),
     ))
-    cache.set('device_info', _wrap_binary(actual_payload), 5)
+    cache.set('device_info', _wrap_binary(actual_payload), 30)
     mmcci = maintenance_card.maintenance_card_card_id
     with models.transaction(session) as tx_session:
         tx_session.add(models.MaintenanceCardHistory(
@@ -261,15 +261,15 @@ def write_credit_card(
         bytes(13),
         (sum(naive_payload[107:109]) & 0xFF).to_bytes(1, 'big'),
     ))
-    cache.set('device_info', _wrap_binary(actual_payload), 10)
+    cache.set('device_info', _wrap_binary(actual_payload), 30)
     write_result = OrderedDict()
     write_result['credit_amount'] = credit_amount
     write_result['credit_card_id'] = str(credit_card_id)
-    cache.set('write_info', json_encode(write_result), 10)
+    cache.set('write_info', json_encode(write_result), 30)
     notify = OrderedDict()
     notify['notification'] = 'Writing Credit Card...'
     notify['type'] = 'alert-warning'
-    cache.set('notification', json_encode(notify), 10)
+    cache.set('notification', json_encode(notify), 30)
     data = {
         'credit_card_id': str(credit_card_id),
         'credit_minigrid_id': minigrid_id,
