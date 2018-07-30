@@ -37,9 +37,9 @@ AES = algorithms.AES
 cache = redis.StrictRedis.from_url(options.redis_url)
 broker_url = 'https://broker.portier.io'
 
-
+cache.config_set('notify-keyspace-events', 'Ex')
 pubsub = cache.pubsub()
-pubsub.subscribe("*")
+pubsub.subscribe("__keyevent@0__:expired")
 
 
 _card_type_dict = {
