@@ -9,7 +9,7 @@ from cryptography.hazmat.backends import default_backend
 
 from sqlalchemy.dialects.postgresql import insert
 
-from tornado.escape import json_encode, json_decode
+from tornado.escape import json_encode
 
 import minigrid.models as models
 

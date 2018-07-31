@@ -832,7 +832,7 @@ def _verify_written_card():
         # -2 on pttl not set, expired, or deleted
         # logging.info(f'PubSub pttl(write_info): {cache.pttl("write_info")}')
     except Exception as error:
-         logging.error(str(error))
+        logging.error(str(error))
     if cache.get('write_info') and cache.get('received_info'):
         write_result = json_decode(cache.get('write_info'))
         device_info = json_decode(cache.get('received_info'))
@@ -843,7 +843,7 @@ def _verify_written_card():
         if value == card_type:
             logging.info(f'Verify Written Card: {type}')
             cached_marker = device_info[_secret_value_type[type]]
-            if type == 'A': # Vendor
+            if type == 'A':  # Vendor
                 vendor_id_write = write_result['vendor_id']
                 creation_time_write = write_result['creation_time']
                 minigrid_id_write = write_result['minigrid_id']
@@ -857,7 +857,7 @@ def _verify_written_card():
                     cache.set('notification', json_encode(notify), 10)
                     logging.info(f'Vendor Card Written: {cached_marker}')
                     cache.delete('write_info')
-            elif type == 'B': # Customer
+            elif type == 'B':  # Customer
                 customer_id_write = write_result['customer_id']
                 creation_time_write = write_result['creation_time']
                 minigrid_id_write = write_result['minigrid_id']
@@ -871,7 +871,7 @@ def _verify_written_card():
                     cache.set('notification', json_encode(notify), 10)
                     logging.info(f'Customer Card Written: {cached_marker}')
                     cache.delete('write_info')
-            elif type == 'C': # Credit
+            elif type == 'C':  # Credit
                 credit_write = write_result['credit_amount']
                 credit_card_id_write = write_result['credit_card_id']
                 cached_credit_card_id = device_info['Credit Card ID']
@@ -882,7 +882,7 @@ def _verify_written_card():
                     cache.set('notification', json_encode(notify), 10)
                     logging.info(f'Credit Card Written: {cached_marker}')
                     cache.delete('write_info')
-            elif type == 'D': # Maintenance
+            elif type == 'D':  # Maintenance
                 maintenance_id_write = write_result['maintenance_id']
                 creation_time_write = write_result['creation_time']
                 minigrid_id_write = write_result['minigrid_id']

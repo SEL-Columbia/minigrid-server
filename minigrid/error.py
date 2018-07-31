@@ -35,4 +35,3 @@ class CardReadError(Exception):
 
 class CardWriteError(Exception):
     """Error while writing a card."""
-        
