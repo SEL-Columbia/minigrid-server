@@ -1,6 +1,6 @@
 asyncio-portier==0.1.0.post1
 cryptography==1.5.3
-psycopg2>=2.6.2
+psycopg2>=2.7.5
 PyJWT==1.4.2
 redis==2.10.6
 sockjs-tornado==1.0.3
