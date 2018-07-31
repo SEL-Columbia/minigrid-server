@@ -6,7 +6,7 @@ Shared Solar server
 ### Native
 
 ```
-$ python3.7 -m venv venv
+$ python3.6 -m venv venv
 $ source venv/bin/activate
 (venv) $ pip install -r requirements.txt -r dev/requirements.txt
 (venv) $ ./dev/run.sh

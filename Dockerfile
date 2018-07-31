@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:3.6
 COPY . /minigrid-server
 WORKDIR /minigrid-server
 RUN set -x \
