@@ -37,7 +37,8 @@ AES = algorithms.AES
 cache = redis.StrictRedis.from_url(options.redis_url)
 broker_url = 'https://broker.portier.io'
 
-cache.config_set('notify-keyspace-events', 'Ex')
+# cache.config_set('notify-keyspace-events', 'Ex') # not available in fakeRedis
+cache.execute_command('CONFIG SET', 'notify-keyspace-events', 'Ex')
 pubsub = cache.pubsub()
 pubsub.subscribe("__keyevent@0__:expired")
 
