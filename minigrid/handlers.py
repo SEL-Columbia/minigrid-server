@@ -452,8 +452,7 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
                 grid.payment_system.payment_id,
                 vendor
             )
-            message = 'Card written'
-            self.redirect(f'/minigrids/{minigrid_id}/vendors', message=message)
+            self.redirect(f'/minigrids/{minigrid_id}/vendors')
             return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
@@ -526,9 +525,7 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
                 grid.payment_system.payment_id,
                 customer
             )
-            message = 'Card written'
-            self.redirect(
-                f'/minigrids/{minigrid_id}/customers', message=message)
+            self.redirect(f'/minigrids/{minigrid_id}/customers')
             return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
@@ -608,9 +605,7 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
                 minigrid_id,
                 grid.payment_system.payment_id,
                 maintenance_card)
-            message = 'Card written'
-            self.redirect(
-                f'/minigrids/{minigrid_id}/maintenance_cards', message=message)
+            self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards')
             return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
@@ -826,9 +821,16 @@ def _verify_written_card():
     # notify on success or failure
     notify = OrderedDict()
     try:
-        # -2 on pttl not set or expired? deleted?
-        logging.info(f'PubSub Notification: {pubsub.get_message()}')
-        logging.info(f'PubSub pttl(write_info): {cache.pttl("write_info")}')
+        expire_message = pubsub.get_message()
+        if expire_message:
+            logging.info(f'PubSub Notification: {expire_message["data"]}')
+            if expire_message["data"] == b'write_info':
+                notify['notification'] = 'Error Writing Card'
+                notify['type'] = 'alert-danger'
+                cache.set('notification', json_encode(notify), 10)
+                return
+        # -2 on pttl not set, expired, or deleted
+        # logging.info(f'PubSub pttl(write_info): {cache.pttl("write_info")}')
     except Exception as error:
          logging.error(str(error))
     if cache.get('write_info') and cache.get('received_info'):
@@ -841,64 +843,61 @@ def _verify_written_card():
         if value == card_type:
             logging.info(f'Verify Written Card: {type}')
             cached_marker = device_info[_secret_value_type[type]]
-            if type == 'A':
+            if type == 'A': # Vendor
+                vendor_id_write = write_result['vendor_id']
+                creation_time_write = write_result['creation_time']
+                minigrid_id_write = write_result['minigrid_id']
+                cached_creation_time = device_info['Card Creation Time']
+                cached_minigrid_id = device_info['Minigrid ID']
+                if cached_marker == vendor_id_write and \
+                   cached_creation_time == creation_time_write and \
+                   cached_minigrid_id == minigrid_id_write:
+                    notify['notification'] = 'Vendor Card Written'
+                    notify['type'] = 'alert-success'
+                    cache.set('notification', json_encode(notify), 10)
+                    logging.info(f'Vendor Card Written: {cached_marker}')
+                    cache.delete('write_info')
+            elif type == 'B': # Customer
+                customer_id_write = write_result['customer_id']
+                creation_time_write = write_result['creation_time']
+                minigrid_id_write = write_result['minigrid_id']
+                cached_creation_time = device_info['Card Creation Time']
+                cached_minigrid_id = device_info['Minigrid ID']
+                if cached_marker == customer_id_write and \
+                   cached_creation_time == creation_time_write and \
+                   cached_minigrid_id == minigrid_id_write:
+                    notify['notification'] = 'Customer Card Written'
+                    notify['type'] = 'alert-success'
+                    cache.set('notification', json_encode(notify), 10)
+                    logging.info(f'Customer Card Written: {cached_marker}')
+                    cache.delete('write_info')
+            elif type == 'C': # Credit
                 credit_write = write_result['credit_amount']
                 credit_card_id_write = write_result['credit_card_id']
                 cached_credit_card_id = device_info['Credit Card ID']
-                if cached_marker == credit_write and cached_credit_card_id == credit_card_id_write:
+                if cached_marker == credit_write and \
+                   cached_credit_card_id == credit_card_id_write:
                     notify['notification'] = 'Credit Card Written'
                     notify['type'] = 'alert-success'
                     cache.set('notification', json_encode(notify), 10)
                     logging.info(f'Credit Card Written: {cached_marker}')
                     cache.delete('write_info')
-                else:
-                    pass
-                    # check time left? Retry number? ((Failed notification?))
-            elif type == 'B':
-                credit_write = write_result['credit_amount']
-                credit_card_id_write = write_result['credit_card_id']
-                cached_credit_card_id = device_info['Credit Card ID']
-                if cached_marker == credit_write and cached_credit_card_id == credit_card_id_write:
-                    notify['notification'] = 'Credit Card Written'
+            elif type == 'D': # Maintenance
+                maintenance_id_write = write_result['maintenance_id']
+                creation_time_write = write_result['creation_time']
+                minigrid_id_write = write_result['minigrid_id']
+                cached_creation_time = device_info['Card Creation Time']
+                cached_minigrid_id = device_info['Minigrid ID']
+                if cached_marker == maintenance_id_write and \
+                   cached_creation_time == creation_time_write and \
+                   cached_minigrid_id == minigrid_id_write:
+                    notify['notification'] = 'Maintenance Card Written'
                     notify['type'] = 'alert-success'
                     cache.set('notification', json_encode(notify), 10)
-                    logging.info(f'Credit Card Written: {cached_marker}')
+                    logging.info(f'Customer Card Written: {cached_marker}')
                     cache.delete('write_info')
-                else:
-                    pass
-                    # check time left? Retry number? ((Failed notification?))
-            elif type == 'C':
-                credit_write = write_result['credit_amount']
-                credit_card_id_write = write_result['credit_card_id']
-                cached_credit_card_id = device_info['Credit Card ID']
-                # logging.info(f'cached_marker: {cached_marker}')
-                # logging.info(f'credit_write: {credit_write}')
-                # logging.info(f'cached_credit_card_id: {cached_credit_card_id}')
-                # logging.info(f'credit_card_id_write: {credit_card_id_write}')
-                if cached_marker == credit_write and cached_credit_card_id == credit_card_id_write:
-                    notify['notification'] = 'Credit Card Written'
-                    notify['type'] = 'alert-success'
-                    cache.set('notification', json_encode(notify), 10)
-                    logging.info(f'Credit Card Written: {cached_marker}')
-                    cache.delete('write_info')
-                else:
-                    pass
-                    # check time left? Retry number? ((Failed notification?))
-            elif type == 'D':
-                credit_write = write_result['credit_amount']
-                credit_card_id_write = write_result['credit_card_id']
-                cached_credit_card_id = device_info['Credit Card ID']
-                if cached_marker == credit_write and cached_credit_card_id == credit_card_id_write:
-                    notify['notification'] = 'Credit Card Written'
-                    notify['type'] = 'alert-success'
-                    cache.set('notification', json_encode(notify), 10)
-                    logging.info(f'Credit Card Written: {cached_marker}')
-                    cache.delete('write_info')
-                else:
-                    pass
-                    # check time left? Retry number? ((Failed notification?))
             else:
-                # Error case
+                # Error case for card type
                 notify['notification'] = 'Invalid Card Type'
                 notify['type'] = 'alert-danger'
                 logging.info(f'Invalid Card Type: {type}')

@@ -25,20 +25,22 @@ def _wrap_binary(binary):
 
 def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
     """Write information to a vendor ID card."""
+    card_produce_time = int(time.time())
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
         b'\x00\x01',  # Application ID
         b'A',  # A for vendor
         b'\x08',  # Offset
         b'\x00\x14',  # Length
-        int(time.time()).to_bytes(4, 'big'),  # card produced time
+        card_produce_time.to_bytes(4, 'big'),  # card produced time
         bytes(4),  # card read time, set as zeros
         uuid.UUID(payment_id).bytes,
         b'\x00',  # Application Flag, has the card been used? Initially no
         bytes(12),
     ))
+    vendor_id = vendor.vendor_user_id.encode('ascii')
     sector_2_content = b''.join((
-        vendor.vendor_user_id.encode('ascii'),  # 0000-9999 ASCII
+        vendor_id,  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
         bytes(11),
     ))
@@ -66,6 +68,15 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
         (sum(naive_payload[75:77]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
+    write_result = OrderedDict()
+    write_result['vendor_id'] = vendor_id
+    write_result['creation_time'] = card_produce_time
+    write_result['minigrid_id'] = str(minigrid_id)
+    cache.set('write_info', json_encode(write_result), 30)
+    notify = OrderedDict()
+    notify['notification'] = 'Writing Vendor Card...'
+    notify['type'] = 'alert-warning'
+    cache.set('notification', json_encode(notify), 30)
     with models.transaction(session) as tx_session:
         tx_session.add(models.VendorCardHistory(
             vendor_card_minigrid_id=minigrid_id,
@@ -77,20 +88,22 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
 def write_customer_card(
         session, cache, key, minigrid_id, payment_id, customer):
     """Write information to a customer ID card."""
+    card_produce_time = int(time.time())
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
         b'\x00\x01',  # Application ID
         b'B',  # B for customer
         b'\x08',  # Offset
         b'\x00\x14',  # Length
-        int(time.time()).to_bytes(4, 'big'),  # card produced time
+        card_produce_time.to_bytes(4, 'big'),  # card produced time
         bytes(4),  # card read time, set as zeros
         uuid.UUID(payment_id).bytes,
         b'\x00',  # Application Flag, has the card been used? Initially no
         bytes(12),
     ))
+    customer_id = customer.customer_user_id.encode('ascii')
     sector_2_content = b''.join((
-        customer.customer_user_id.encode('ascii'),  # 0000-9999 ASCII
+        customer_id,  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
         int(customer.customer_current_limit).to_bytes(4, 'big'),  # Limit mA
         int(customer.customer_energy_limit).to_bytes(4, 'big'),   # Limit Wh
@@ -120,6 +133,15 @@ def write_customer_card(
         (sum(naive_payload[75:77]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
+    write_result = OrderedDict()
+    write_result['customer_id'] = customer_id
+    write_result['creation_time'] = card_produce_time
+    write_result['minigrid_id'] = str(minigrid_id)
+    cache.set('write_info', json_encode(write_result), 30)
+    notify = OrderedDict()
+    notify['notification'] = 'Writing Customer Card...'
+    notify['type'] = 'alert-warning'
+    cache.set('notification', json_encode(notify), 30)
     with models.transaction(session) as tx_session:
         tx_session.add(models.CustomerCardHistory(
             customer_card_minigrid_id=minigrid_id,
@@ -131,13 +153,14 @@ def write_customer_card(
 def write_maintenance_card_card(
         session, cache, key, minigrid_id, payment_id, maintenance_card):
     """Write information to a maintenance card card."""
+    card_produce_time = int(time.time())
     sector_1 = b''.join((
         b'\x00\x01',  # System ID
         b'\x00\x01',  # Application ID
         b'D',  # D for maintenance card
         b'\x08',  # Offset
         b'\x00\xd0',  # Length
-        int(time.time()).to_bytes(4, 'big'),  # card produced time
+        card_produce_time.to_bytes(4, 'big'),  # card produced time
         bytes(4),  # card read time, set as zeros
         uuid.UUID(payment_id).bytes,
         b'\x00',  # Application Flag, has the card been used?
@@ -173,6 +196,15 @@ def write_maintenance_card_card(
         (sum(naive_payload[75:77]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
+    write_result = OrderedDict()
+    write_result['maintenance_id'] = mc_id
+    write_result['creation_time'] = card_produce_time
+    write_result['minigrid_id'] = str(minigrid_id)
+    cache.set('write_info', json_encode(write_result), 30)
+    notify = OrderedDict()
+    notify['notification'] = 'Writing Maintenance Card...'
+    notify['type'] = 'alert-warning'
+    cache.set('notification', json_encode(notify), 30)
     mmcci = maintenance_card.maintenance_card_card_id
     with models.transaction(session) as tx_session:
         tx_session.add(models.MaintenanceCardHistory(
