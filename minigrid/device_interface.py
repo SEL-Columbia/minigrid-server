@@ -4,6 +4,8 @@ import uuid
 
 from collections import OrderedDict
 
+from datetime import datetime
+
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
@@ -38,9 +40,9 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
         b'\x00',  # Application Flag, has the card been used? Initially no
         bytes(12),
     ))
-    vendor_id = vendor.vendor_user_id.encode('ascii')
+    vendor_id = vendor.vendor_user_id
     sector_2_content = b''.join((
-        vendor_id,  # 0000-9999 ASCII
+        vendor_id.encode('ascii'),  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
         bytes(11),
     ))
@@ -69,8 +71,9 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
     write_result = OrderedDict()
-    write_result['vendor_id'] = vendor_id
-    write_result['creation_time'] = card_produce_time
+    write_result['vendor_id'] = str(vendor_id)
+    write_result['creation_time'] = \
+        datetime.fromtimestamp(card_produce_time).isoformat()
     write_result['minigrid_id'] = str(minigrid_id)
     cache.set('write_info', json_encode(write_result), 30)
     notify = OrderedDict()
@@ -101,9 +104,9 @@ def write_customer_card(
         b'\x00',  # Application Flag, has the card been used? Initially no
         bytes(12),
     ))
-    customer_id = customer.customer_user_id.encode('ascii')
+    customer_id = customer.customer_user_id
     sector_2_content = b''.join((
-        customer_id,  # 0000-9999 ASCII
+        customer_id.encode('ascii'),  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
         int(customer.customer_current_limit).to_bytes(4, 'big'),  # Limit mA
         int(customer.customer_energy_limit).to_bytes(4, 'big'),   # Limit Wh
@@ -134,8 +137,9 @@ def write_customer_card(
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
     write_result = OrderedDict()
-    write_result['customer_id'] = customer_id
-    write_result['creation_time'] = card_produce_time
+    write_result['customer_id'] = str(customer_id)
+    write_result['creation_time'] = \
+        datetime.fromtimestamp(card_produce_time).isoformat()
     write_result['minigrid_id'] = str(minigrid_id)
     cache.set('write_info', json_encode(write_result), 30)
     notify = OrderedDict()
@@ -166,9 +170,9 @@ def write_maintenance_card_card(
         b'\x00',  # Application Flag, has the card been used?
         bytes(12),
     ))
-    mc_id = maintenance_card.maintenance_card_card_id.encode('ascii')
+    mc_id = maintenance_card.maintenance_card_card_id
     sector_2_content = b''.join((
-        mc_id,  # 0000-9999 ASCII
+        mc_id.encode('ascii'),  # 0000-9999 ASCII
         uuid.UUID(minigrid_id).bytes,
         bytes(11),
     ))
@@ -197,8 +201,9 @@ def write_maintenance_card_card(
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
     write_result = OrderedDict()
-    write_result['maintenance_id'] = mc_id
-    write_result['creation_time'] = card_produce_time
+    write_result['maintenance_id'] = str(mc_id)
+    write_result['creation_time'] = \
+        datetime.fromtimestamp(card_produce_time).isoformat()
     write_result['minigrid_id'] = str(minigrid_id)
     cache.set('write_info', json_encode(write_result), 30)
     notify = OrderedDict()

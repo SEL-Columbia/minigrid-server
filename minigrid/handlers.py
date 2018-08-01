@@ -444,14 +444,17 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
             vendor = (
                 self.session.query(models.Vendor)
                 .get(self.get_argument('vendor_id')))
-            write_vendor_card(
-                self.session,
-                cache,
-                grid.payment_system.aes_key,
-                minigrid_id,
-                grid.payment_system.payment_id,
-                vendor
-            )
+            try:
+                write_vendor_card(
+                    self.session,
+                    cache,
+                    grid.payment_system.aes_key,
+                    minigrid_id,
+                    grid.payment_system.payment_id,
+                    vendor
+                )
+            except Exception as error:
+                logging.error(str(error))
             self.redirect(f'/minigrids/{minigrid_id}/vendors')
             return
         else:
@@ -517,14 +520,17 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
             customer = (
                 self.session.query(models.Customer)
                 .get(self.get_argument('customer_id')))
-            write_customer_card(
-                self.session,
-                cache,
-                grid.payment_system.aes_key,
-                minigrid_id,
-                grid.payment_system.payment_id,
-                customer
-            )
+            try:
+                write_customer_card(
+                    self.session,
+                    cache,
+                    grid.payment_system.aes_key,
+                    minigrid_id,
+                    grid.payment_system.payment_id,
+                    customer
+                )
+            except Exception as error:
+                logging.error(str(error))
             self.redirect(f'/minigrids/{minigrid_id}/customers')
             return
         else:
@@ -598,13 +604,17 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
             maintenance_card = (
                 self.session.query(models.MaintenanceCard)
                 .get(self.get_argument('maintenance_card_id')))
-            write_maintenance_card_card(
-                self.session,
-                cache,
-                grid.payment_system.aes_key,
-                minigrid_id,
-                grid.payment_system.payment_id,
-                maintenance_card)
+            try:
+                write_maintenance_card_card(
+                    self.session,
+                    cache,
+                    grid.payment_system.aes_key,
+                    minigrid_id,
+                    grid.payment_system.payment_id,
+                    maintenance_card
+                )
+            except Exception as error:
+                logging.error(str(error))
             self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards')
             return
         else:
@@ -849,6 +859,12 @@ def _verify_written_card():
                 minigrid_id_write = write_result['minigrid_id']
                 cached_creation_time = device_info['Card Creation Time']
                 cached_minigrid_id = device_info['Minigrid ID']
+                logging.info(f'cached_marker: {cached_marker}')
+                logging.info(f'vendor_id_write: {vendor_id_write}')
+                logging.info(f'cached_creation_time: {cached_creation_time}')
+                logging.info(f'creation_time_write: {creation_time_write}')
+                logging.info(f'cached_minigrid_id: {cached_minigrid_id}')
+                logging.info(f'minigrid_id_write: {minigrid_id_write}')
                 if cached_marker == vendor_id_write and \
                    cached_creation_time == creation_time_write and \
                    cached_minigrid_id == minigrid_id_write:
@@ -863,6 +879,12 @@ def _verify_written_card():
                 minigrid_id_write = write_result['minigrid_id']
                 cached_creation_time = device_info['Card Creation Time']
                 cached_minigrid_id = device_info['Minigrid ID']
+                logging.info(f'cached_marker: {cached_marker}')
+                logging.info(f'customer_id_write: {customer_id_write}')
+                logging.info(f'cached_creation_time: {cached_creation_time}')
+                logging.info(f'creation_time_write: {creation_time_write}')
+                logging.info(f'cached_minigrid_id: {cached_minigrid_id}')
+                logging.info(f'minigrid_id_write: {minigrid_id_write}')
                 if cached_marker == customer_id_write and \
                    cached_creation_time == creation_time_write and \
                    cached_minigrid_id == minigrid_id_write:
@@ -888,6 +910,12 @@ def _verify_written_card():
                 minigrid_id_write = write_result['minigrid_id']
                 cached_creation_time = device_info['Card Creation Time']
                 cached_minigrid_id = device_info['Minigrid ID']
+                logging.info(f'cached_marker: {cached_marker}')
+                logging.info(f'maintenance_id_write: {maintenance_id_write}')
+                logging.info(f'cached_creation_time: {cached_creation_time}')
+                logging.info(f'creation_time_write: {creation_time_write}')
+                logging.info(f'cached_minigrid_id: {cached_minigrid_id}')
+                logging.info(f'minigrid_id_write: {minigrid_id_write}')
                 if cached_marker == maintenance_id_write and \
                    cached_creation_time == creation_time_write and \
                    cached_minigrid_id == minigrid_id_write:
