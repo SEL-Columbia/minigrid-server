@@ -848,7 +848,10 @@ def _verify_written_card():
         device_info = json_decode(cache.get('received_info'))
     else:
         return
-    card_type = device_info['Card Type']
+    try:
+        card_type = device_info['Card Type']
+    except NameError:
+        return
     for type, value in _card_type_dict.items():
         if value == card_type:
             logging.info(f'Verify Written Card: {type}')
@@ -969,14 +972,15 @@ class DeviceInfoHandler(BaseHandler):
                 # logging.info(f'sector_1[6:8]: {sector_1[6:8]}')
                 system_id = sector_1[6:8].decode('ascii')
                 logging.info(f'system_id: {system_id}')
-                if system_id == 'up':
-                    cache.set('device_active', 0, 10)
-                else:
-                    cache.set('device_active', 1, 10)
                 # Failure to read the card should be displayed somehow, but
                 # shouldn't prevent overwriting the card
                 # TODO: clean this up
                 payload = _pack_into_dict(self.session, body)
+                if system_id == 'up':
+                    cache.set('device_active', 0, 10)
+                else:
+                    cache.set('device_active', 1, 10)
+                _verify_written_card()
             except Exception as error:
                 logging.info(f'Error: {error}')
                 cache.set('card_read_error', str(error), 10)
@@ -987,7 +991,6 @@ class DeviceInfoHandler(BaseHandler):
         if device_info is not None:
             self.write(device_info)
             cache.delete('device_info')
-        _verify_written_card()
 
 
 class JSONDeviceConnection(SockJSConnection):
