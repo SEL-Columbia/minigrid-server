@@ -826,7 +826,7 @@ def _pack_into_dict(session, binary):
     return json_encode(result)
 
 
-def _verify_written_card():
+def _verify_written_card(session):
     # Check if a card has actually been written by reading it
     # notify on success or failure
     notify = OrderedDict()
@@ -857,7 +857,7 @@ def _verify_written_card():
             logging.info(f'Verify Written Card: {type}')
             cached_marker = device_info[_secret_value_type[type]]
             if type == 'A':  # Vendor
-                vendor_id_write = write_result['vendor_id']
+                vendor_id_write = write_result['user_id']
                 creation_time_write = write_result['creation_time']
                 minigrid_id_write = write_result['minigrid_id']
                 cached_creation_time = device_info['Card Creation Time']
@@ -875,9 +875,15 @@ def _verify_written_card():
                     notify['type'] = 'alert-success'
                     cache.set('notification', json_encode(notify), 10)
                     logging.info(f'Vendor Card Written: {cached_marker}')
+                    with models.transaction(session) as tx_session:
+                        tx_session.add(models.VendorCardHistory(
+                            vendor_card_minigrid_id=minigrid_id_write,
+                            vendor_card_vendor_id=write_result['vendor_id'],
+                            vendor_card_user_id=vendor_id_write,
+                        ))
                     cache.delete('write_info')
             elif type == 'B':  # Customer
-                customer_id_write = write_result['customer_id']
+                customer_id_write = write_result['user_id']
                 creation_time_write = write_result['creation_time']
                 minigrid_id_write = write_result['minigrid_id']
                 cached_creation_time = device_info['Card Creation Time']
@@ -895,6 +901,12 @@ def _verify_written_card():
                     notify['type'] = 'alert-success'
                     cache.set('notification', json_encode(notify), 10)
                     logging.info(f'Customer Card Written: {cached_marker}')
+                    with models.transaction(session) as tx_session:
+                        tx_session.add(models.CustomerCardHistory(
+                            customer_card_minigrid_id=minigrid_id_write,
+                            customer_card_customer_id=write_result['customer_id'],
+                            customer_card_user_id=customer_id_write,
+                        ))
                     cache.delete('write_info')
             elif type == 'C':  # Credit
                 credit_write = write_result['credit_amount']
@@ -906,6 +918,23 @@ def _verify_written_card():
                     notify['type'] = 'alert-success'
                     cache.set('notification', json_encode(notify), 10)
                     logging.info(f'Credit Card Written: {cached_marker}')
+                    data = {
+                        'credit_card_id': write_result['credit_card_id'],
+                        'credit_minigrid_id': write_result['minigrid_id'],
+                        'credit_amount': write_result['credit_amount'],
+                        'credit_day_tariff': write_result['day_tariff'],
+                        'credit_day_tariff_start': write_result['day_tariff_start'],
+                        'credit_night_tariff': write_result['night_tariff'],
+                        'credit_night_tariff_start': write_result['night_tariff_start'],
+                        'credit_tariff_creation_timestamp': write_result['tariff_creation_timestamp'],
+                        'credit_tariff_activation_timestamp': write_result['tariff_activation_timestamp'],
+                    }
+                    statement = (
+                        insert(models.CreditCardHistory)
+                        .values(**data)
+                        .on_conflict_do_nothing())
+                    with models.transaction(session) as tx_session:
+                        tx_session.execute(statement)
                     cache.delete('write_info')
             elif type == 'D':  # Maintenance
                 maintenance_id_write = write_result['maintenance_id']
@@ -925,7 +954,13 @@ def _verify_written_card():
                     notify['notification'] = 'Maintenance Card Written'
                     notify['type'] = 'alert-success'
                     cache.set('notification', json_encode(notify), 10)
-                    logging.info(f'Customer Card Written: {cached_marker}')
+                    logging.info(f'Maintenance Card Written: {cached_marker}')
+                    with models.transaction(session) as tx_session:
+                        tx_session.add(models.MaintenanceCardHistory(
+                            mc_minigrid_id=minigrid_id_write,
+                            mc_maintenance_card_id=write_result['mc_maintenance_card_id'],
+                            mc_maintenance_card_card_id=write_result['maintenance_id'],
+                        ))
                     cache.delete('write_info')
             else:
                 # Error case for card type
@@ -980,7 +1015,7 @@ class DeviceInfoHandler(BaseHandler):
                     cache.set('device_active', 0, 10)
                 else:
                     cache.set('device_active', 1, 10)
-                _verify_written_card()
+                _verify_written_card(self.session)
             except Exception as error:
                 logging.info(f'Error: {error}')
                 cache.set('card_read_error', str(error), 10)

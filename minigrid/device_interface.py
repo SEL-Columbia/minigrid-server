@@ -71,21 +71,16 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
     write_result = OrderedDict()
-    write_result['vendor_id'] = str(vendor_id)
+    write_result['user_id'] = str(vendor_id)
     write_result['creation_time'] = \
         datetime.fromtimestamp(card_produce_time).isoformat()
     write_result['minigrid_id'] = str(minigrid_id)
+    write_result['vendor_id'] = vendor.vendor_id
     cache.set('write_info', json_encode(write_result), 30)
     notify = OrderedDict()
     notify['notification'] = 'Writing Vendor Card...'
     notify['type'] = 'alert-warning'
     cache.set('notification', json_encode(notify), 30)
-    with models.transaction(session) as tx_session:
-        tx_session.add(models.VendorCardHistory(
-            vendor_card_minigrid_id=minigrid_id,
-            vendor_card_vendor_id=vendor.vendor_id,
-            vendor_card_user_id=vendor.vendor_user_id,
-        ))
 
 
 def write_customer_card(
@@ -137,21 +132,16 @@ def write_customer_card(
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
     write_result = OrderedDict()
-    write_result['customer_id'] = str(customer_id)
+    write_result['user_id'] = str(customer_id)
     write_result['creation_time'] = \
         datetime.fromtimestamp(card_produce_time).isoformat()
     write_result['minigrid_id'] = str(minigrid_id)
+    write_result['customer_id'] = customer.customer_id
     cache.set('write_info', json_encode(write_result), 30)
     notify = OrderedDict()
     notify['notification'] = 'Writing Customer Card...'
     notify['type'] = 'alert-warning'
     cache.set('notification', json_encode(notify), 30)
-    with models.transaction(session) as tx_session:
-        tx_session.add(models.CustomerCardHistory(
-            customer_card_minigrid_id=minigrid_id,
-            customer_card_customer_id=customer.customer_id,
-            customer_card_user_id=customer.customer_user_id,
-        ))
 
 
 def write_maintenance_card_card(
@@ -205,18 +195,13 @@ def write_maintenance_card_card(
     write_result['creation_time'] = \
         datetime.fromtimestamp(card_produce_time).isoformat()
     write_result['minigrid_id'] = str(minigrid_id)
+    mmci = maintenance_card.maintenance_card_id
+    write_result['mc_maintenance_card_id'] = mmci
     cache.set('write_info', json_encode(write_result), 30)
     notify = OrderedDict()
     notify['notification'] = 'Writing Maintenance Card...'
     notify['type'] = 'alert-warning'
     cache.set('notification', json_encode(notify), 30)
-    mmcci = maintenance_card.maintenance_card_card_id
-    with models.transaction(session) as tx_session:
-        tx_session.add(models.MaintenanceCardHistory(
-            mc_minigrid_id=minigrid_id,
-            mc_maintenance_card_id=maintenance_card.maintenance_card_id,
-            mc_maintenance_card_card_id=mmcci,
-        ))
 
 
 def _hour_on_epoch_day(hour_int):
@@ -300,27 +285,17 @@ def write_credit_card(
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
     write_result = OrderedDict()
-    write_result['credit_amount'] = credit_amount
     write_result['credit_card_id'] = str(credit_card_id)
+    write_result['credit_amount'] = credit_amount
+    write_result['minigrid_id'] = str(minigrid_id)
+    write_result['day_tariff'] = str(day_tariff)
+    write_result['day_tariff_start'] = str(day_tariff_start)
+    write_result['night_tariff'] = str(night_tariff)
+    write_result['night_tariff_start'] = str(night_tariff_start)
+    write_result['tariff_creation_timestamp'] = str(tariff_creation_timestamp)
+    write_result['tariff_activation_timestamp'] = str(tariff_activation_timestamp)
     cache.set('write_info', json_encode(write_result), 30)
     notify = OrderedDict()
     notify['notification'] = 'Writing Credit Card...'
     notify['type'] = 'alert-warning'
     cache.set('notification', json_encode(notify), 30)
-    data = {
-        'credit_card_id': str(credit_card_id),
-        'credit_minigrid_id': minigrid_id,
-        'credit_amount': credit_amount,
-        'credit_day_tariff': day_tariff,
-        'credit_day_tariff_start': day_tariff_start,
-        'credit_night_tariff': night_tariff,
-        'credit_night_tariff_start': night_tariff_start,
-        'credit_tariff_creation_timestamp': tariff_creation_timestamp,
-        'credit_tariff_activation_timestamp': tariff_activation_timestamp,
-    }
-    statement = (
-        insert(models.CreditCardHistory)
-        .values(**data)
-        .on_conflict_do_nothing())
-    with models.transaction(session) as tx_session:
-        tx_session.execute(statement)
