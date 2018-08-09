@@ -32,6 +32,12 @@ import minigrid.error
 import minigrid.models as models
 from minigrid.options import options
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import io
+
+from itertools import islice
 
 AES = algorithms.AES
 cache = redis.StrictRedis.from_url(options.redis_url)
@@ -1061,6 +1067,45 @@ class ManualHandler(BaseHandler):
         self.render('manual.html', http_protocol=http_protocol)
 
 
+class ImageHandler(BaseHandler):
+    """Handlers for data plot."""
+
+    def genImage(self, minigrid_id):
+        """Return the plot png."""
+        x = []; y = []
+        with models.transaction(self.session) as session:
+            minigrid = models.get_minigrid(session, minigrid_id)
+            for credit_card_history in islice(reversed(minigrid.credit_card_history), 0, 25):
+                x.append(credit_card_history.credit_card_created)
+                y.append(credit_card_history.credit_amount)
+        fig = plt.figure()
+        memdata = io.BytesIO()
+        if x:
+            min = x[0]; max = x[-1]
+        # plt.plot(x, y)
+        # plt.bar(x, y, align='center', alpha=0.5)
+        plt.scatter(x, y, alpha=0.5)
+        plt.xlim(min, max)
+        plt.title('Recent Credit Cards')
+        plt.xlabel('Card Creation Time')
+        plt.ylabel('Amount [UGX]')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.grid(True)
+        plt.savefig(memdata, format='png')
+        image = memdata.getvalue()
+        return image
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the credit card history form."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+        image = self.genImage(minigrid_id)
+        self.set_header('Content-type', 'image/png')
+        self.set_header('Content-length', len(image))
+        self.write(image)
+
+
 _mmch = MinigridMaintenanceCardsHandler
 application_urls = [
     (r'/', MainHandler),
@@ -1080,7 +1125,8 @@ application_urls = [
     (r'/cards/?', CardsHandler),
     (r'/verify/?', VerifyLoginHandler),
     (r'/logout/?', LogoutHandler),
-    (r'/manual/?', ManualHandler)]
+    (r'/manual/?', ManualHandler),
+    (r'/minigrids/(.{36})/plot.png', ImageHandler)]
 
 
 def get_urls():

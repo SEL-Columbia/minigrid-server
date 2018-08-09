@@ -341,3 +341,11 @@ div.manual>p>img {
     display: block;
     margin: 5px auto 15px auto;
 }
+
+/* PLOT */
+
+#plot-render {
+		width : 600px;
+		height: 384px;
+		margin: 8px auto;
+}

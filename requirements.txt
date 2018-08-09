@@ -6,3 +6,4 @@ redis==2.10.6
 sockjs-tornado==1.0.3
 sqlalchemy==1.1.4
 tornado==4.4.2
+matplotlib==2.2.2
