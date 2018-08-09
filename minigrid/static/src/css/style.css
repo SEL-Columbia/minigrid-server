@@ -25,6 +25,10 @@ footer {
     margin: 20px;
 }
 
+.menu {
+		margin-left: 20px;
+}
+
 input[type="submit"] {
     background-color: #2C3031;
     border-color: #232828;
@@ -340,12 +344,4 @@ div.manual>p>img {
     border: 2px solid rgba(0, 0, 0, 0.4);
     display: block;
     margin: 5px auto 15px auto;
-}
-
-/* PLOT */
-
-#plot-render {
-		width : 600px;
-		height: 384px;
-		margin: 8px auto;
 }

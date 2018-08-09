@@ -71,6 +71,7 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
     write_result = OrderedDict()
+    write_result['card_type'] = 'Vendor ID Card'
     write_result['user_id'] = str(vendor_id)
     write_result['creation_time'] = \
         datetime.fromtimestamp(card_produce_time).isoformat()
@@ -81,6 +82,7 @@ def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
     notify['notification'] = 'Writing Vendor Card...'
     notify['type'] = 'alert-warning'
     cache.set('notification', json_encode(notify), 30)
+    cache.delete('received_info')
 
 
 def write_customer_card(
@@ -132,6 +134,7 @@ def write_customer_card(
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
     write_result = OrderedDict()
+    write_result['card_type'] = 'Customer ID Card'
     write_result['user_id'] = str(customer_id)
     write_result['creation_time'] = \
         datetime.fromtimestamp(card_produce_time).isoformat()
@@ -142,6 +145,7 @@ def write_customer_card(
     notify['notification'] = 'Writing Customer Card...'
     notify['type'] = 'alert-warning'
     cache.set('notification', json_encode(notify), 30)
+    cache.delete('received_info')
 
 
 def write_maintenance_card_card(
@@ -191,6 +195,7 @@ def write_maintenance_card_card(
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
     write_result = OrderedDict()
+    write_result['card_type'] = 'Maintenance Card'
     write_result['maintenance_id'] = str(mc_id)
     write_result['creation_time'] = \
         datetime.fromtimestamp(card_produce_time).isoformat()
@@ -202,6 +207,7 @@ def write_maintenance_card_card(
     notify['notification'] = 'Writing Maintenance Card...'
     notify['type'] = 'alert-warning'
     cache.set('notification', json_encode(notify), 30)
+    cache.delete('received_info')
 
 
 def _hour_on_epoch_day(hour_int):
@@ -285,6 +291,7 @@ def write_credit_card(
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
     write_result = OrderedDict()
+    write_result['card_type'] = 'Credit Card'
     write_result['credit_card_id'] = str(credit_card_id)
     write_result['credit_amount'] = credit_amount
     write_result['minigrid_id'] = str(minigrid_id)
@@ -299,3 +306,4 @@ def write_credit_card(
     notify['notification'] = 'Writing Credit Card...'
     notify['type'] = 'alert-warning'
     cache.set('notification', json_encode(notify), 30)
+    cache.delete('received_info')

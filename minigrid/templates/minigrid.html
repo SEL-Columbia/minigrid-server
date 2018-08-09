@@ -8,8 +8,12 @@
 
     <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
     <p>ID: {{ minigrid.minigrid_id }}</p>
-    <p>Error code: {{ minigrid.error_code }}</p>
-    <p>Status: {{ minigrid.status }}</p>
+    {% if minigrid.error_code %}
+      <p>Error code: {{ minigrid.error_code }}</p>
+    {% end %}
+    {% if minigrid.status %}
+      <p>Status: {{ minigrid.status }}</p>
+    {% end %}
     <p>Payment system ID: {{ minigrid.minigrid_payment_id }}</p>
     <form action="/minigrids/{{ minigrid.minigrid_id }}" method="POST">
       {% module xsrf_form_html() %}

@@ -2,7 +2,7 @@
 
 {% block body %}
   <div class="menu"><p>
-    <a href="/minigrids/{{ minigrid.minigrid_id }}/write_credit">&laquo; Write Credit Card</a>
+    <a href="/minigrids/{{ minigrid.minigrid_id }}/vendors">&laquo; Write Vendor Card</a>
   </p></div>
   <div class="full-page-content">
     {% if message is not None %}
@@ -11,24 +11,23 @@
     <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
     <p>ID: {{ minigrid.minigrid_id }}</p>
     <p>Recent History:</p>
-    <br>
-    <div><img src="/minigrids/{{ minigrid.minigrid_id }}/write_credit/history/plot.png" /></div>
-    <br>
     <table class="table table-condensed">
       {% from itertools import islice %}
       {% set zero_history = True %}
       <thead>
         <tr>
           <th>Creation Time</th>
-          <th>Amount</th>
+          <th>Name</th>
+          <th>User ID</th>
         </tr>
       </thead>
       <tbody>
-      {% for credit_card_history in islice(reversed(minigrid.credit_card_history), 0, 25) %}
+      {% for vendor_card_history in islice(reversed(minigrid.vendor_card_history), 0, 25) %}
         {% set zero_history = False %}
         <tr>
-        <td>{{ credit_card_history.credit_card_created }}</td>
-        <td>{{ credit_card_history.credit_amount }}</td>
+        <td>{{ vendor_card_history.vendor_card_created }}</td>
+        <td>{{ vendor_card_history.vendor_card_vendor_id }}</td>
+        <td>{{ vendor_card_history.vendor_card_user_id }}</td>
         </tr>
       {% end %}
       </tbody>
@@ -38,7 +37,7 @@
     {% end %}
   </div>
   <footer>
-    <p><a href="/minigrids/{{ minigrid.minigrid_id }}/write_credit">&laquo; Write Credit Card</a></p>
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}/vendors">&laquo; Write Vendor Card</a></p>
     <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
     <p><a href="/">&laquo; Return to minigrid index</a></p>
   </footer>

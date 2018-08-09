@@ -468,6 +468,20 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
         self.redirect(f'/minigrids/{minigrid_id}/vendors')
 
 
+class MinigridVendorsHistoryHandler(BaseHandler):
+    """Handlers for Vendor card history view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the vendor card history form."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
+        self.render(
+            'minigrid_vendor_history.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id),
+            http_protocol=http_protocol)
+
+
 class MinigridCustomersHandler(ReadCardBaseHandler):
     """Handlers for customers view."""
 
@@ -543,6 +557,18 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
         self.redirect(f'/minigrids/{minigrid_id}/customers')
 
+class MinigridCustomersHistoryHandler(BaseHandler):
+    """Handlers for Customer card history view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the customer card history form."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
+        self.render(
+            'minigrid_customer_history.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id),
+            http_protocol=http_protocol)
 
 class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
     """Handlers for maintenance cards view."""
@@ -627,6 +653,18 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
         self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards')
 
+class MinigridMaintenanceHistoryHandler(BaseHandler):
+    """Handlers for Maintenance card history view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the maintenance card history form."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
+        self.render(
+            'minigrid_maintenance_history.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id),
+            http_protocol=http_protocol)
 
 class VerifyLoginHandler(BaseHandler):
     """Handlers for portier verification."""
@@ -856,7 +894,10 @@ def _verify_written_card(session):
         return
     try:
         card_type = device_info['Card Type']
+        write_card_type = write_result['card_type']
     except NameError:
+        return
+    if card_type != write_card_type:
         return
     for type, value in _card_type_dict.items():
         if value == card_type:
@@ -1012,7 +1053,7 @@ class DeviceInfoHandler(BaseHandler):
                 # logging.info(f'sector_1: {sector_1}')
                 # logging.info(f'sector_1[6:8]: {sector_1[6:8]}')
                 system_id = sector_1[6:8].decode('ascii')
-                logging.info(f'system_id: {system_id}')
+                # logging.info(f'system_id: {system_id}')
                 # Failure to read the card should be displayed somehow, but
                 # shouldn't prevent overwriting the card
                 # TODO: clean this up
@@ -1021,13 +1062,16 @@ class DeviceInfoHandler(BaseHandler):
                     cache.set('device_active', 0, 10)
                 else:
                     cache.set('device_active', 1, 10)
-                _verify_written_card(self.session)
             except Exception as error:
-                logging.info(f'Error: {error}')
+                logging.error(f'Card Process Error: {error}')
                 cache.set('card_read_error', str(error), 10)
             else:
                 cache.set('received_info', payload, 10)
                 cache.delete('card_read_error')
+            try:
+                _verify_written_card(self.session)
+            except Exception as error:
+                logging.error(f'Verify Error: {error}')
         device_info = cache.get('device_info')
         if device_info is not None:
             self.write(device_info)
@@ -1085,7 +1129,7 @@ class ImageHandler(BaseHandler):
         # plt.plot(x, y)
         # plt.bar(x, y, align='center', alpha=0.5)
         plt.scatter(x, y, alpha=0.5)
-        plt.xlim(min, max)
+        plt.xlim(max, min)
         plt.title('Recent Credit Cards')
         plt.xlabel('Card Creation Time')
         plt.ylabel('Amount [UGX]')
@@ -1111,8 +1155,15 @@ application_urls = [
     (r'/', MainHandler),
     (r'/minigrids/(.{36})/?', MinigridHandler),
     (r'/minigrids/(.{36})/vendors/?', MinigridVendorsHandler),
+    (r'/minigrids/(.{36})/vendors/history/?',
+        MinigridVendorsHistoryHandler),
     (r'/minigrids/(.{36})/customers/?', MinigridCustomersHandler),
-    (r'/minigrids/(.{36})/maintenance_cards/?', _mmch),
+    (r'/minigrids/(.{36})/customers/history/?',
+        MinigridCustomersHistoryHandler),
+    (r'/minigrids/(.{36})/maintenance_cards/?',
+        MinigridMaintenanceCardsHandler),
+    (r'/minigrids/(.{36})/maintenance_cards/history/?',
+        MinigridMaintenanceHistoryHandler),
     (r'/minigrids/(.{36})/write_credit/?', MinigridWriteCreditHandler),
     (r'/minigrids/(.{36})/write_credit/history/?',
         MinigridWriteCreditHistoryHandler),
@@ -1126,7 +1177,7 @@ application_urls = [
     (r'/verify/?', VerifyLoginHandler),
     (r'/logout/?', LogoutHandler),
     (r'/manual/?', ManualHandler),
-    (r'/minigrids/(.{36})/plot.png', ImageHandler)]
+    (r'/minigrids/(.{36})/write_credit/history/plot.png', ImageHandler)]
 
 
 def get_urls():

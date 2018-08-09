@@ -3,6 +3,9 @@
 {% block body %}
   <div class="container-fluid notification-alert">
   </div>
+  <div class="menu">
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
+  </div>
   <div class="full-page-content">
     {% if message is not None %}
       <p><strong>{{ message }}</strong></p>
