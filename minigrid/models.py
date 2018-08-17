@@ -139,7 +139,7 @@ class VendorCardHistory(Base):
 
     __tablename__ = 'vendor_card_history'
     vendor_card_id = pk()
-    vendor_card_minigrid_id = sa.Column(pg.UUID, nullable=False)
+    vendor_card_minigrid_id = fk('minigrid.minigrid_id')
     vendor_card_vendor_id = sa.Column(pg.UUID, nullable=False)
     vendor_card_user_id = sa.Column(
         pg.TEXT, sa.CheckConstraint("vendor_card_user_id ~ '\d{4}'"),
@@ -154,7 +154,7 @@ class CustomerCardHistory(Base):
 
     __tablename__ = 'customer_card_history'
     customer_card_id = pk()
-    customer_card_minigrid_id = sa.Column(pg.UUID, nullable=False)
+    customer_card_minigrid_id = fk('minigrid.minigrid_id')
     customer_card_customer_id = sa.Column(pg.UUID, nullable=False)
     customer_card_user_id = sa.Column(
         pg.TEXT, sa.CheckConstraint("customer_card_user_id ~ '\d{4}'"),
@@ -167,9 +167,9 @@ class CustomerCardHistory(Base):
 class MaintenanceCardHistory(Base):
     """The model for freshly-minted maintenance card records."""
 
-    __tablename__ = 'maintenance_card_history'
+    __tablename__ = 'maintenance_history'
     mc_id = pk()
-    mc_minigrid_id = sa.Column(pg.UUID, nullable=False)
+    mc_minigrid_id = fk('minigrid.minigrid_id')
     mc_maintenance_card_id = sa.Column(pg.UUID, nullable=False)
     mc_maintenance_card_card_id = sa.Column(
         pg.TEXT, sa.CheckConstraint("mc_maintenance_card_card_id ~ '\d{4}'"),
@@ -280,9 +280,18 @@ class Minigrid(Base):
     maintenance_cards = relationship(
         'MaintenanceCard', backref='minigrid',
         order_by='MaintenanceCard.maintenance_card_card_id')
+    vendor_card_history = relationship(
+        'VendorCardHistory', backref='minigrid',
+        order_by='VendorCardHistory.vendor_card_created')
+    customer_card_history = relationship(
+        'CustomerCardHistory', backref='minigrid',
+        order_by='CustomerCardHistory.customer_card_created')
+    maintenance_history = relationship(
+        'MaintenanceCardHistory', backref='minigrid',
+        order_by='MaintenanceCardHistory.mc_created')
     credit_card_history = relationship(
         'CreditCardHistory', backref='minigrid',
-        order_by='CreditCardHistory.credit_tariff_creation_timestamp')
+        order_by='CreditCardHistory.credit_card_created')
 
     __table_args__ = (
         sa.UniqueConstraint('minigrid_payment_id'),)

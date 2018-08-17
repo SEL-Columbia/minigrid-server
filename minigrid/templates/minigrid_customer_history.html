@@ -16,8 +16,7 @@
       {% set zero_history = True %}
       <thead>
         <tr>
-          <th>Creation Time</th>
-          <th>Name</th>
+          <th>Creation Time (UTC)</th>
           <th>User ID</th>
         </tr>
       </thead>
@@ -26,7 +25,6 @@
         {% set zero_history = False %}
         <tr>
         <td>{{ customer_card_history.customer_card_created }}</td>
-        <td>{{ customer_card_history.customer_card_customer_id }}</td>
         <td>{{ customer_card_history.customer_card_user_id }}</td>
         </tr>
       {% end %}

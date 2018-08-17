@@ -16,18 +16,16 @@
       {% set zero_history = True %}
       <thead>
         <tr>
-          <th>Creation Time</th>
-          <th>Name</th>
+          <th>Creation Time (UTC)</th>
           <th>User ID</th>
         </tr>
       </thead>
       <tbody>
-      {% for mc_card_history in islice(reversed(minigrid.maintenance_card_history), 0, 25) %}
+      {% for maintenance_history in islice(reversed(minigrid.maintenance_history), 0, 25) %}
         {% set zero_history = False %}
         <tr>
-        <td>{{ mc_card_history.mc_created }}</td>
-        <td>{{ mc_card_history.mc_maintenance_card_id }}</td>
-        <td>{{ mc_card_history.mc_maintenance_card_card_id }}</td>
+        <td>{{ maintenance_history.mc_created }}</td>
+        <td>{{ maintenance_history.mc_maintenance_card_card_id }}</td>
         </tr>
       {% end %}
       </tbody>
