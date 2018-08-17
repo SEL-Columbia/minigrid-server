@@ -9,11 +9,7 @@ from datetime import datetime
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
-from sqlalchemy.dialects.postgresql import insert
-
 from tornado.escape import json_encode
-
-import minigrid.models as models
 
 import logging
 
@@ -300,7 +296,8 @@ def write_credit_card(
     write_result['night_tariff'] = str(night_tariff)
     write_result['night_tariff_start'] = str(night_tariff_start)
     write_result['tariff_creation_timestamp'] = str(tariff_creation_timestamp)
-    write_result['tariff_activation_timestamp'] = str(tariff_activation_timestamp)
+    write_result['tariff_activation_timestamp'] = \
+        str(tariff_activation_timestamp)
     cache.set('write_info', json_encode(write_result), 30)
     notify = OrderedDict()
     notify['notification'] = 'Writing Credit Card...'

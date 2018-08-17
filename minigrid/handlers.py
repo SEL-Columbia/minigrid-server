@@ -15,6 +15,13 @@ from cryptography.hazmat.backends import default_backend
 
 import redis
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import io
+
+from itertools import islice
+
 from sockjs.tornado import SockJSConnection, SockJSRouter
 from sqlalchemy import exists
 from sqlalchemy.dialects.postgresql import insert
@@ -31,13 +38,6 @@ from minigrid.device_interface import (
 import minigrid.error
 import minigrid.models as models
 from minigrid.options import options
-
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import io
-
-from itertools import islice
 
 AES = algorithms.AES
 cache = redis.StrictRedis.from_url(options.redis_url)
@@ -557,6 +557,7 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
         self.redirect(f'/minigrids/{minigrid_id}/customers')
 
+
 class MinigridCustomersHistoryHandler(BaseHandler):
     """Handlers for Customer card history view."""
 
@@ -569,6 +570,7 @@ class MinigridCustomersHistoryHandler(BaseHandler):
             'minigrid_customer_history.html',
             minigrid=models.get_minigrid(self.session, minigrid_id),
             http_protocol=http_protocol)
+
 
 class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
     """Handlers for maintenance cards view."""
@@ -653,6 +655,7 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
         self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards')
 
+
 class MinigridMaintenanceHistoryHandler(BaseHandler):
     """Handlers for Maintenance card history view."""
 
@@ -665,6 +668,7 @@ class MinigridMaintenanceHistoryHandler(BaseHandler):
             'minigrid_maintenance_history.html',
             minigrid=models.get_minigrid(self.session, minigrid_id),
             http_protocol=http_protocol)
+
 
 class VerifyLoginHandler(BaseHandler):
     """Handlers for portier verification."""
@@ -950,9 +954,10 @@ def _verify_written_card(session):
                     logging.info(f'Customer Card Written: {cached_marker}')
                     with models.transaction(session) as tx_session:
                         tx_session.add(models.CustomerCardHistory(
-                            customer_card_minigrid_id=minigrid_id_write,
-                            customer_card_customer_id=write_result['customer_id'],
-                            customer_card_user_id=customer_id_write,
+                            customer_card_minigrid_id = minigrid_id_write,
+                            customer_card_customer_id \
+                                = write_result['customer_id'],
+                            customer_card_user_id = customer_id_write,
                         ))
                     cache.delete('write_info')
             elif type == 'C':  # Credit
@@ -970,11 +975,15 @@ def _verify_written_card(session):
                         'credit_minigrid_id': write_result['minigrid_id'],
                         'credit_amount': write_result['credit_amount'],
                         'credit_day_tariff': write_result['day_tariff'],
-                        'credit_day_tariff_start': write_result['day_tariff_start'],
+                        'credit_day_tariff_start': \
+                            write_result['day_tariff_start'],
                         'credit_night_tariff': write_result['night_tariff'],
-                        'credit_night_tariff_start': write_result['night_tariff_start'],
-                        'credit_tariff_creation_timestamp': write_result['tariff_creation_timestamp'],
-                        'credit_tariff_activation_timestamp': write_result['tariff_activation_timestamp'],
+                        'credit_night_tariff_start': \
+                            write_result['night_tariff_start'],
+                        'credit_tariff_creation_timestamp': \
+                            write_result['tariff_creation_timestamp'],
+                        'credit_tariff_activation_timestamp': \
+                            write_result['tariff_activation_timestamp'],
                     }
                     statement = (
                         insert(models.CreditCardHistory)
@@ -1004,9 +1013,11 @@ def _verify_written_card(session):
                     logging.info(f'Maintenance Card Written: {cached_marker}')
                     with models.transaction(session) as tx_session:
                         tx_session.add(models.MaintenanceCardHistory(
-                            mc_minigrid_id=minigrid_id_write,
-                            mc_maintenance_card_id=write_result['mc_maintenance_card_id'],
-                            mc_maintenance_card_card_id=write_result['maintenance_id'],
+                            mc_minigrid_id = minigrid_id_write,
+                            mc_maintenance_card_id \
+                                = write_result['mc_maintenance_card_id'],
+                            mc_maintenance_card_card_id \
+                                = write_result['maintenance_id'],
                         ))
                     cache.delete('write_info')
             else:
@@ -1116,16 +1127,19 @@ class ImageHandler(BaseHandler):
 
     def genImage(self, minigrid_id):
         """Return the plot png."""
-        x = []; y = []
+        x = []
+        y = []
         with models.transaction(self.session) as session:
             minigrid = models.get_minigrid(session, minigrid_id)
-            for credit_card_history in islice(reversed(minigrid.credit_card_history), 0, 25):
+            for credit_card_history
+                    in islice(reversed(minigrid.credit_card_history), 0, 25):
                 x.append(credit_card_history.credit_card_created)
                 y.append(credit_card_history.credit_amount)
         fig = plt.figure()
         memdata = io.BytesIO()
         if x:
-            min = x[0]; max = x[-1]
+            min = x[0]
+            max = x[-1]
         # plt.plot(x, y)
         # plt.bar(x, y, align='center', alpha=0.5)
         plt.scatter(x, y, alpha=0.5)
@@ -1143,7 +1157,6 @@ class ImageHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self, minigrid_id):
         """Render the credit card history form."""
-        http_protocol = 'https' if options.minigrid_https else 'http'
         image = self.genImage(minigrid_id)
         self.set_header('Content-type', 'image/png')
         self.set_header('Content-length', len(image))
