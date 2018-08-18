@@ -1134,7 +1134,7 @@ class ImageHandler(BaseHandler):
                     in islice(reversed(minigrid.credit_card_history), 0, 25):
                 x.append(credit_card_history.credit_card_created)
                 y.append(credit_card_history.credit_amount)
-        fig = plt.figure()
+        # fig = plt.figure()
         memdata = io.BytesIO()
         if x:
             min = x[0]
