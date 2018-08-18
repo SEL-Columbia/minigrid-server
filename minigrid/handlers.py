@@ -15,13 +15,6 @@ from cryptography.hazmat.backends import default_backend
 
 import redis
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import io
-
-from itertools import islice
-
 from sockjs.tornado import SockJSConnection, SockJSRouter
 from sqlalchemy import exists
 from sqlalchemy.dialects.postgresql import insert
@@ -38,6 +31,13 @@ from minigrid.device_interface import (
 import minigrid.error
 import minigrid.models as models
 from minigrid.options import options
+
+import matplotlib
+matplotlib.use('Agg') # noqa
+import matplotlib.pyplot as plt
+import io
+
+from itertools import islice
 
 AES = algorithms.AES
 cache = redis.StrictRedis.from_url(options.redis_url)
@@ -954,10 +954,9 @@ def _verify_written_card(session):
                     logging.info(f'Customer Card Written: {cached_marker}')
                     with models.transaction(session) as tx_session:
                         tx_session.add(models.CustomerCardHistory(
-                            customer_card_minigrid_id = minigrid_id_write,
-                            customer_card_customer_id \
-                                = write_result['customer_id'],
-                            customer_card_user_id = customer_id_write,
+                         customer_card_minigrid_id=minigrid_id_write,
+                         customer_card_customer_id=write_result['customer_id'],
+                         customer_card_user_id=customer_id_write,
                         ))
                     cache.delete('write_info')
             elif type == 'C':  # Credit
@@ -975,14 +974,14 @@ def _verify_written_card(session):
                         'credit_minigrid_id': write_result['minigrid_id'],
                         'credit_amount': write_result['credit_amount'],
                         'credit_day_tariff': write_result['day_tariff'],
-                        'credit_day_tariff_start': \
+                        'credit_day_tariff_start':
                             write_result['day_tariff_start'],
                         'credit_night_tariff': write_result['night_tariff'],
-                        'credit_night_tariff_start': \
+                        'credit_night_tariff_start':
                             write_result['night_tariff_start'],
-                        'credit_tariff_creation_timestamp': \
+                        'credit_tariff_creation_timestamp':
                             write_result['tariff_creation_timestamp'],
-                        'credit_tariff_activation_timestamp': \
+                        'credit_tariff_activation_timestamp':
                             write_result['tariff_activation_timestamp'],
                     }
                     statement = (
@@ -1012,12 +1011,12 @@ def _verify_written_card(session):
                     cache.set('notification', json_encode(notify), 10)
                     logging.info(f'Maintenance Card Written: {cached_marker}')
                     with models.transaction(session) as tx_session:
+                        mccid = write_result['mc_maintenance_card_id']
+                        mcid = write_result['maintenance_id']
                         tx_session.add(models.MaintenanceCardHistory(
-                            mc_minigrid_id = minigrid_id_write,
-                            mc_maintenance_card_id \
-                                = write_result['mc_maintenance_card_id'],
-                            mc_maintenance_card_card_id \
-                                = write_result['maintenance_id'],
+                            mc_minigrid_id=minigrid_id_write,
+                            mc_maintenance_card_id=mccid,
+                            mc_maintenance_card_card_id=mcid,
                         ))
                     cache.delete('write_info')
             else:
@@ -1131,7 +1130,7 @@ class ImageHandler(BaseHandler):
         y = []
         with models.transaction(self.session) as session:
             minigrid = models.get_minigrid(session, minigrid_id)
-            for credit_card_history
+            for credit_card_history \
                     in islice(reversed(minigrid.credit_card_history), 0, 25):
                 x.append(credit_card_history.credit_card_created)
                 y.append(credit_card_history.credit_amount)
