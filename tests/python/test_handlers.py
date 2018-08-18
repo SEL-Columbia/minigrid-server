@@ -576,7 +576,7 @@ class TestMinigridVendorsHandler(HTTPTest):
             'You must initialize the system tariff information.',
             response.body.decode())
         body = BeautifulSoup(response.body)
-        self.assertEqual(body.findAll('p')[2].contents[0], 'Name: v')
+        self.assertEqual(body.findAll('p')[4].contents[0], 'Name: v')
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
     def test_create_vendor(self, get_current_user):
@@ -708,7 +708,7 @@ class TestMinigridCustomersHandler(HTTPTest):
             'You must initialize the system tariff information.',
             response.body.decode())
         body = BeautifulSoup(response.body)
-        self.assertEqual(body.findAll('p')[2].contents[0], 'Name: c')
+        self.assertEqual(body.findAll('p')[4].contents[0], 'Name: c')
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
     def test_create_customer(self, get_current_user):
