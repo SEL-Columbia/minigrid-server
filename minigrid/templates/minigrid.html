@@ -29,9 +29,36 @@
     <p><a href="/minigrids/{{ minigrid.minigrid_id }}/write_credit">Write credit card &raquo;</a></p>
     <hr>
 
-    <!--<p>Data:</p>
-    <p>TODO: What data? From where?</p>
-    <hr> -->
+    <p>Recent Data:</p>
+    <table class="table table-condensed">
+      {% from itertools import islice %}
+      {% set zero_history = True %}
+      <thead>
+        <tr>
+          <th>Minigrid</th>
+          <th>Record Timestamp</th>
+          <th>Meter ID</th>
+          <th>Energy Use</th>
+          <th>Credit</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for system_history in islice(reversed(minigrid.system_history), 0, 25) %}
+        {% set zero_history = False %}
+        <tr>
+          <td>{{ system_history.sh_minigrid_id }}</td>
+          <td>{{ system_history.sh_record_timestamp }}</td>
+          <td>{{ system_history.sh_meter_id }}</td>
+          <td>{{ system_history.sh_meter_energy_usage }}</td>
+          <td>{{ system_history.sh_meter_credit }}</td>
+        </tr>
+      {% end %}
+      </tbody>
+    </table>
+    {% if zero_history %}
+      <p>No history</p>
+    {% end %}
+    <hr>
 
   </div>
 

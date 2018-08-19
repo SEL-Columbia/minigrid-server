@@ -743,7 +743,7 @@ def _user_or_maintenance_card(binary):
     return result
 
 
-def _credit_card(session, cipher, binary, credit_card_id):
+def _credit_card(session, cipher, binary, credit_card_id, minigrid_id):
     result = OrderedDict()
     # raw_sector_3 = unhexlify(binary[183:273])
     # logging.info(f'Sector 3: {raw_sector_3}')
@@ -770,6 +770,7 @@ def _credit_card(session, cipher, binary, credit_card_id):
                 sh_meter_energy_usage=usage,
                 sh_meter_credit=credit,
                 sh_record_timestamp=record_timestamp,
+                sh_minigrid_id=minigrid_id,
             ))
     return result
 
@@ -860,7 +861,17 @@ def _pack_into_dict(session, binary):
     elif card_type == 'C':
         cc_id = str(UUID(bytes=sector_2[4:20]))
         result['Credit Card ID'] = cc_id
-        specific_data = _credit_card(session, cipher, binary, cc_id)
+        minigrids = models.get_minigrids(session)
+        minigrid_id = ''
+        for mg in minigrids:
+            for credit_card_history in mg.credit_card_history:
+                if cc_id == str(credit_card_history.credit_card_id):
+                    minigrid_id = mg.minigrid_id
+                    break
+            if str(minigrid_id) == str(mg.minigrid_id):
+                break
+        specific_data = _credit_card(session, cipher, binary, cc_id,
+                                     minigrid_id)
     else:
         raise tornado.web.HTTPError(400, f'bad card type {card_type}')
     if card_type == 'C':

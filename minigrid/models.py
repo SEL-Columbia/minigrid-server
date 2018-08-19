@@ -223,6 +223,7 @@ class SystemHistory(Base):
 
     __tablename__ = 'system_history'
     sh_id = pk()
+    sh_minigrid_id = fk('minigrid.minigrid_id')
     sh_credit_card_id = fk('credit_card_history.credit_card_id')
     sh_meter_id = sa.Column(
         pg.INTEGER,
@@ -292,6 +293,9 @@ class Minigrid(Base):
     credit_card_history = relationship(
         'CreditCardHistory', backref='minigrid',
         order_by='CreditCardHistory.credit_card_created')
+    system_history = relationship(
+        'SystemHistory', backref='minigrid',
+        order_by='SystemHistory.sh_created')
 
     __table_args__ = (
         sa.UniqueConstraint('minigrid_payment_id'),)
