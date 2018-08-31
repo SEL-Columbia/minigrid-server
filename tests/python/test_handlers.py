@@ -1004,7 +1004,7 @@ class TestMinigridMaintenanceCardsHandler(HTTPTest):
                 '&maintenance_card_card_id=0000',
                 method='POST', body='')
         self.assertResponseCode(response, 400)
-        self.assertIn('maintenance_card_maintenance_card_name_check',
+        self.assertIn('maintenance_card_name_check',
                       response.body.decode())
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
