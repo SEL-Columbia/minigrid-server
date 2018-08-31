@@ -589,8 +589,13 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
         """Add a maintenance card."""
         grid = models.get_minigrid(self.session, minigrid_id)
         action = self.get_argument('action')
+        # variable shortened should be fixed
+        card_name_exists = (
+            'maintenance_card_maintenance_card_minigrid_id_maintenance__key'
+        )
+        # variable shortened should be fixed
         card_id_exists = (
-            'maintenance_card_minigrid_id_maintenance_card_card_id_key'
+            'maintenance_card_maintenance_card_minigrid_id_maintenance_c_key'
         )
         http_protocol = 'https' if options.minigrid_https else 'http'
         if action == 'create':
@@ -602,8 +607,7 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
                         maintenance_card_card_id=mcci,
                         maintenance_card_name=mcn))
             except (IntegrityError, DataError) as error:
-                if 'maintenance_card_minigrid_id_maintenance_key' \
-                   in error.orig.pgerror:
+                if card_name_exists in error.orig.pgerror:
                     message = (
                         'A maintenance card with that name already exists')
                 elif card_id_exists in error.orig.pgerror:
