@@ -924,9 +924,9 @@ class TestMinigridMaintenanceCardsHandler(HTTPTest):
             session.add(self.user)
             session.add(models.System(day_tariff=1, night_tariff=1))
             self.minigrid = models.Minigrid(minigrid_name='a')
-            self.customer = models.MaintenanceCard(
+            self.maintenance_card = models.MaintenanceCard(
                 maintenance_card_name='m', maintenance_card_card_id='0000')
-            self.minigrid.customers.append(self.customer)
+            self.minigrid.maintenance_cards.append(self.maintenance_card)
             session.add(self.minigrid)
             session.add(models.Device(address=bytes(6)))
 
@@ -1040,7 +1040,7 @@ class TestMinigridMaintenanceCardsHandler(HTTPTest):
         self.assertIsNone(maintenance_card)
         # Not sure why this isn't showing up...
         # self.assertIn(
-        #     'The requested customer no longer exists',
+        #     'The requested maintenance card no longer exists',
         #     response.body.decode())
 
     @patch('minigrid.handlers.BaseHandler.get_current_user')
