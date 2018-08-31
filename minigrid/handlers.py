@@ -32,12 +32,11 @@ import minigrid.error
 import minigrid.models as models
 from minigrid.options import options
 
-import matplotlib
-matplotlib.use('Agg') # noqa
 import matplotlib.pyplot as plt
 import io
-
 from itertools import islice
+
+plt.switch_backend('Agg')
 
 AES = algorithms.AES
 cache = redis.StrictRedis.from_url(options.redis_url)
