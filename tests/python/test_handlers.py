@@ -543,6 +543,42 @@ class TestWriteCreditCardHandler(HTTPTest):
         self.assertResponseCode(response, 404)
 
 
+class TestMinigridWriteCreditHistoryHandler(HTTPTest):
+    def setUp(self):
+        super().setUp()
+        with models.transaction(self.session) as session:
+            self.user = models.User(email='a@a.com')
+            session.add(self.user)
+            session.add(models.System(day_tariff=1, night_tariff=1))
+            self.minigrid = models.Minigrid(minigrid_name='a')
+            session.add(self.minigrid)
+            session.add(models.Device(address=bytes(6)))
+
+    def test_get_write_credit_card_history_not_logged_in(self):
+        response = self.fetch(
+            f'/minigrids/{self.minigrid.minigrid_id}/write_credit/history')
+        self.assertResponseCode(response, 200)
+        self.assertNotIn('user', response.headers['Set-Cookie'])
+        self.assertIn('Log In', response.body.decode())
+        self.assertNotIn('Log Out', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_write_credit_card_history_logged_in(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch(
+            f'/minigrids/{self.minigrid.minigrid_id}/write_credit/history')
+        self.assertResponseCode(response, 200)
+        self.assertIn('Creation Time (UTC)', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_write_credit_card_history_404(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '404'):
+            response = self.fetch(
+                f'/minigrids/{self.user.user_id}/write_credit/history')
+        self.assertResponseCode(response, 404)
+
+
 class TestMinigridVendorsHandler(HTTPTest):
     def setUp(self):
         super().setUp()
@@ -671,6 +707,42 @@ class TestMinigridVendorsHandler(HTTPTest):
                 'action=something', method='POST', body='')
         self.assertResponseCode(response, 400)
         self.assertIn('Bad Request', response.body.decode())
+
+
+class TestMinigridVendorsHistoryHandler(HTTPTest):
+    def setUp(self):
+        super().setUp()
+        with models.transaction(self.session) as session:
+            self.user = models.User(email='a@a.com')
+            session.add(self.user)
+            session.add(models.System(day_tariff=1, night_tariff=1))
+            self.minigrid = models.Minigrid(minigrid_name='a')
+            session.add(self.minigrid)
+            session.add(models.Device(address=bytes(6)))
+
+    def test_get_write_vendor_card_history_not_logged_in(self):
+        response = self.fetch(
+            f'/minigrids/{self.minigrid.minigrid_id}/vendors/history')
+        self.assertResponseCode(response, 200)
+        self.assertNotIn('user', response.headers['Set-Cookie'])
+        self.assertIn('Log In', response.body.decode())
+        self.assertNotIn('Log Out', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_vendor_card_history_logged_in(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch(
+            f'/minigrids/{self.minigrid.minigrid_id}/vendors/history')
+        self.assertResponseCode(response, 200)
+        self.assertIn('Creation Time (UTC)', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_vendor_card_history_404(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '404'):
+            response = self.fetch(
+                f'/minigrids/{self.user.user_id}/vendors/history')
+        self.assertResponseCode(response, 404)
 
 
 class TestMinigridCustomersHandler(HTTPTest):
@@ -806,6 +878,219 @@ class TestMinigridCustomersHandler(HTTPTest):
                 'action=something', method='POST', body='')
         self.assertResponseCode(response, 400)
         self.assertIn('Bad Request', response.body.decode())
+
+
+class TestMinigridCustomersHistoryHandler(HTTPTest):
+    def setUp(self):
+        super().setUp()
+        with models.transaction(self.session) as session:
+            self.user = models.User(email='a@a.com')
+            session.add(self.user)
+            session.add(models.System(day_tariff=1, night_tariff=1))
+            self.minigrid = models.Minigrid(minigrid_name='a')
+            session.add(self.minigrid)
+            session.add(models.Device(address=bytes(6)))
+
+    def test_get_write_customer_card_history_not_logged_in(self):
+        response = self.fetch(
+            f'/minigrids/{self.minigrid.minigrid_id}/customers/history')
+        self.assertResponseCode(response, 200)
+        self.assertNotIn('user', response.headers['Set-Cookie'])
+        self.assertIn('Log In', response.body.decode())
+        self.assertNotIn('Log Out', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_customer_card_history_logged_in(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch(
+            f'/minigrids/{self.minigrid.minigrid_id}/customers/history')
+        self.assertResponseCode(response, 200)
+        self.assertIn('Creation Time (UTC)', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_customer_card_history_404(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '404'):
+            response = self.fetch(
+                f'/minigrids/{self.user.user_id}/customers/history')
+        self.assertResponseCode(response, 404)
+
+
+class TestMinigridMaintenanceCardsHandler(HTTPTest):
+    def setUp(self):
+        super().setUp()
+        with models.transaction(self.session) as session:
+            self.user = models.User(email='a@a.com')
+            session.add(self.user)
+            session.add(models.System(day_tariff=1, night_tariff=1))
+            self.minigrid = models.Minigrid(minigrid_name='a')
+            self.customer = models.MaintenanceCard(
+                maintenance_card_name='m', maintenance_card_card_id='0000')
+            self.minigrid.customers.append(self.customer)
+            session.add(self.minigrid)
+            session.add(models.Device(address=bytes(6)))
+
+    def test_get_not_logged_in(self):
+        response = self.fetch(
+            f'/minigrids/{self.minigrid.minigrid_id}/maintenance_cards')
+        self.assertResponseCode(response, 200)
+        self.assertNotIn('user', response.headers['Set-Cookie'])
+        self.assertIn('Log In', response.body.decode())
+        self.assertNotIn('Log Out', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_logged_in(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch(
+            f'/minigrids/{self.minigrid.minigrid_id}/maintenance_cards')
+        self.assertResponseCode(response, 200)
+        self.assertNotIn('Log In', response.body.decode())
+        self.assertIn('Log Out', response.body.decode())
+        self.assertNotIn(
+            'You must initialize the system tariff information.',
+            response.body.decode())
+        body = BeautifulSoup(response.body)
+        self.assertEqual(body.findAll('p')[4].contents[0], 'Name: m')
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_create_maintenance_card(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch(
+            f'/minigrids/{self.minigrid.minigrid_id}/maintenance_cards?'
+            'action=create&maintenance_card_name=m2'
+            '&maintenance_card_card_id=0001',
+            method='POST', body='')
+        self.assertResponseCode(response, 200)
+        maintenance_card = (
+            self.session.query(models.MaintenanceCard)
+            .filter_by(maintenance_card_name='m2').one())
+        self.assertEqual(maintenance_card.maintenance_card_name, 'm2')
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_create_duplicate_maintenance_card_name(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                f'/minigrids/{self.minigrid.minigrid_id}/maintenance_cards?'
+                'action=create&maintenance_card_name=m'
+                '&maintenance_card_card_id=0001',
+                method='POST', body='')
+        self.assertResponseCode(response, 400)
+        self.assertIn(
+            'A maintenance card with that name already exists',
+            response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_create_duplicate_maintenance_card_user_id(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                f'/minigrids/{self.minigrid.minigrid_id}/maintenance_cards?'
+                'action=create&maintenance_card_name=m2'
+                '&maintenance_card_card_id=0000',
+                method='POST', body='')
+        self.assertResponseCode(response, 400)
+        self.assertIn(
+            'A maintenance card with that User ID already exists',
+            response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_create_missing_name(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '400'):
+            response = self.fetch(
+                f'/minigrids/{self.minigrid.minigrid_id}/maintenance_cards?'
+                'action=create&maintenance_card_name='
+                '&maintenance_card_card_id=0000',
+                method='POST', body='')
+        self.assertResponseCode(response, 400)
+        self.assertIn('maintenance_card_maintenance_card_name_check',
+                      response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_remove_maintenance_card(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch(
+            f'/minigrids/{self.minigrid.minigrid_id}/maintenance_cards?'
+            f'action=remove&maintenance_card_id='
+            f'{self.maintenance_card.maintenance_card_id}',
+            method='POST', body='')
+        self.assertResponseCode(response, 200)
+        maintenance_card = \
+            self.session.query(models.MaintenanceCard).one_or_none()
+        self.assertIsNone(maintenance_card)
+        self.assertIn('No maintenance cards', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_remove_maintenance_card_twice(self, get_current_user):
+        get_current_user.return_value = self.user
+        self.fetch(
+            f'/minigrids/{self.minigrid.minigrid_id}/maintenance_cards?'
+            f'action=remove&maintenance_card_id='
+            f'{self.maintenance_card.maintenance_card_id}',
+            method='POST', body='')
+        response = self.fetch(
+            f'/minigrids/{self.minigrid.minigrid_id}/maintenance_cards?'
+            f'action=remove&maintenance_card_id='
+            f'{self.maintenance_card.maintenance_card_id}',
+            method='POST', body='')
+        self.assertResponseCode(response, 200)
+        maintenance_card = \
+            self.session.query(models.MaintenanceCard).one_or_none()
+        self.assertIsNone(maintenance_card)
+        # Not sure why this isn't showing up...
+        # self.assertIn(
+        #     'The requested customer no longer exists',
+        #     response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_bad_action(self, get_current_user):
+        get_current_user.return_value = self.user
+        log_1 = ExpectLog(
+            'tornado.general', '.*Bad Request \(invalid action\)')
+        log_2 = ExpectLog('tornado.access', '400')
+        with log_1, log_2:
+            response = self.fetch(
+                f'/minigrids/{self.minigrid.minigrid_id}/maintenance_cards?'
+                'action=something', method='POST', body='')
+        self.assertResponseCode(response, 400)
+        self.assertIn('Bad Request', response.body.decode())
+
+
+class TestMinigridMaintenanceCardHistoryHandler(HTTPTest):
+    def setUp(self):
+        super().setUp()
+        with models.transaction(self.session) as session:
+            self.user = models.User(email='a@a.com')
+            session.add(self.user)
+            session.add(models.System(day_tariff=1, night_tariff=1))
+            self.minigrid = models.Minigrid(minigrid_name='a')
+            session.add(self.minigrid)
+            session.add(models.Device(address=bytes(6)))
+
+    def test_get_write_maintenance_card_history_not_logged_in(self):
+        response = self.fetch(
+          f'/minigrids/{self.minigrid.minigrid_id}/maintenance_cards/history')
+        self.assertResponseCode(response, 200)
+        self.assertNotIn('user', response.headers['Set-Cookie'])
+        self.assertIn('Log In', response.body.decode())
+        self.assertNotIn('Log Out', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_maintenance_card_history_logged_in(self, get_current_user):
+        get_current_user.return_value = self.user
+        response = self.fetch(
+          f'/minigrids/{self.minigrid.minigrid_id}/maintenance_cards/history')
+        self.assertResponseCode(response, 200)
+        self.assertIn('Creation Time (UTC)', response.body.decode())
+
+    @patch('minigrid.handlers.BaseHandler.get_current_user')
+    def test_get_maintenance_card_history_404(self, get_current_user):
+        get_current_user.return_value = self.user
+        with ExpectLog('tornado.access', '404'):
+            response = self.fetch(
+                f'/minigrids/{self.user.user_id}/maintenance_cards/history')
+        self.assertResponseCode(response, 404)
 
 
 class TestXSRF(HTTPTest):

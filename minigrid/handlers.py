@@ -605,10 +605,10 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
             except (IntegrityError, DataError) as error:
                 if 'maintenance_card_name_key' in error.orig.pgerror:
                     message = (
-                        'A maintenance_card with that name already exists')
+                        'A maintenance card with that name already exists')
                 elif card_id_exists in error.orig.pgerror:
                     message = (
-                        'A maintenance_card with that User ID already exists')
+                        'A maintenance card with that User ID already exists')
                 else:
                     message = ' '.join(error.orig.pgerror.split())
                 raise minigrid.error.MinigridHTTPError(
