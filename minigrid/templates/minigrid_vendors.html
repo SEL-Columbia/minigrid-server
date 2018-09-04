@@ -1,12 +1,24 @@
 {% extends 'base.html' %}
 
 {% block body %}
+  <div class="container-fluid notification-alert">
+  </div>
+  <div class="menu"><p>
+    <a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a>
+  </p></div>
   <div class="full-page-content">
     {% if message is not None %}
       <p><strong>{{ message }}</strong></p>
     {% end %}
     <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
     <p>ID: {{ minigrid.minigrid_id }}</p>
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}/vendors/history">{{ minigrid.minigrid_name }} Vendor Card History &raquo;</a></p>
+    <div class="device-info">
+      <div class="card-info-header">
+        <span>Device Info</span>
+      </div>
+    </div>
+    <hr class="device-hr">
     <div class="card-info">
       <div class="card-info-header">
         <span>Card Info</span>

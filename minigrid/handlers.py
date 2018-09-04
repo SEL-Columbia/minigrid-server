@@ -32,10 +32,35 @@ import minigrid.error
 import minigrid.models as models
 from minigrid.options import options
 
+import matplotlib.pyplot as plt
+import io
+from itertools import islice
+
+plt.switch_backend('Agg')
 
 AES = algorithms.AES
 cache = redis.StrictRedis.from_url(options.redis_url)
 broker_url = 'https://broker.portier.io'
+
+# cache.config_set('notify-keyspace-events', 'Ex') # not available in fakeRedis
+pubsub = cache.pubsub()
+pubsub.subscribe("__keyevent@0__:expired")
+
+
+_card_type_dict = {
+    'A': 'Vendor ID Card',
+    'B': 'Customer ID Card',
+    'C': 'Credit Card',
+    'D': 'Maintenance Card',
+}
+
+
+_secret_value_type = {
+    'A': 'Vendor User ID',
+    'B': 'Customer User ID',
+    'C': 'Credit Amount',
+    'D': 'Maintenance Card ID',
+}
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -93,6 +118,10 @@ class ReadCardBaseHandler(BaseHandler):
             kwargs['device_active'] = cache.get('device_active')
         if 'received_info' not in kwargs:
             kwargs['received_info'] = cache.get('received_info')
+        if 'write_info' not in kwargs:
+            kwargs['write_info'] = cache.get('write_info')
+        if 'notification' not in kwargs:
+            kwargs['notification'] = cache.get('notification')
         if 'card_read_error' not in kwargs:
             kwargs['card_read_error'] = cache.get('card_read_error')
         super().render(*args, **kwargs)
@@ -335,13 +364,14 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
         """Write a credit card for this minigrid."""
         minigrid = models.get_minigrid(self.session, minigrid_id)
         system = self.session.query(models.System).one()
+        credit_write = int(self.get_argument('credit_value'))
         write_credit_card(
             self.session,
             cache,
             minigrid.payment_system.aes_key,
             minigrid_id,
             minigrid.payment_system.payment_id,
-            int(self.get_argument('credit_value')),
+            credit_write,
             system.day_tariff,
             system.day_tariff_start,
             system.night_tariff,
@@ -349,9 +379,21 @@ class MinigridWriteCreditHandler(ReadCardBaseHandler):
             system.tariff_creation_timestamp,
             system.tariff_activation_timestamp,
         )
-        message = 'Card written'
-        self.redirect(
-            f'/minigrids/{minigrid_id}/write_credit', message=message)
+        self.redirect(f'/minigrids/{minigrid_id}/write_credit')
+
+
+class MinigridWriteCreditHistoryHandler(BaseHandler):
+    """Handlers for credit card history view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the credit card history form."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
+        self.render(
+            'minigrid_credit_history.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id),
+            http_protocol=http_protocol)
 
 
 class MinigridVendorsHandler(ReadCardBaseHandler):
@@ -407,20 +449,36 @@ class MinigridVendorsHandler(ReadCardBaseHandler):
             vendor = (
                 self.session.query(models.Vendor)
                 .get(self.get_argument('vendor_id')))
-            write_vendor_card(
-                self.session,
-                cache,
-                grid.payment_system.aes_key,
-                minigrid_id,
-                grid.payment_system.payment_id,
-                vendor
-            )
-            message = 'Card written'
-            self.redirect(f'/minigrids/{minigrid_id}/vendors', message=message)
+            try:
+                write_vendor_card(
+                    self.session,
+                    cache,
+                    grid.payment_system.aes_key,
+                    minigrid_id,
+                    grid.payment_system.payment_id,
+                    vendor
+                )
+            except Exception as error:
+                logging.error(str(error))
+            self.redirect(f'/minigrids/{minigrid_id}/vendors')
             return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
         self.redirect(f'/minigrids/{minigrid_id}/vendors')
+
+
+class MinigridVendorsHistoryHandler(BaseHandler):
+    """Handlers for Vendor card history view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the vendor card history form."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
+        self.render(
+            'minigrid_vendor_history.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id),
+            http_protocol=http_protocol)
 
 
 class MinigridCustomersHandler(ReadCardBaseHandler):
@@ -481,21 +539,36 @@ class MinigridCustomersHandler(ReadCardBaseHandler):
             customer = (
                 self.session.query(models.Customer)
                 .get(self.get_argument('customer_id')))
-            write_customer_card(
-                self.session,
-                cache,
-                grid.payment_system.aes_key,
-                minigrid_id,
-                grid.payment_system.payment_id,
-                customer
-            )
-            message = 'Card written'
-            self.redirect(
-                f'/minigrids/{minigrid_id}/customers', message=message)
+            try:
+                write_customer_card(
+                    self.session,
+                    cache,
+                    grid.payment_system.aes_key,
+                    minigrid_id,
+                    grid.payment_system.payment_id,
+                    customer
+                )
+            except Exception as error:
+                logging.error(str(error))
+            self.redirect(f'/minigrids/{minigrid_id}/customers')
             return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
         self.redirect(f'/minigrids/{minigrid_id}/customers')
+
+
+class MinigridCustomersHistoryHandler(BaseHandler):
+    """Handlers for Customer card history view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the customer card history form."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
+        self.render(
+            'minigrid_customer_history.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id),
+            http_protocol=http_protocol)
 
 
 class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
@@ -516,9 +589,13 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
         """Add a maintenance card."""
         grid = models.get_minigrid(self.session, minigrid_id)
         action = self.get_argument('action')
+        # variable shortened should be fixed
+        card_name_exists = (
+            'maintenance_card_mc_minigrid_id_maintenance_card_name_key'
+        )
+        # variable shortened should be fixed
         card_id_exists = (
-            'maintenance_card_maintenance_card_minigrid_id'
-            '_maintenance_card_card_id_key'
+            'maintenance_card_mc_minigrid_id_maintenance_card_card_id_key'
         )
         http_protocol = 'https' if options.minigrid_https else 'http'
         if action == 'create':
@@ -530,12 +607,12 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
                         maintenance_card_card_id=mcci,
                         maintenance_card_name=mcn))
             except (IntegrityError, DataError) as error:
-                if 'maintenance_card_name_key' in error.orig.pgerror:
+                if card_name_exists in error.orig.pgerror:
                     message = (
-                        'A maintenance_card with that name already exists')
+                        'A maintenance card with that name already exists')
                 elif card_id_exists in error.orig.pgerror:
                     message = (
-                        'A maintenance_card with that User ID already exists')
+                        'A maintenance card with that User ID already exists')
                 else:
                     message = ' '.join(error.orig.pgerror.split())
                 raise minigrid.error.MinigridHTTPError(
@@ -564,20 +641,36 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
             maintenance_card = (
                 self.session.query(models.MaintenanceCard)
                 .get(self.get_argument('maintenance_card_id')))
-            write_maintenance_card_card(
-                self.session,
-                cache,
-                grid.payment_system.aes_key,
-                minigrid_id,
-                grid.payment_system.payment_id,
-                maintenance_card)
-            message = 'Card written'
-            self.redirect(
-                f'/minigrids/{minigrid_id}/maintenance_cards', message=message)
+            try:
+                write_maintenance_card_card(
+                    self.session,
+                    cache,
+                    grid.payment_system.aes_key,
+                    minigrid_id,
+                    grid.payment_system.payment_id,
+                    maintenance_card
+                )
+            except Exception as error:
+                logging.error(str(error))
+            self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards')
             return
         else:
             raise tornado.web.HTTPError(400, 'Bad Request (invalid action)')
         self.redirect(f'/minigrids/{minigrid_id}/maintenance_cards')
+
+
+class MinigridMaintenanceHistoryHandler(BaseHandler):
+    """Handlers for Maintenance card history view."""
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the maintenance card history form."""
+        http_protocol = 'https' if options.minigrid_https else 'http'
+
+        self.render(
+            'minigrid_maintenance_history.html',
+            minigrid=models.get_minigrid(self.session, minigrid_id),
+            http_protocol=http_protocol)
 
 
 class VerifyLoginHandler(BaseHandler):
@@ -653,7 +746,7 @@ def _user_or_maintenance_card(binary):
     return result
 
 
-def _credit_card(session, cipher, binary, credit_card_id):
+def _credit_card(session, cipher, binary, credit_card_id, minigrid_id):
     result = OrderedDict()
     # raw_sector_3 = unhexlify(binary[183:273])
     # logging.info(f'Sector 3: {raw_sector_3}')
@@ -670,6 +763,7 @@ def _credit_card(session, cipher, binary, credit_card_id):
         int(sector_4[4:14].decode('ascii'))).isoformat()
     result['Timestamp of Recorded Data'] = record_timestamp
     meter_records = sector_4[15:].decode('ascii').split()
+    logging.info(f'meter_records: {meter_records}')
     for record in meter_records:
         meter_id, usage, credit = record.split(',')
         with models.transaction(session) as tx_session:
@@ -679,24 +773,9 @@ def _credit_card(session, cipher, binary, credit_card_id):
                 sh_meter_energy_usage=usage,
                 sh_meter_credit=credit,
                 sh_record_timestamp=record_timestamp,
+                sh_minigrid_id=minigrid_id,
             ))
     return result
-
-
-_card_type_dict = {
-    'A': 'Vendor ID Card',
-    'B': 'Customer ID Card',
-    'C': 'Credit Card',
-    'D': 'Maintenance Card',
-}
-
-
-_secret_value_type = {
-    'A': 'Vendor User ID',
-    'B': 'Customer User ID',
-    'C': 'Credit Amount',
-    'D': 'Maintenance Card ID',
-}
 
 
 def _pack_into_dict(session, binary):
@@ -710,7 +789,6 @@ def _pack_into_dict(session, binary):
         device_exists = session.query(
             exists().where(models.Device.address == device_address)).scalar()
     except Exception as error:
-        import logging  # remove
         logging.error(str(error))
         device_exists = False
     if not device_exists:  # TODO: new error class
@@ -718,13 +796,17 @@ def _pack_into_dict(session, binary):
             400, 'bad device id {}'.format(binary[:12]))
     binary = binary[12:]  # Remove device address form binary
     result = OrderedDict()
+    result['Connected Device'] = device_address.hex()
     # Is it safe to assume that sector 1 is always first? I hope so
     # Sector label is one character, ignore it, take 90 after as sector 1
     sector_1 = unhexlify(binary[1:91])
     # logging.info(f'Sector 1: {sector_1}')
     # Use this for the future... displaying in the UI
-    # system_id = sector_1[:2]
+    system_id = sector_1[:2].decode('ascii')
     # application_id = sector_1[2:4]
+    if system_id == 'up':
+        logging.info(f'Operator Box is {system_id}')
+        return json_encode(result)
     card_type = sector_1[4:5].decode('ascii')
     logging.info(f'Card Type: {card_type}')
     try:
@@ -782,7 +864,17 @@ def _pack_into_dict(session, binary):
     elif card_type == 'C':
         cc_id = str(UUID(bytes=sector_2[4:20]))
         result['Credit Card ID'] = cc_id
-        specific_data = _credit_card(session, cipher, binary, cc_id)
+        minigrids = models.get_minigrids(session)
+        minigrid_id = ''
+        for mg in minigrids:
+            for credit_card_history in mg.credit_card_history:
+                if cc_id == str(credit_card_history.credit_card_id):
+                    minigrid_id = mg.minigrid_id
+                    break
+            if str(minigrid_id) == str(mg.minigrid_id):
+                break
+        specific_data = _credit_card(session, cipher, binary, cc_id,
+                                     minigrid_id)
     else:
         raise tornado.web.HTTPError(400, f'bad card type {card_type}')
     if card_type == 'C':
@@ -794,6 +886,159 @@ def _pack_into_dict(session, binary):
             result['Credit Status'] = 'Previously Used'
     result.update(specific_data)
     return json_encode(result)
+
+
+def _verify_written_card(session):
+    # Check if a card has actually been written by reading it
+    # notify on success or failure
+    notify = OrderedDict()
+    try:
+        expire_message = pubsub.get_message()
+        if expire_message:
+            logging.info(f'PubSub Notification: {expire_message["data"]}')
+            if expire_message["data"] == b'write_info':
+                notify['notification'] = 'Error Writing Card'
+                notify['type'] = 'alert-danger'
+                cache.set('notification', json_encode(notify), 10)
+                return
+        # -2 on pttl not set, expired, or deleted
+        # logging.info(f'PubSub pttl(write_info): {cache.pttl("write_info")}')
+    except Exception as error:
+        logging.error(str(error))
+    if cache.get('write_info') and cache.get('received_info'):
+        write_result = json_decode(cache.get('write_info'))
+        device_info = json_decode(cache.get('received_info'))
+    else:
+        return
+    try:
+        card_type = device_info['Card Type']
+        write_card_type = write_result['card_type']
+    except NameError:
+        return
+    if card_type != write_card_type:
+        return
+    for type, value in _card_type_dict.items():
+        if value == card_type:
+            logging.info(f'Verify Written Card: {type}')
+            cached_marker = device_info[_secret_value_type[type]]
+            if type == 'A':  # Vendor
+                vendor_id_write = write_result['user_id']
+                creation_time_write = write_result['creation_time']
+                minigrid_id_write = write_result['minigrid_id']
+                cached_creation_time = device_info['Card Creation Time']
+                cached_minigrid_id = device_info['Minigrid ID']
+                logging.info(f'cached_marker: {cached_marker}')
+                logging.info(f'vendor_id_write: {vendor_id_write}')
+                logging.info(f'cached_creation_time: {cached_creation_time}')
+                logging.info(f'creation_time_write: {creation_time_write}')
+                logging.info(f'cached_minigrid_id: {cached_minigrid_id}')
+                logging.info(f'minigrid_id_write: {minigrid_id_write}')
+                if cached_marker == vendor_id_write and \
+                   cached_creation_time == creation_time_write and \
+                   cached_minigrid_id == minigrid_id_write:
+                    notify['notification'] = 'Vendor Card Written'
+                    notify['type'] = 'alert-success'
+                    cache.set('notification', json_encode(notify), 10)
+                    logging.info(f'Vendor Card Written: {cached_marker}')
+                    with models.transaction(session) as tx_session:
+                        tx_session.add(models.VendorCardHistory(
+                            vendor_card_minigrid_id=minigrid_id_write,
+                            vendor_card_vendor_id=write_result['vendor_id'],
+                            vendor_card_user_id=vendor_id_write,
+                        ))
+                    cache.delete('write_info')
+            elif type == 'B':  # Customer
+                customer_id_write = write_result['user_id']
+                creation_time_write = write_result['creation_time']
+                minigrid_id_write = write_result['minigrid_id']
+                cached_creation_time = device_info['Card Creation Time']
+                cached_minigrid_id = device_info['Minigrid ID']
+                logging.info(f'cached_marker: {cached_marker}')
+                logging.info(f'customer_id_write: {customer_id_write}')
+                logging.info(f'cached_creation_time: {cached_creation_time}')
+                logging.info(f'creation_time_write: {creation_time_write}')
+                logging.info(f'cached_minigrid_id: {cached_minigrid_id}')
+                logging.info(f'minigrid_id_write: {minigrid_id_write}')
+                if cached_marker == customer_id_write and \
+                   cached_creation_time == creation_time_write and \
+                   cached_minigrid_id == minigrid_id_write:
+                    notify['notification'] = 'Customer Card Written'
+                    notify['type'] = 'alert-success'
+                    cache.set('notification', json_encode(notify), 10)
+                    logging.info(f'Customer Card Written: {cached_marker}')
+                    with models.transaction(session) as tx_session:
+                        tx_session.add(models.CustomerCardHistory(
+                         customer_card_minigrid_id=minigrid_id_write,
+                         customer_card_customer_id=write_result['customer_id'],
+                         customer_card_user_id=customer_id_write,
+                        ))
+                    cache.delete('write_info')
+            elif type == 'C':  # Credit
+                credit_write = write_result['credit_amount']
+                credit_card_id_write = write_result['credit_card_id']
+                cached_credit_card_id = device_info['Credit Card ID']
+                if cached_marker == credit_write and \
+                   cached_credit_card_id == credit_card_id_write:
+                    notify['notification'] = 'Credit Card Written'
+                    notify['type'] = 'alert-success'
+                    cache.set('notification', json_encode(notify), 10)
+                    logging.info(f'Credit Card Written: {cached_marker}')
+                    data = {
+                        'credit_card_id': write_result['credit_card_id'],
+                        'credit_minigrid_id': write_result['minigrid_id'],
+                        'credit_amount': write_result['credit_amount'],
+                        'credit_day_tariff': write_result['day_tariff'],
+                        'credit_day_tariff_start':
+                            write_result['day_tariff_start'],
+                        'credit_night_tariff': write_result['night_tariff'],
+                        'credit_night_tariff_start':
+                            write_result['night_tariff_start'],
+                        'credit_tariff_creation_timestamp':
+                            write_result['tariff_creation_timestamp'],
+                        'credit_tariff_activation_timestamp':
+                            write_result['tariff_activation_timestamp'],
+                    }
+                    statement = (
+                        insert(models.CreditCardHistory)
+                        .values(**data)
+                        .on_conflict_do_nothing())
+                    with models.transaction(session) as tx_session:
+                        tx_session.execute(statement)
+                    cache.delete('write_info')
+            elif type == 'D':  # Maintenance
+                maintenance_id_write = write_result['maintenance_id']
+                creation_time_write = write_result['creation_time']
+                minigrid_id_write = write_result['minigrid_id']
+                cached_creation_time = device_info['Card Creation Time']
+                cached_minigrid_id = device_info['Minigrid ID']
+                logging.info(f'cached_marker: {cached_marker}')
+                logging.info(f'maintenance_id_write: {maintenance_id_write}')
+                logging.info(f'cached_creation_time: {cached_creation_time}')
+                logging.info(f'creation_time_write: {creation_time_write}')
+                logging.info(f'cached_minigrid_id: {cached_minigrid_id}')
+                logging.info(f'minigrid_id_write: {minigrid_id_write}')
+                if cached_marker == maintenance_id_write and \
+                   cached_creation_time == creation_time_write and \
+                   cached_minigrid_id == minigrid_id_write:
+                    notify['notification'] = 'Maintenance Card Written'
+                    notify['type'] = 'alert-success'
+                    cache.set('notification', json_encode(notify), 10)
+                    logging.info(f'Maintenance Card Written: {cached_marker}')
+                    with models.transaction(session) as tx_session:
+                        mccid = write_result['mc_maintenance_card_id']
+                        mcid = write_result['maintenance_id']
+                        tx_session.add(models.MaintenanceCardHistory(
+                            mc_minigrid_id=minigrid_id_write,
+                            mc_maintenance_card_id=mccid,
+                            mc_maintenance_card_card_id=mcid,
+                        ))
+                    cache.delete('write_info')
+            else:
+                # Error case for card type
+                notify['notification'] = 'Invalid Card Type'
+                notify['type'] = 'alert-danger'
+                logging.info(f'Invalid Card Type: {type}')
+                cache.delete('write_info')
 
 
 class DeviceInfoHandler(BaseHandler):
@@ -809,8 +1054,8 @@ class DeviceInfoHandler(BaseHandler):
 
     def get(self):
         """Return the device info."""
-        cache.set('device_active', 1, 5)
-        cache.set('received_info', self.request.query_arguments, 5)
+        cache.set('device_active', 1, 10)
+        cache.set('received_info', self.request.query_arguments, 10)
         device_info = cache.get('device_info')
         if device_info is not None:
             self.write(device_info)
@@ -826,19 +1071,31 @@ class DeviceInfoHandler(BaseHandler):
         # except Exception as error:
         #     self.write(str(error))
         # body = binary[12:]
-        cache.set('device_active', 1, 5)
         if len(body) > 0:
             try:
+                sector_1 = unhexlify(body[1:91])
+                # logging.info(f'sector_1: {sector_1}')
+                # logging.info(f'sector_1[6:8]: {sector_1[6:8]}')
+                system_id = sector_1[6:8].decode('ascii')
+                # logging.info(f'system_id: {system_id}')
                 # Failure to read the card should be displayed somehow, but
                 # shouldn't prevent overwriting the card
                 # TODO: clean this up
                 payload = _pack_into_dict(self.session, body)
+                if system_id == 'up':
+                    cache.set('device_active', 0, 10)
+                else:
+                    cache.set('device_active', 1, 10)
             except Exception as error:
-                logging.info(f'Error: {error}')
-                cache.set('card_read_error', str(error), 5)
+                logging.error(f'Card Process Error: {error}')
+                cache.set('card_read_error', str(error), 10)
             else:
-                cache.set('received_info', payload, 5)
+                cache.set('received_info', payload, 10)
                 cache.delete('card_read_error')
+            try:
+                _verify_written_card(self.session)
+            except Exception as error:
+                logging.error(f'Verify Error: {error}')
         device_info = cache.get('device_info')
         if device_info is not None:
             self.write(device_info)
@@ -861,6 +1118,8 @@ class JSONDeviceConnection(SockJSConnection):
         result = {
             'device_active': bool(int(cache.get('device_active') or 0)),
             'received_info': json_decode(cache.get('received_info') or '{}'),
+            'write_info': json_decode(cache.get('write_info') or '{}'),
+            'notification': json_decode(cache.get('notification') or '{}'),
             'card_read_error': (cache.get('card_read_error') or b'').decode(),
         }
         self.send(result)
@@ -876,14 +1135,64 @@ class ManualHandler(BaseHandler):
         self.render('manual.html', http_protocol=http_protocol)
 
 
+class ImageHandler(BaseHandler):
+    """Handlers for data plot."""
+
+    def genImage(self, minigrid_id):
+        """Return the plot png."""
+        x = []
+        y = []
+        with models.transaction(self.session) as session:
+            minigrid = models.get_minigrid(session, minigrid_id)
+            for credit_card_history \
+                    in islice(reversed(minigrid.credit_card_history), 0, 25):
+                x.append(credit_card_history.credit_card_created)
+                y.append(credit_card_history.credit_amount)
+        # fig = plt.figure()
+        memdata = io.BytesIO()
+        if x:
+            min = x[0]
+            max = x[-1]
+        # plt.plot(x, y)
+        # plt.bar(x, y, align='center', alpha=0.5)
+        plt.scatter(x, y, alpha=0.5)
+        plt.xlim(max, min)
+        plt.title('Recent Credit Cards')
+        plt.xlabel('Card Creation Time')
+        plt.ylabel('Amount [UGX]')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.grid(True)
+        plt.savefig(memdata, format='png')
+        image = memdata.getvalue()
+        return image
+
+    @tornado.web.authenticated
+    def get(self, minigrid_id):
+        """Render the credit card history form."""
+        image = self.genImage(minigrid_id)
+        self.set_header('Content-type', 'image/png')
+        self.set_header('Content-length', len(image))
+        self.write(image)
+
+
 _mmch = MinigridMaintenanceCardsHandler
 application_urls = [
     (r'/', MainHandler),
     (r'/minigrids/(.{36})/?', MinigridHandler),
     (r'/minigrids/(.{36})/vendors/?', MinigridVendorsHandler),
+    (r'/minigrids/(.{36})/vendors/history/?',
+        MinigridVendorsHistoryHandler),
     (r'/minigrids/(.{36})/customers/?', MinigridCustomersHandler),
-    (r'/minigrids/(.{36})/maintenance_cards/?', _mmch),
+    (r'/minigrids/(.{36})/customers/history/?',
+        MinigridCustomersHistoryHandler),
+    (r'/minigrids/(.{36})/maintenance_cards/?',
+        MinigridMaintenanceCardsHandler),
+    (r'/minigrids/(.{36})/maintenance_cards/history/?',
+        MinigridMaintenanceHistoryHandler),
     (r'/minigrids/(.{36})/write_credit/?', MinigridWriteCreditHandler),
+    (r'/minigrids/(.{36})/write_credit/history/?',
+        MinigridWriteCreditHistoryHandler),
     (r'/device_info/?', DeviceInfoHandler),
     (r'/tariffs/?', TariffsHandler),
     (r'/minigrids/?', MinigridsHandler),
@@ -893,7 +1202,8 @@ application_urls = [
     (r'/cards/?', CardsHandler),
     (r'/verify/?', VerifyLoginHandler),
     (r'/logout/?', LogoutHandler),
-    (r'/manual/?', ManualHandler)]
+    (r'/manual/?', ManualHandler),
+    (r'/minigrids/(.{36})/write_credit/history/plot.png', ImageHandler)]
 
 
 def get_urls():

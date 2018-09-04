@@ -3,18 +3,23 @@
 import $ from 'jquery';
 import SockJS from 'sockjs-client';
 import populateCardInfoTable from './populate_card_info.js';
-
+import populateCardDeviceTable from './populate_device_info.js';
+import populateNotification from './populate_notification.js';
 
 (function(){
-    
+
     const inputs = document.getElementsByClassName('card-value');
 
     console.log('new input', inputs)
 
     let conn = new SockJS(http_protocol + '://' + window.location.host + '/cardconn');
         let received_info;
+        let notification;
         let card_read_error;
         let device_active;
+        let device_connect_error;
+        let alert_error;
+        let last_received;
 
         console.log('Connecting...');
 
@@ -25,9 +30,14 @@ import populateCardInfoTable from './populate_card_info.js';
         conn.onmessage = function(e) {
             console.log('Received!: ' + JSON.stringify(e.data));
             received_info = e.data['received_info'];
+            notification = e.data['notification'];
             card_read_error = e.data['card_read_error'];
             console.log('its different part 1', e.data['device_active']);
+            device_connect_error = {}; // future use
+            alert_error = {}; // future use
 
+            populateCardDeviceTable(received_info, device_connect_error);
+            populateNotification(notification, alert_error);
             if (e.data['device_active']!==device_active) {
                 device_active = e.data['device_active'];
                 console.log('its different', device_active);
@@ -37,6 +47,10 @@ import populateCardInfoTable from './populate_card_info.js';
                     else input.disabled = true;
                 });
                 populateCardInfoTable(received_info, card_read_error);
+            }
+            else if (e.data['received_info']!==last_received) {
+                last_received = e.data['received_info'];
+                populateCardInfoTable(received_info, card_read_error);
             };
         };
 
@@ -44,6 +58,5 @@ import populateCardInfoTable from './populate_card_info.js';
             console.log('Disconnected.');
             conn = null;
         };
-
 
 })();

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  <div class="menu"><p>
+    <a href="/minigrids/{{ minigrid.minigrid_id }}/maintenance_cards">&laquo; Write Maintenance Card</a>
+  </p></div>
+  <div class="full-page-content">
+    {% if message is not None %}
+      <p><strong>{{ message }}</strong></p>
+    {% end %}
+    <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
+    <p>ID: {{ minigrid.minigrid_id }}</p>
+    <p>Recent History:</p>
+    <table class="table table-condensed">
+      {% from itertools import islice %}
+      {% set zero_history = True %}
+      <thead>
+        <tr>
+          <th>Creation Time (UTC)</th>
+          <th>User ID</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for maintenance_history in islice(reversed(minigrid.maintenance_history), 0, 25) %}
+        {% set zero_history = False %}
+        <tr>
+        <td>{{ maintenance_history.mc_created }}</td>
+        <td>{{ maintenance_history.mc_maintenance_card_card_id }}</td>
+        </tr>
+      {% end %}
+      </tbody>
+    </table>
+    {% if zero_history %}
+      <p>No history</p>
+    {% end %}
+  </div>
+  <footer>
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}/maintenance_cards">&laquo; Write Maintenance Card</a></p>
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
+    <p><a href="/">&laquo; Return to minigrid index</a></p>
+  </footer>
+
+{% end %}

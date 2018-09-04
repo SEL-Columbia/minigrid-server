@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  <div class="menu"><p>
+    <a href="/minigrids/{{ minigrid.minigrid_id }}/vendors">&laquo; Write Vendor Card</a>
+  </p></div>
+  <div class="full-page-content">
+    {% if message is not None %}
+      <p><strong>{{ message }}</strong></p>
+    {% end %}
+    <h1>Minigrid Name: {{ minigrid.minigrid_name }}</h1>
+    <p>ID: {{ minigrid.minigrid_id }}</p>
+    <p>Recent History:</p>
+    <table class="table table-condensed">
+      {% from itertools import islice %}
+      {% set zero_history = True %}
+      <thead>
+        <tr>
+          <th>Creation Time (UTC)</th>
+          <th>User ID</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for vendor_card_history in islice(reversed(minigrid.vendor_card_history), 0, 25) %}
+        {% set zero_history = False %}
+        <tr>
+        <td>{{ vendor_card_history.vendor_card_created }}</td>
+        <td>{{ vendor_card_history.vendor_card_user_id }}</td>
+        </tr>
+      {% end %}
+      </tbody>
+    </table>
+    {% if zero_history %}
+      <p>No history</p>
+    {% end %}
+  </div>
+  <footer>
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}/vendors">&laquo; Write Vendor Card</a></p>
+    <p><a href="/minigrids/{{ minigrid.minigrid_id }}">&laquo; Return to minigrid {{ minigrid.minigrid_name }}</a></p>
+    <p><a href="/">&laquo; Return to minigrid index</a></p>
+  </footer>
+
+
+{% end %}

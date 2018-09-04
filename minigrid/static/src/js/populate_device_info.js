@@ -1,28 +1,29 @@
 import $ from 'jquery';
 
-export default function populateCardInfoTable(info, card_read_error) {
-    $('.card-info>.card-info-row').remove();
+export default function populateCardDeviceTable(info, device_connect_error) {
+    $('.device-info>.card-info-row').remove();
     if (isEmpty(info)) {
-        if (isEmpty(card_read_error)) {
-            $('.card-info').append(`
+        console.log('no device');
+        if (isEmpty(device_connect_error)) {
+            $('.device-info').append(`
                     <div class="card-info-row" id="no-card-message">
-                        <strong><p>${'No card info received.'}</p><p>${'Is there a card on the device?'}</p></strong>
+                        <strong><p>${'No device connected.'}</p><p>${'Try resetting your device'}</p></strong>
                     </div>
                 `);
         }
         else {
-            $('.card-info').append(`
+            $('.device-info').append(`
                     <div class="card-info-row" id="no-card-message">
-                        <strong><p>${'Error reading card.'}</p><p>${card_read_error}</p></strong>
+                        <strong><p>${'Error connecting to device.'}</p><p>${device_connect_error}</p></strong>
                     </div>
                 `);
         }
     }
     else {
         Object.keys(info).forEach(key => {
-            console.log('here', key, info[key]);
-            if (key != "Connected Device") {
-                $('.card-info').append(`
+            console.log('device', key, info[key]);
+            if (key == "Connected Device") {
+                $('.device-info').append(`
                     <div class="card-info-row">
                         <div class="card-info-col col-left"><strong>${key}</strong></div>
                         <div class="card-info-col col-right">${info[key]}</div>
@@ -36,7 +37,7 @@ export default function populateCardInfoTable(info, card_read_error) {
 function isEmpty(obj) {
     if (obj==null) return true;
     for (var key in obj) {
-        if (key != "Connected Device") {
+        if (key == "Connected Device") {
             return false;
         }
     }

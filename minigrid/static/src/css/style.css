@@ -25,6 +25,10 @@ footer {
     margin: 20px;
 }
 
+.menu {
+		margin-left: 20px;
+}
+
 input[type="submit"] {
     background-color: #2C3031;
     border-color: #232828;
@@ -262,6 +266,22 @@ form#minigrid {
 .col-right {
     vertical-align: middle;
     float: right;
+}
+
+.device-info {
+    background-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 2px 2px 5px 1px rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    text-align: center;
+    min-width: 400px;
+    margin: 40px 0px 0px 0px;
+    padding: 20px;
+    border-collapse: collapse;
+    border-spacing: 5px;
+}
+
+.device-hr {
+	margin: 0px;
 }
 
 form.credit-form {
