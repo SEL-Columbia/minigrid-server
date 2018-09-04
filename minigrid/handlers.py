@@ -591,11 +591,11 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
         action = self.get_argument('action')
         # variable shortened should be fixed
         card_name_exists = (
-            'maintenance_card_maintenance_card_minigrid_id_maintenance__key'
+            'maintenance_card_mc_minigrid_id_maintenance_card_name_key'
         )
         # variable shortened should be fixed
         card_id_exists = (
-            'maintenance_card_maintenance_card_minigrid_id_maintenance_c_key'
+            'maintenance_card_mc_minigrid_id_maintenance_card_card_id_key'
         )
         http_protocol = 'https' if options.minigrid_https else 'http'
         if action == 'create':

@@ -352,7 +352,7 @@ class MaintenanceCard(Base):
 
     __tablename__ = 'maintenance_card'
     maintenance_card_id = pk()
-    mcmid = fk('minigrid.minigrid_id')
+    mc_minigrid_id = fk('minigrid.minigrid_id')
     maintenance_card_name = sa.Column(
         pg.TEXT, sa.CheckConstraint("maintenance_card_name != ''"),
         nullable=False)
@@ -362,6 +362,6 @@ class MaintenanceCard(Base):
 
     __table_args__ = (
         sa.UniqueConstraint(
-            'mcmid', 'maintenance_card_card_id'),
+            'mc_minigrid_id', 'maintenance_card_card_id'),
         sa.UniqueConstraint(
-            'mcmid', 'maintenance_card_name'))
+            'mc_minigrid_id', 'maintenance_card_name'))
