@@ -46,7 +46,7 @@ def transaction(session):
     try:
         yield session
         session.commit()
-    except:
+    except BaseException:
         session.rollback()
         raise
 
@@ -66,7 +66,7 @@ def fk(foreign_column):
 def json_column(column_name, default=None):
     """Return a JSONB column that is a dictionary at the top level."""
     return sa.Column(
-        pg.json.JSONB,
+        pg.JSONB,
         sa.CheckConstraint(f"{column_name} @> '{{}}'"),
         nullable=False,
         server_default=default)
