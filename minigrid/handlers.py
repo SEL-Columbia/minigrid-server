@@ -68,7 +68,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
     @property
     def session(self):
-        """The database session.
+        """Database session.
 
         Use the models.transaction(session) context manager.
         """
