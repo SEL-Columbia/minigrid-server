@@ -1,9 +1,9 @@
 asyncio-portier==0.1.0.post1
 cryptography==2.3.1
-psycopg2-binary>=2.7.5
+psycopg2-binary==2.8.4
 PyJWT==1.6.4
 redis==2.10.6
 sockjs-tornado==1.0.5
-sqlalchemy==1.2.11
+SQLAlchemy==1.2.11
 tornado==5.1
 matplotlib==2.2.3
