@@ -5,5 +5,5 @@ PyJWT==1.7.1
 redis==3.3.11
 sockjs-tornado==1.0.6
 SQLAlchemy==1.3.10
-tornado==6.0.3
+tornado==5.1.1
 matplotlib==3.1.1
