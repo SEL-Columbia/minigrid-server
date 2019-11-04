@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Minigrid Server installer for version 0.2.8
+# Minigrid Server installer for version 0.2.9
 set -e
 
 # Do you have docker installed?
@@ -108,8 +108,8 @@ $SUDO openssl dhparam -out /etc/letsencrypt/live/$LETSENCRYPT_DIR/dhparam.pem 20
 printf "========================================\n"
 printf " Generating configuration               \n"
 printf "========================================\n"
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.2.8/prod/docker-compose.yml > docker-compose.yml
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.2.8/prod/nginx.conf > nginx.conf
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.2.9/prod/docker-compose.yml > docker-compose.yml
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.2.9/prod/nginx.conf > nginx.conf
 
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g docker-compose.yml
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g nginx.conf
@@ -153,9 +153,8 @@ CRON_CMD="mkdir -p /tmp/letsencrypt && "\
 " -v /var/lib/letsencrypt:/var/lib/letsencrypt:Z"\
 " -v /tmp:/tmp:Z"\
 " -v /var/log/letsencrypt:/var/log/letsencrypt:Z"\
-" quay.io/letsencrypt/letsencrypt renew --quiet --webroot --webroot-path /tmp/letsencrypt --post-hook 'touch /tmp/renewed' ; "\
-"if [ -f /tmp/renewed ] ; then docker restart $NGINX_CONTAINER_NAME ; fi ; "\
-"rm -f /tmp/renewed"
+" quay.io/letsencrypt/letsencrypt renew --quiet --webroot --webroot-path /tmp/letsencrypt;"\
+" docker restart $NGINX_CONTAINER_NAME"
 # https://certbot.eff.org/#ubuntuxenial-nginx recommends running this twice a day on random minute within the hour
 CRON_JOB="00 01,13 * * * sleep \$(expr \$RANDOM \% 59 \* 60); $CRON_CMD"
 crontab -l | fgrep -i -v "$CRON_CMD" | { cat; echo "$CRON_JOB"; } | crontab -
