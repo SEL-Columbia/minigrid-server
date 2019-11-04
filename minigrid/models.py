@@ -142,7 +142,7 @@ class VendorCardHistory(Base):
     vendor_card_minigrid_id = fk('minigrid.minigrid_id')
     vendor_card_vendor_id = sa.Column(pg.UUID, nullable=False)
     vendor_card_user_id = sa.Column(
-        pg.TEXT, sa.CheckConstraint("vendor_card_user_id ~ r'\d{4}'"),
+        pg.TEXT, sa.CheckConstraint(r"vendor_card_user_id ~ '\d{4}'"),
         nullable=False)
     vendor_card_created = sa.Column(
         pg.TIMESTAMP, nullable=False,
@@ -157,7 +157,7 @@ class CustomerCardHistory(Base):
     customer_card_minigrid_id = fk('minigrid.minigrid_id')
     customer_card_customer_id = sa.Column(pg.UUID, nullable=False)
     customer_card_user_id = sa.Column(
-        pg.TEXT, sa.CheckConstraint("customer_card_user_id ~ r'\d{4}'"),
+        pg.TEXT, sa.CheckConstraint(r"customer_card_user_id ~ '\d{4}'"),
         nullable=False)
     customer_card_created = sa.Column(
         pg.TIMESTAMP, nullable=False,
@@ -172,7 +172,7 @@ class MaintenanceCardHistory(Base):
     mc_minigrid_id = fk('minigrid.minigrid_id')
     mc_maintenance_card_id = sa.Column(pg.UUID, nullable=False)
     mc_maintenance_card_card_id = sa.Column(
-        pg.TEXT, sa.CheckConstraint("mc_maintenance_card_card_id ~ r'\d{4}'"),
+        pg.TEXT, sa.CheckConstraint(r"mc_maintenance_card_card_id ~ '\d{4}'"),
         nullable=False)
     mc_created = sa.Column(
         pg.TIMESTAMP, nullable=False,
@@ -311,7 +311,7 @@ class Vendor(Base):
         pg.TEXT, sa.CheckConstraint("vendor_name != ''"),
         nullable=False)
     vendor_user_id = sa.Column(
-        pg.TEXT, sa.CheckConstraint("vendor_user_id ~ r'\d{4}'"),
+        pg.TEXT, sa.CheckConstraint(r"vendor_user_id ~ '\d{4}'"),
         nullable=False)
 
     __table_args__ = (
@@ -329,7 +329,7 @@ class Customer(Base):
         pg.TEXT, sa.CheckConstraint("customer_name != ''"),
         nullable=False)
     customer_user_id = sa.Column(
-        pg.TEXT, sa.CheckConstraint("customer_user_id ~ r'\d{4}'"),
+        pg.TEXT, sa.CheckConstraint(r"customer_user_id ~ '\d{4}'"),
         nullable=False)
     customer_current_limit = sa.Column(
         pg.INTEGER,
@@ -355,7 +355,7 @@ class MaintenanceCard(Base):
         pg.TEXT, sa.CheckConstraint("maintenance_card_name != ''"),
         nullable=False)
     maintenance_card_card_id = sa.Column(
-        pg.TEXT, sa.CheckConstraint("maintenance_card_card_id ~ r'\d{4}'"),
+        pg.TEXT, sa.CheckConstraint(r"maintenance_card_card_id ~ '\d{4}'"),
         nullable=False)
 
     __table_args__ = (
