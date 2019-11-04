@@ -699,7 +699,7 @@ class TestMinigridVendorsHandler(HTTPTest):
     def test_bad_action(self, get_current_user):
         get_current_user.return_value = self.user
         log_1 = ExpectLog(
-            'tornado.general', '.*Bad Request \(invalid action\)')
+            'tornado.general', r'.*Bad Request \(invalid action\)')
         log_2 = ExpectLog('tornado.access', '400')
         with log_1, log_2:
             response = self.fetch(
@@ -870,7 +870,7 @@ class TestMinigridCustomersHandler(HTTPTest):
     def test_bad_action(self, get_current_user):
         get_current_user.return_value = self.user
         log_1 = ExpectLog(
-            'tornado.general', '.*Bad Request \(invalid action\)')
+            'tornado.general', r'.*Bad Request \(invalid action\)')
         log_2 = ExpectLog('tornado.access', '400')
         with log_1, log_2:
             response = self.fetch(
@@ -1047,7 +1047,7 @@ class TestMinigridMaintenanceCardsHandler(HTTPTest):
     def test_bad_action(self, get_current_user):
         get_current_user.return_value = self.user
         log_1 = ExpectLog(
-            'tornado.general', '.*Bad Request \(invalid action\)')
+            'tornado.general', r'.*Bad Request \(invalid action\)')
         log_2 = ExpectLog('tornado.access', '400')
         with log_1, log_2:
             response = self.fetch(
