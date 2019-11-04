@@ -1,11 +1,12 @@
 language: python
 python:
+  - "3.6"
   - "3.7"
 cache: pip
 addons:
   postgresql: "9.5"
   firefox: "49.0"
-dist: trusty
+dist: bionic
 sudo: false
 
 before_install:

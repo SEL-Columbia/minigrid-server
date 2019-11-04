@@ -153,9 +153,8 @@ CRON_CMD="mkdir -p /tmp/letsencrypt && "\
 " -v /var/lib/letsencrypt:/var/lib/letsencrypt:Z"\
 " -v /tmp:/tmp:Z"\
 " -v /var/log/letsencrypt:/var/log/letsencrypt:Z"\
-" quay.io/letsencrypt/letsencrypt renew --quiet --webroot --webroot-path /tmp/letsencrypt --post-hook 'touch /tmp/renewed' ; "\
-"if [ -f /tmp/renewed ] ; then docker restart $NGINX_CONTAINER_NAME ; fi ; "\
-"rm -f /tmp/renewed"
+" quay.io/letsencrypt/letsencrypt renew --quiet --webroot --webroot-path /tmp/letsencrypt;"\
+" docker restart $NGINX_CONTAINER_NAME"
 # https://certbot.eff.org/#ubuntuxenial-nginx recommends running this twice a day on random minute within the hour
 CRON_JOB="00 01,13 * * * sleep \$(expr \$RANDOM \% 59 \* 60); $CRON_CMD"
 crontab -l | fgrep -i -v "$CRON_CMD" | { cat; echo "$CRON_JOB"; } | crontab -
