@@ -4,7 +4,7 @@ python:
   - "3.7"
 cache: pip
 addons:
-  postgresql: "11.1"
+  postgresql: "9.6"
   firefox: latest
 dist: bionic
 sudo: false
