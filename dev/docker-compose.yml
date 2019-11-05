@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
   minigrid:
     build:
@@ -13,8 +13,8 @@ services:
       - redis
       - db
   db:
-    image: postgres:9.6
+    image: postgres:11.1
     environment:
       POSTGRES_DB: minigrid
   redis:
-    image: redis:3.2
+    image: redis:5.0

@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Minigrid Server installer for version 0.2.9
+# Minigrid Server installer for version 0.3.0
 set -e
 
 # Do you have docker installed?
@@ -37,7 +37,7 @@ else
     printf " Installing docker-compose in this      \n"
     printf " directory                              \n"
     printf "========================================\n"
-    $CURL -L https://github.com/docker/compose/releases/download/1.9.0/run.sh > docker-compose \
+    $CURL -L https://github.com/docker/compose/releases/download/1.24.1/run.sh > docker-compose \
       && chmod +x docker-compose
     ./docker-compose -v
   fi
@@ -108,8 +108,8 @@ $SUDO openssl dhparam -out /etc/letsencrypt/live/$LETSENCRYPT_DIR/dhparam.pem 20
 printf "========================================\n"
 printf " Generating configuration               \n"
 printf "========================================\n"
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.2.9/prod/docker-compose.yml > docker-compose.yml
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.2.9/prod/nginx.conf > nginx.conf
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.0/prod/docker-compose.yml > docker-compose.yml
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.0/prod/nginx.conf > nginx.conf
 
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g docker-compose.yml
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g nginx.conf
