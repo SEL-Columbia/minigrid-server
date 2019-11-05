@@ -1,7 +1,7 @@
 version: '2'
 services:
   minigrid:
-    image: selcolumbia/minigrid-server:0.3.0
+    image: selcolumbia/minigrid-server:0.3.1
     command: ./prod/run.sh --db_host=db --redis_url=redis://redis:6379/0 --minigrid-website-url=https://www.example.com
     depends_on:
       - redis
