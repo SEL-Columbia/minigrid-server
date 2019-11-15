@@ -20,6 +20,45 @@ def _wrap_binary(binary):
     """Add a signifier to the beginning and end of a binary block."""
     return b'qS' + binary.hex().encode('ascii') + b'EL'
 
+def erase_card(session, cache):
+    """Erase card."""
+    sector_1 = b''.join((
+        bytes(45),
+    ))
+    sector_2 = b''.join((
+        bytes(32),
+    ))
+    naive_payload = sector_1 + sector_2
+    actual_payload = b''.join((
+        naive_payload[:15],
+        (sum(naive_payload[:15]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[15:30],
+        (sum(naive_payload[15:30]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[30:45],
+        (sum(naive_payload[30:45]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[45:60],
+        (sum(naive_payload[45:60]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[60:75],
+        (sum(naive_payload[60:75]) & 0xFF).to_bytes(1, 'big'),
+        naive_payload[75:77],
+        bytes(13),
+        (sum(naive_payload[75:77]) & 0xFF).to_bytes(1, 'big'),
+    ))
+    cache.set('device_info', _wrap_binary(actual_payload), 30)
+    # write_result = OrderedDict()
+    # write_result['card_type'] = 'Vendor ID Card'
+    # write_result['user_id'] = str(vendor_id)
+    # write_result['creation_time'] = \
+    #     datetime.fromtimestamp(card_produce_time).isoformat()
+    # write_result['minigrid_id'] = str(minigrid_id)
+    # write_result['vendor_id'] = vendor.vendor_id
+    # cache.set('write_info', json_encode(write_result), 30)
+    notify = OrderedDict()
+    notify['notification'] = 'Erasing Card...'
+    notify['type'] = 'alert-warning'
+    cache.set('notification', json_encode(notify), 30)
+    cache.delete('received_info')
+
 
 def write_vendor_card(session, cache, key, minigrid_id, payment_id, vendor):
     """Write information to a vendor ID card."""

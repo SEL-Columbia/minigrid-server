@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
 {% block body %}
+  <div class="container-fluid notification-alert">
+  </div>
   <div class="full-page-content">
     <div class="center-wrap">
       {% if message is not None %}
@@ -12,6 +14,17 @@
           <span>Card Info</span>
         </div>
       </div>
+      <div>
+        <form action="/cards" method="POST">
+          {% module xsrf_form_html() %}
+          <input type="hidden" name="action" value="write" />
+          {% if device_active %}
+            <input class="card-value" type="submit" value="Erase card" />
+          {% else %}
+            <input class="card-value" type="submit" value="Erase card" title="Touch card to reader" disabled/>
+          {% end %}
+        </form>
+      </div>
     </div>
   </div>
   <footer><a href="/">&laquo; Return to minigrid index</a></footer>
@@ -19,6 +32,6 @@
   <script>
     var http_protocol = '{{ http_protocol }}';
   </script>
-  <script type="text/javascript" src="{{ static_url('dist/read_card.bundle.js') }}"></script>
+  <script type="text/javascript" src="{{ static_url('dist/write_card.bundle.js') }}"></script>
 
 {% end %}

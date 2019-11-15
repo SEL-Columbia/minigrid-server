@@ -26,7 +26,7 @@ import tornado.web
 import tornado.ioloop
 
 from minigrid.device_interface import (
-    write_maintenance_card_card,
+    write_maintenance_card_card, erase_card,
     write_vendor_card, write_customer_card, write_credit_card)
 import minigrid.error
 import minigrid.models as models
@@ -320,6 +320,12 @@ class CardsHandler(ReadCardBaseHandler):
         """Render the cards form."""
         http_protocol = 'https' if options.minigrid_https else 'http'
         self.render('cards.html', http_protocol=http_protocol)
+
+    @tornado.web.authenticated
+    def post(self):
+        """Erase card."""
+        erase_card(self.session, cache)
+        self.redirect(f'/cards')
 
 
 class MinigridHandler(BaseHandler):
@@ -807,6 +813,9 @@ def _pack_into_dict(session, binary):
     if system_id == 'up':
         logging.info(f'Operator Box is {system_id}')
         return json_encode(result)
+    else:
+        cache.set('device_active', 1, 10)
+        cache.set('received_info', json_encode(result), 10)
     card_type = sector_1[4:5].decode('ascii')
     logging.info(f'Card Type: {card_type}')
     try:
@@ -1140,8 +1149,7 @@ class ImageHandler(BaseHandler):
 
     def genImage(self, minigrid_id):
         """Return the plot png."""
-        x = []
-        y = []
+        x = []; y = []
         with models.transaction(self.session) as session:
             minigrid = models.get_minigrid(session, minigrid_id)
             for credit_card_history \
@@ -1151,8 +1159,7 @@ class ImageHandler(BaseHandler):
         # fig = plt.figure()
         memdata = io.BytesIO()
         if x:
-            min = x[0]
-            max = x[-1]
+            min = x[0]; max = x[-1]
         # plt.plot(x, y)
         # plt.bar(x, y, align='center', alpha=0.5)
         plt.scatter(x, y, alpha=0.5)
