@@ -1,4 +1,5 @@
 """Handlers for the URL endpoints."""
+import time
 from binascii import unhexlify
 from collections import OrderedDict
 from datetime import datetime, timedelta
@@ -26,7 +27,7 @@ import tornado.web
 import tornado.ioloop
 
 from minigrid.device_interface import (
-    write_maintenance_card_card,
+    write_maintenance_card_card, erase_card,
     write_vendor_card, write_customer_card, write_credit_card)
 import minigrid.error
 import minigrid.models as models
@@ -52,6 +53,7 @@ _card_type_dict = {
     'B': 'Customer ID Card',
     'C': 'Credit Card',
     'D': 'Maintenance Card',
+    'E': 'Blank Card',
 }
 
 
@@ -60,6 +62,7 @@ _secret_value_type = {
     'B': 'Customer User ID',
     'C': 'Credit Amount',
     'D': 'Maintenance Card ID',
+    'E': 'Card Type',
 }
 
 
@@ -320,6 +323,12 @@ class CardsHandler(ReadCardBaseHandler):
         """Render the cards form."""
         http_protocol = 'https' if options.minigrid_https else 'http'
         self.render('cards.html', http_protocol=http_protocol)
+
+    @tornado.web.authenticated
+    def post(self):
+        """Erase card."""
+        erase_card(self.session, cache)
+        self.redirect(f'/cards')
 
 
 class MinigridHandler(BaseHandler):
@@ -807,12 +816,19 @@ def _pack_into_dict(session, binary):
     if system_id == 'up':
         logging.info(f'Operator Box is {system_id}')
         return json_encode(result)
+    else:
+        cache.set('device_active', 1, 10)
+        cache.set('received_info', json_encode(result), 10)
     card_type = sector_1[4:5].decode('ascii')
     logging.info(f'Card Type: {card_type}')
     try:
         result['Card Type'] = _card_type_dict[card_type]
     except KeyError:
         if card_type == '\x00':
+            found = OrderedDict()
+            found['Card Type'] = 'Blank Card'
+            found['Connected Device'] = device_address.hex()
+            cache.set('received_info', json_encode(found), 10)
             raise minigrid.error.CardReadError('This card appears blank')
         raise minigrid.error.CardReadError(
             f'This card appears to have the invalid card type {card_type}')
@@ -1032,6 +1048,15 @@ def _verify_written_card(session):
                             mc_maintenance_card_id=mccid,
                             mc_maintenance_card_card_id=mcid,
                         ))
+                    cache.delete('write_info')
+            elif type == 'E':  # Blank card
+                future = write_result['future_time']
+                logging.info(f'future: {future}')
+                if int(future) > int(time.time()):
+                    notify['notification'] = 'Card Blank'
+                    notify['type'] = 'alert-success'
+                    cache.set('notification', json_encode(notify), 10)
+                    logging.info('Card Erased')
                     cache.delete('write_info')
             else:
                 # Error case for card type
