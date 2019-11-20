@@ -1049,7 +1049,7 @@ def _verify_written_card(session):
                             mc_maintenance_card_card_id=mcid,
                         ))
                     cache.delete('write_info')
-            elif type == 'E': # Blank card
+            elif type == 'E':  # Blank card
                 future = write_result['future_time']
                 logging.info(f'future: {future}')
                 if int(future) > int(time.time()):
@@ -1165,7 +1165,8 @@ class ImageHandler(BaseHandler):
 
     def genImage(self, minigrid_id):
         """Return the plot png."""
-        x = []; y = []
+        x = []
+        y = []
         with models.transaction(self.session) as session:
             minigrid = models.get_minigrid(session, minigrid_id)
             for credit_card_history \
@@ -1175,7 +1176,8 @@ class ImageHandler(BaseHandler):
         # fig = plt.figure()
         memdata = io.BytesIO()
         if x:
-            min = x[0]; max = x[-1]
+            min = x[0]
+            max = x[-1]
         # plt.plot(x, y)
         # plt.bar(x, y, align='center', alpha=0.5)
         plt.scatter(x, y, alpha=0.5)

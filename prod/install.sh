@@ -147,7 +147,7 @@ printf "========================================\n"
 # The --post-hook should just be docker restart $NGINX_CONTAINER_NAME... but
 # the container can't run the docker command properly.
 # So /tmp/renewed serves as a sentinel
-CRON_CMD="mkdir -p /tmp/letsencrypt && "\
+CRON_CMD_1="mkdir -p /tmp/letsencrypt && "\
 "docker run -i --rm --name certbot"\
 " -v /etc/letsencrypt:/etc/letsencrypt:Z"\
 " -v /var/lib/letsencrypt:/var/lib/letsencrypt:Z"\
@@ -155,7 +155,13 @@ CRON_CMD="mkdir -p /tmp/letsencrypt && "\
 " -v /var/log/letsencrypt:/var/log/letsencrypt:Z"\
 " quay.io/letsencrypt/letsencrypt renew --quiet --webroot --webroot-path /tmp/letsencrypt;"\
 " docker restart $NGINX_CONTAINER_NAME"
+# Backup database every week at 2:15
+DB_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _db_ | cut -d' ' -f1)
+CRON_CMD_2="mkdir -p /db-bak && "\
+"docker exec $DB_CONTAINER_NAME pg_dump -U postgres minigrid > /db-bak/$LETSENCRYPT_DIR-db-$(date +%d-%m-%y).pg"
 # https://certbot.eff.org/#ubuntuxenial-nginx recommends running this twice a day on random minute within the hour
-CRON_JOB="00 01,13 * * * sleep \$(expr \$RANDOM \% 59 \* 60); $CRON_CMD"
-crontab -l | fgrep -i -v "$CRON_CMD" | { cat; echo "$CRON_JOB"; } | crontab -
+CRON_JOB_1="00 01,13 * * * sleep \$(expr \$RANDOM \% 59 \* 60); $CRON_CMD_1"
+CRON_JOB_2="15 2 * * 0 $CRON_CMD_2"
+crontab -l | fgrep -i -v "$CRON_CMD_1" | { cat; echo "$CRON_JOB_1"; } | crontab -
+crontab -l | fgrep -i -v "$CRON_CMD_2" | { cat; echo "$CRON_JOB_2"; } | crontab -
 crontab -l

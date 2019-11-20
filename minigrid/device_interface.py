@@ -20,6 +20,7 @@ def _wrap_binary(binary):
     """Add a signifier to the beginning and end of a binary block."""
     return b'qS' + binary.hex().encode('ascii') + b'EL'
 
+
 def erase_card(session, cache):
     """Erase card."""
     sector_1 = b''.join((
