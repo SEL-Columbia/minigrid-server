@@ -1,4 +1,5 @@
 """Handlers for the URL endpoints."""
+import time
 from binascii import unhexlify
 from collections import OrderedDict
 from datetime import datetime, timedelta
@@ -52,6 +53,7 @@ _card_type_dict = {
     'B': 'Customer ID Card',
     'C': 'Credit Card',
     'D': 'Maintenance Card',
+    'E': 'Blank Card',
 }
 
 
@@ -60,6 +62,7 @@ _secret_value_type = {
     'B': 'Customer User ID',
     'C': 'Credit Amount',
     'D': 'Maintenance Card ID',
+    'E': 'Card Type',
 }
 
 
@@ -822,6 +825,10 @@ def _pack_into_dict(session, binary):
         result['Card Type'] = _card_type_dict[card_type]
     except KeyError:
         if card_type == '\x00':
+            found = OrderedDict()
+            found['Card Type'] = 'Blank Card'
+            found['Connected Device'] = device_address.hex()
+            cache.set('received_info', json_encode(found), 10)
             raise minigrid.error.CardReadError('This card appears blank')
         raise minigrid.error.CardReadError(
             f'This card appears to have the invalid card type {card_type}')
@@ -1041,6 +1048,15 @@ def _verify_written_card(session):
                             mc_maintenance_card_id=mccid,
                             mc_maintenance_card_card_id=mcid,
                         ))
+                    cache.delete('write_info')
+            elif type == 'E': # Blank card
+                future = write_result['future_time']
+                logging.info(f'future: {future}')
+                if int(future) > int(time.time()):
+                    notify['notification'] = 'Card Blank'
+                    notify['type'] = 'alert-success'
+                    cache.set('notification', json_encode(notify), 10)
+                    logging.info('Card Erased')
                     cache.delete('write_info')
             else:
                 # Error case for card type

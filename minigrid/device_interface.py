@@ -45,14 +45,10 @@ def erase_card(session, cache):
         (sum(naive_payload[75:77]) & 0xFF).to_bytes(1, 'big'),
     ))
     cache.set('device_info', _wrap_binary(actual_payload), 30)
-    # write_result = OrderedDict()
-    # write_result['card_type'] = 'Vendor ID Card'
-    # write_result['user_id'] = str(vendor_id)
-    # write_result['creation_time'] = \
-    #     datetime.fromtimestamp(card_produce_time).isoformat()
-    # write_result['minigrid_id'] = str(minigrid_id)
-    # write_result['vendor_id'] = vendor.vendor_id
-    # cache.set('write_info', json_encode(write_result), 30)
+    write_result = OrderedDict()
+    write_result['card_type'] = 'Blank Card'
+    write_result['future_time'] = str(int(time.time())+30)
+    cache.set('write_info', json_encode(write_result), 30)
     notify = OrderedDict()
     notify['notification'] = 'Erasing Card...'
     notify['type'] = 'alert-warning'
