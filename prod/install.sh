@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Minigrid Server installer for version 0.3.4
+# Minigrid Server installer for version 0.3.5
 set -e
 
 # Do you have docker installed?
@@ -108,8 +108,8 @@ $SUDO openssl dhparam -out /etc/letsencrypt/live/$LETSENCRYPT_DIR/dhparam.pem 20
 printf "========================================\n"
 printf " Generating configuration               \n"
 printf "========================================\n"
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.4/prod/docker-compose.yml > docker-compose.yml
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.4/prod/nginx.conf > nginx.conf
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.5/prod/docker-compose.yml > docker-compose.yml
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.5/prod/nginx.conf > nginx.conf
 
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g docker-compose.yml
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g nginx.conf
@@ -134,7 +134,8 @@ if [ -f /etc/redhat-release ] ; then
 fi
 $DOCKER_COMPOSE up -d
 MINIGRID_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _minigrid_ | cut -d' ' -f1)
-sleep 4
+printf "pause for 10 seconds... \n"
+sleep 10
 docker exec $MINIGRID_CONTAINER_NAME ""prod/create_initial_user.py --db-host=db $ADMIN_EMAIL""
 docker exec $MINIGRID_CONTAINER_NAME ""prod/create_payment_ids.py --db-host=db""
 NGINX_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _nginx_ | cut -d' ' -f1)
@@ -167,18 +168,18 @@ printf "                                        \n"
 printf "========================================\n"
 printf "[Y/n]:\n>>> "
 read REPLY
-if [[ $REPLY =~ ^[Yy]$ ]]
+found=`echo $REPLY | grep -coP '^[Yy]$'`
+if [ $found -ne 0 ];
 then
 
   # install awscli
-  printf "Installing the awscli"
-  $SUDO apt-get install awscli -qq > /dev/null
+  printf "Installing the awscli \n"
+  $SUDO apt-get install awscli -qq
 
   # Ask for AWS bucket name
   printf "========================================\n"
   printf " Please enter your AWS backup bucket    \n"
   printf " name.                                  \n"
-  printf "                                        \n"
   printf "========================================\n"
   printf "Bucket:\n>>> "
   read BUCKET
@@ -207,8 +208,8 @@ then
   # Backup database every week at 2:15
   DB_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _db_ | cut -d' ' -f1)
   CRON_CMD_2="mkdir -p /db-bak && "\
-  "docker exec $DB_CONTAINER_NAME pg_dump -U postgres minigrid > /db-bak/$LETSENCRYPT_DIR-db-bak.pg && "\
-  "aws s3 cp /db-bak/$LETSENCRYPT_DIR-db-bak.pg s3://$AWS_BUCKET/$LETSENCRYPT_DIR-db-$(date +%d-%m-%y).pg"
+"docker exec $DB_CONTAINER_NAME pg_dump -U postgres minigrid > /db-bak/$LETSENCRYPT_DIR-db-bak.pg && "\
+"aws s3 cp /db-bak/$LETSENCRYPT_DIR-db-bak.pg s3://$AWS_BUCKET/$LETSENCRYPT_DIR-db-\$(date +%d-%m-%y).pg"
   CRON_JOB_2="15 2 * * 0 $CRON_CMD_2"
 
   crontab -l | fgrep -i -v "$CRON_CMD_2" | { cat; echo "$CRON_JOB_2"; } | crontab -
