@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Minigrid Server installer for version 0.3.3
+# Minigrid Server installer for version 0.3.4
 set -e
 
 # Do you have docker installed?
@@ -108,8 +108,8 @@ $SUDO openssl dhparam -out /etc/letsencrypt/live/$LETSENCRYPT_DIR/dhparam.pem 20
 printf "========================================\n"
 printf " Generating configuration               \n"
 printf "========================================\n"
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.3/prod/docker-compose.yml > docker-compose.yml
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.3/prod/nginx.conf > nginx.conf
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.4/prod/docker-compose.yml > docker-compose.yml
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.4/prod/nginx.conf > nginx.conf
 
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g docker-compose.yml
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g nginx.conf
@@ -155,13 +155,64 @@ CRON_CMD_1="mkdir -p /tmp/letsencrypt && "\
 " -v /var/log/letsencrypt:/var/log/letsencrypt:Z"\
 " quay.io/letsencrypt/letsencrypt renew --quiet --webroot --webroot-path /tmp/letsencrypt;"\
 " docker restart $NGINX_CONTAINER_NAME"
-# Backup database every week at 2:15
-DB_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _db_ | cut -d' ' -f1)
-CRON_CMD_2="mkdir -p /db-bak && "\
-"docker exec $DB_CONTAINER_NAME pg_dump -U postgres minigrid > /db-bak/$LETSENCRYPT_DIR-db-$(date +%d-%m-%y).pg"
 # https://certbot.eff.org/#ubuntuxenial-nginx recommends running this twice a day on random minute within the hour
 CRON_JOB_1="00 01,13 * * * sleep \$(expr \$RANDOM \% 59 \* 60); $CRON_CMD_1"
-CRON_JOB_2="15 2 * * 0 $CRON_CMD_2"
 crontab -l | fgrep -i -v "$CRON_CMD_1" | { cat; echo "$CRON_JOB_1"; } | crontab -
-crontab -l | fgrep -i -v "$CRON_CMD_2" | { cat; echo "$CRON_JOB_2"; } | crontab -
+
+# Setup automated backup?
+printf "========================================\n"
+printf " Would you like to setup an automated   \n"
+printf " backup to AWS S3?                      \n"
+printf "                                        \n"
+printf "========================================\n"
+printf "[Y/n]:\n>>> "
+read REPLY
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+
+  # install awscli
+  printf "Installing the awscli"
+  $SUDO apt-get install awscli -qq > /dev/null
+
+  # Ask for AWS bucket name
+  printf "========================================\n"
+  printf " Please enter your AWS backup bucket    \n"
+  printf " name.                                  \n"
+  printf "                                        \n"
+  printf "========================================\n"
+  printf "Bucket:\n>>> "
+  read BUCKET
+  AWS_BUCKET=$(echo $BUCKET | cut -d' ' -f1)
+
+  # Ask for AWS Access Key ID
+  printf "========================================\n"
+  printf " Please enter your AWS Access Key ID    \n"
+  printf " ex: AKIAIOSFODNN7EXAMPLE               \n"
+  printf "========================================\n"
+  printf "Access Key ID:\n>>> "
+  read KEY
+  AWS_ACESS_KEY=$(echo $KEY | cut -d' ' -f1)
+  aws configure set aws_access_key_id $AWS_ACESS_KEY
+
+  # Ask for AWS Secret Access Key
+  printf "========================================\n"
+  printf " Please enter your AWS Secret Access Key\n"
+  printf " ex: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\n"
+  printf "========================================\n"
+  printf "Secret Key:\n>>> "
+  read KEY
+  AWS_SECRET_KEY=$(echo $KEY | cut -d' ' -f1)
+  aws configure set aws_secret_access_key $AWS_SECRET_KEY
+
+  # Backup database every week at 2:15
+  DB_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _db_ | cut -d' ' -f1)
+  CRON_CMD_2="mkdir -p /db-bak && "\
+  "docker exec $DB_CONTAINER_NAME pg_dump -U postgres minigrid > /db-bak/$LETSENCRYPT_DIR-db-bak.pg && "\
+  "aws s3 cp /db-bak/$LETSENCRYPT_DIR-db-bak.pg s3://$AWS_BUCKET/$LETSENCRYPT_DIR-db-$(date +%d-%m-%y).pg"
+  CRON_JOB_2="15 2 * * 0 $CRON_CMD_2"
+
+  crontab -l | fgrep -i -v "$CRON_CMD_2" | { cat; echo "$CRON_JOB_2"; } | crontab -
+
+fi
+
 crontab -l
