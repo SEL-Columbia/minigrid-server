@@ -45,3 +45,33 @@ Created user with e-mail your_email_address
 $ docker exec dev_minigrid_1 dev/commands.py create_user --db_host=db --kwarg email=<your_email_address>
 Created user with e-mail your_email_address
 ```
+
+## Restoring Database from backup
+
+* download backup, from S3 or otherwise
+* use `scp` to copy the db from your host computer to the new server,
+
+```
+$ scp <BACKUP name> <USER>@<HOSTNAME>:<PATH on server>
+```
+
+* break connections, remove old db, and recreate so its blank
+
+```
+$ docker exec root_db_1 psql -U postgres -d minigrid -c "SELECT pid, pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = current_database() AND pid <> pg_backend_pid();"
+$ docker exec root_db_1 psql -U postgres -c "DROP DATABASE minigrid"
+$ docker exec root_db_1 psql -U postgres -c "CREATE DATABASE minigrid"
+```
+
+* copy backup into the database container
+
+```
+$ docker cp demo.sharedsolar.org-db-bak-11-26.pg root_db_1:/demo.sharedsolar.org-db-bak-11-26.pg
+```
+
+* restore the backup and restart the containers
+
+```
+$ docker exec root_db_1 psql -U postgres -d minigrid --set ON_ERROR_STOP=on -f demo.sharedsolar.org-db-bak-11-26.pg
+$ docker restart $(docker ps -a -q)
+```
