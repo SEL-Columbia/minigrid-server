@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Minigrid Server installer for version 0.3.5
+# Minigrid Server installer for version 0.3.6
 set -e
 
 # Do you have docker installed?
@@ -108,8 +108,8 @@ $SUDO openssl dhparam -out /etc/letsencrypt/live/$LETSENCRYPT_DIR/dhparam.pem 20
 printf "========================================\n"
 printf " Generating configuration               \n"
 printf "========================================\n"
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.5/prod/docker-compose.yml > docker-compose.yml
-$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.5/prod/nginx.conf > nginx.conf
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.6/prod/docker-compose.yml > docker-compose.yml
+$CURL -L https://raw.githubusercontent.com/SEL-Columbia/minigrid-server/0.3.6/prod/nginx.conf > nginx.conf
 
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g docker-compose.yml
 sed -i s/www.example.com/$LETSENCRYPT_DIR/g nginx.conf
@@ -209,7 +209,7 @@ then
   DB_CONTAINER_NAME=$($DOCKER_COMPOSE ps | grep _db_ | cut -d' ' -f1)
   CRON_CMD_2="mkdir -p /db-bak && "\
 "docker exec $DB_CONTAINER_NAME pg_dump -U postgres minigrid > /db-bak/$LETSENCRYPT_DIR-db-bak.pg && "\
-"aws s3 cp /db-bak/$LETSENCRYPT_DIR-db-bak.pg s3://$AWS_BUCKET/$LETSENCRYPT_DIR-db-\$(date +%d-%m-%y).pg"
+"aws s3 cp /db-bak/$LETSENCRYPT_DIR-db-bak.pg s3://$AWS_BUCKET/$LETSENCRYPT_DIR-db-\$(date +\%d-\%m-\%y).pg"
   CRON_JOB_2="15 2 * * 0 $CRON_CMD_2"
 
   crontab -l | fgrep -i -v "$CRON_CMD_2" | { cat; echo "$CRON_JOB_2"; } | crontab -
