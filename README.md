@@ -66,12 +66,12 @@ $ docker exec root_db_1 psql -U postgres -c "CREATE DATABASE minigrid"
 * copy backup into the database container
 
 ```
-$ docker cp demo.sharedsolar.org-db-bak-11-26.pg root_db_1:/demo.sharedsolar.org-db-bak-11-26.pg
+$ docker cp <BACKUP name> root_db_1:/<BACKUP name>
 ```
 
 * restore the backup and restart the containers
 
 ```
-$ docker exec root_db_1 psql -U postgres -d minigrid --set ON_ERROR_STOP=on -f demo.sharedsolar.org-db-bak-11-26.pg
+$ docker exec root_db_1 psql -U postgres -d minigrid --set ON_ERROR_STOP=on -f <BACKUP name>
 $ docker restart $(docker ps -a -q)
 ```
