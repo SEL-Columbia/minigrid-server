@@ -1,8 +1,8 @@
-codecov==2.0.15
-fakeredis==1.0.5
+codecov==2.0.22
+fakeredis==1.4.0
 flake8==3.7.9
 pyflakes==2.1.1  # temporary requirement to make flake8 happy
-pydocstyle==4.0.1
-coverage==4.5.4
-beautifulsoup4==4.8.1
+pydocstyle==5.0.2
+coverage==5.0.4
+beautifulsoup4==4.9.0
 selenium==3.141.0
