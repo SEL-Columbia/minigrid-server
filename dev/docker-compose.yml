@@ -16,5 +16,6 @@ services:
     image: postgres:9.6
     environment:
       POSTGRES_DB: minigrid
+      POSTGRES_HOST_AUTH_METHOD: "trust"
   redis:
     image: redis:5.0
