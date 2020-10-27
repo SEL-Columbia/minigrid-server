@@ -1,5 +1,5 @@
 asyncio-portier==0.1.0.post1
-cryptography==2.9
+cryptography==3.2
 psycopg2-binary==2.8.5
 PyJWT==1.7.1
 redis==3.4.1
