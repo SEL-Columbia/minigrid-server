@@ -21,17 +21,17 @@
   },
   "homepage": "https://github.com/SEL-Columbia/minigrid-server#readme",
   "dependencies": {
-    "bootstrap": "^4.4.1",
-    "flatpickr": "^4.6.3",
-    "jquery": "^3.5.0",
-    "sockjs-client": "^1.4.0"
+    "bootstrap": "^5.1.0",
+    "flatpickr": "^4.6.9",
+    "jquery": "^3.6.0",
+    "sockjs-client": "^1.5.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.9.0",
-    "babel-loader": "^8.1.0",
+    "@babel/core": "^7.15.0",
+    "babel-loader": "^8.2.2",
     "babel-preset-es2015": "^6.24.1",
-    "css-loader": "^3.5.1",
-    "style-loader": "^1.1.3",
-    "webpack": "^4.42.1"
+    "css-loader": "^6.2.0",
+    "style-loader": "^3.2.1",
+    "webpack": "^5.50.0"
   }
 }
