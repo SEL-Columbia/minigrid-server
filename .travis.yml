@@ -4,12 +4,15 @@ python:
 cache: pip
 addons:
   firefox: latest
+  # use a different PostgreSQL version than the default:
   postgresql: 13
   apt:
+    update: true
     packages:
       - postgresql-13
 env:
   global:
+    # a different port must be used when not using the default PostgreSQL:
     - PGPORT=5433
 dist: bionic
 sudo: false
@@ -21,7 +24,8 @@ before_install:
 before_script:
   - python3 -m flake8 .
   - python3 -m pydocstyle .
-  - psql -c 'create database minigrid;' -U postgres
+  # create the minigrid database:
+  - psql -p 5433 -c 'create database minigrid;' -U postgres
 
 script:
   - xvfb-run --server-args="-screen 0, 1280x1280x16" tests/python/coverage_run.sh
