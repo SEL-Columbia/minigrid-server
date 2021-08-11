@@ -21,9 +21,6 @@ jobs:
           sudo apt-get install postgresql-13 libpq-dev
           sudo service postgresql start
           pg_isready
-      - name: List postgres users
-        run: |
-          sudo -u postgres psql --command="\du"
       - name: Change from peer to md5 authentication
         run: |
           sudo sed -i -e '/local.*peer/s/postgres/all/' -e 's/peer\|md5/trust/g' /etc/postgresql/13/main/pg_hba.conf
@@ -31,20 +28,20 @@ jobs:
       - name: create the minigrid database
         run: |
           psql -U postgres -c 'create database minigrid;'
-      # sudo -u postgres createdb minigrid
-
-      # sets up python
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
-      # install python dependencies
-      - name: Install dependencies
+      - name: Install python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r dev/requirements.txt
           pip install -r requirements.txt
           pip install coveralls
+      - name: Install node dependencies
+        run: |
+          npm install
+          node node_modules/webpack/bin/webpack.js --mode=production
       - name: Analysing the code with flake8
         run: |
           flake8 .
