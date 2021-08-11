@@ -3,8 +3,14 @@ python:
   - "3.9"
 cache: pip
 addons:
-  postgresql: "13"
   firefox: latest
+  postgresql: 13
+  apt:
+    packages:
+      - postgresql-13
+env:
+  global:
+    - PGPORT=5433
 dist: bionic
 sudo: false
 
