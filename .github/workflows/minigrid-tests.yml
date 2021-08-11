@@ -8,22 +8,6 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        # docker hub image
-        image: postgres:13
-        # provide the password for postgres
-        env:
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432/tcp
-        # set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       # downloads a copy of the code in your repository before running CI tests
       - name: Check out repository code
@@ -31,6 +15,12 @@ jobs:
       # setup latest firefox version
       - name: Setup latest firefox
         uses: browser-actions/setup-firefox@latest
+      # setup database
+      - name: create the minigrid database
+        run: |
+          sudo apt-get install postgresql-13 libpq-dev
+          sudo service postgresql start
+          psql -U postgres -c 'create database minigrid;'
       # sets up python
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
@@ -48,14 +38,6 @@ jobs:
       - name: Analysing the code with pydocstyle
         run: |
           python3 -m pydocstyle .
-      - name: create the minigrid database
-        run: |
-          psql -U postgres -c 'create database minigrid;'
-        env:
-          # the hostname used to communicate with the PostgreSQL service container
-          POSTGRES_HOST: localhost
-          # the default PostgreSQL port
-          POSTGRES_PORT: 5432
       - name: install xvfb
         run: sudo apt-get install xvfb
       - name: run xvfb for python tests
