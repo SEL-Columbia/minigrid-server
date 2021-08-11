@@ -13,11 +13,11 @@ from sqlalchemy.orm import sessionmaker
 from tornado.testing import AsyncHTTPTestCase
 
 from minigrid.options import options, path
-options.db_schema = 'minigrid_test'  # noqa
-import minigrid.options
-minigrid.options.cookie_secret_path = path(
-    '../tests/python/tmp/COOKIE_SECRET')  # noqa
 from minigrid import models
+
+options.db_schema = 'minigrid_test'  # noqa
+options.cookie_secret_path = path(
+    '../tests/python/tmp/COOKIE_SECRET')  # noqa
 
 
 class Dummy:
