@@ -1145,7 +1145,7 @@ class TestAuthentication(HTTPTest):
             )
         self.assertResponseCode(response, 400)
         self.assertEqual(
-            response.error.message, 'error')
+            response.error.message, 'ValueError: error')
 
     @patch('minigrid.handlers.get_verified_email', new_callable=CoroMock)
     def test_verify(self, get_verified_email):
