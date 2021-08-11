@@ -1,4 +1,4 @@
-version: '2'
+version: '3.9'
 services:
   minigrid:
     build:
@@ -13,9 +13,9 @@ services:
       - redis
       - db
   db:
-    image: postgres:9.6
+    image: postgres:13
     environment:
       POSTGRES_DB: minigrid
       POSTGRES_HOST_AUTH_METHOD: "trust"
   redis:
-    image: redis:5.0
+    image: redis:6.2.5

@@ -5,8 +5,22 @@ Shared Solar server
 
 ### Native
 
+* make sure `postgresql` is installed and the service is running
+* create the `minigrid` database if it doesn't already exist
+
 ```
-$ python3.7 -m venv venv
+% psql postgres
+psql (13.3)
+Type "help" for help.
+
+postgres=# CREATE DATABASE minigrid;
+CREATE DATABASE
+```
+
+* install the requirements and test the server
+
+```
+$ python3.9 -m venv venv
 $ source venv/bin/activate
 (venv) $ pip install -r requirements.txt -r dev/requirements.txt
 (venv) $ ./dev/run.sh
@@ -15,7 +29,12 @@ Listening on port 8889
 [I 170329 16:07:16 server:50] Application started
 ```
 
+* view the webapp at `http://localhost:8889/`
+
+
 ### Docker
+
+* make sure the docker daemon is running
 
 ```
 $ docker-compose -f dev/docker-compose.yml up -d
@@ -27,10 +46,16 @@ dev_minigrid_1   ./dev/run.sh --db_host=db  ...   Up      0.0.0.0:8889->8889/tcp
 dev_redis_1      docker-entrypoint.sh redis ...   Up      6379/tcp               
 ```
 
+* check the container logs if one fails to come up `docker logs <container name>`
+* remove all stopped containers with `docker container prune`
+* check you have removed old conflicting images, `docker rmi <image>`
+* view the webapp at `http://localhost:8889/`
+
 
 ## Adding an initial user locally
 
 Note that the login flow is quicker with a gmail.com e-mail address.
+
 
 ### Native
 
@@ -39,12 +64,14 @@ Note that the login flow is quicker with a gmail.com e-mail address.
 Created user with e-mail your_email_address
 ```
 
+
 ### Docker
 
 ```
 $ docker exec dev_minigrid_1 dev/commands.py create_user --db_host=db --kwarg email=<your_email_address>
 Created user with e-mail your_email_address
 ```
+
 
 ## Restoring Database from backup
 

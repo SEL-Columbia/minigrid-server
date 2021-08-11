@@ -328,7 +328,7 @@ class CardsHandler(ReadCardBaseHandler):
     def post(self):
         """Erase card."""
         erase_card(self.session, cache)
-        self.redirect(f'/cards')
+        self.redirect('/cards')
 
 
 class MinigridHandler(BaseHandler):
@@ -639,7 +639,7 @@ class MinigridMaintenanceCardsHandler(ReadCardBaseHandler):
                         .get(maintenance_card_id))
                     session.delete(maintenance_card)
                 message = (
-                    f'Maintenance card'
+                    'Maintenance card'
                     ' {maintenance_card.maintenance_card_name} removed')
             except UnmappedInstanceError:
                 message = 'The requested maintenance_card no longer exists'
@@ -709,7 +709,8 @@ class VerifyLoginHandler(BaseHandler):
                 broker_url,
                 cache)
         except ValueError as exc:
-            raise minigrid.error.LoginError(reason=str(exc))
+            raise minigrid.error.LoginError(
+                reason=f'ValueError: {exc}')
         try:
             user = (
                 self.session
