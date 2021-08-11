@@ -3,36 +3,33 @@ name: full minigrid tests
 on: [push]
 
 jobs:
-  # label of the runner job
-  runner-job:
-    # containers must run in Linux based operating systems
+
+  build:
+    name: Build
     runs-on: ubuntu-latest
 
-    # service containers to run with `runner-job`
     services:
-      # label used to access the service container
       postgres:
         # docker hub image
         image: postgres:13
         # provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432/tcp
         # set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          # maps tcp port 5432 on service container to the host
-          - 5432:5432
 
     steps:
       # downloads a copy of the code in your repository before running CI tests
       - name: Check out repository code
         uses: actions/checkout@v2
       # setup latest firefox version
-      - name: Setup firefox
+      - name: Setup latest firefox
         uses: browser-actions/setup-firefox@latest
       # sets up python
       - name: Set up Python 3.9
@@ -54,6 +51,11 @@ jobs:
       - name: create the minigrid database
         run: |
           psql -U postgres -c 'create database minigrid;'
+        env:
+          # the hostname used to communicate with the PostgreSQL service container
+          POSTGRES_HOST: localhost
+          # the default PostgreSQL port
+          POSTGRES_PORT: 5432
       - name: install xvfb
         run: sudo apt-get install xvfb
       - name: run xvfb for python tests
