@@ -15,6 +15,7 @@ from tornado.testing import AsyncHTTPTestCase
 from minigrid.options import path
 from minigrid import models
 
+
 class Dummy:
     """Dummy class to help fake redis in tests."""
 
