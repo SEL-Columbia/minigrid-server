@@ -16,11 +16,17 @@ jobs:
       - name: Setup latest firefox
         uses: browser-actions/setup-firefox@latest
       # setup database
-      - name: create the minigrid database
+      - name: Install postgresql
         run: |
           sudo apt-get install postgresql-13 libpq-dev
           sudo service postgresql start
-          psql -U postgres -c 'create database minigrid;'
+          pg_isready
+      - name: List postgres users
+        run: |
+          sudo -u postgres psql --command="\du"
+      - name: create the minigrid database
+        run: |
+          sudo -u postgres createdb minigrid
       # sets up python
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
