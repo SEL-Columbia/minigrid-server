@@ -64,12 +64,14 @@ Note that the login flow is quicker with a gmail.com e-mail address.
 Created user with e-mail your_email_address
 ```
 
+
 ### Docker
 
 ```
 $ docker exec dev_minigrid_1 dev/commands.py create_user --db_host=db --kwarg email=<your_email_address>
 Created user with e-mail your_email_address
 ```
+
 
 ## Restoring Database from backup
 
