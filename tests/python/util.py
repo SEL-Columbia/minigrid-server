@@ -12,13 +12,8 @@ from sqlalchemy.orm import sessionmaker
 
 from tornado.testing import AsyncHTTPTestCase
 
-from minigrid.options import options, path
+from minigrid.options import path
 from minigrid import models
-
-options.db_schema = 'minigrid_test'  # noqa
-options.cookie_secret_path = path(
-    '../tests/python/tmp/COOKIE_SECRET')  # noqa
-
 
 class Dummy:
     """Dummy class to help fake redis in tests."""
