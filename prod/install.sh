@@ -37,7 +37,7 @@ else
     printf " Installing docker-compose in this      \n"
     printf " directory                              \n"
     printf "========================================\n"
-    $CURL -L https://github.com/docker/compose/releases/download/1.24.1/run.sh > docker-compose \
+    $CURL -L https://github.com/docker/compose/releases/download/1.29.2/run.sh > docker-compose \
       && chmod +x docker-compose
     ./docker-compose -v
   fi
