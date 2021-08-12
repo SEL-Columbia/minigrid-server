@@ -44,7 +44,8 @@ def main():
         cursor = tx_session.connection().connection.cursor()
         table = '{}.payment_system'.format(options.db_schema)
         aes_keys = io.StringIO('\n'.join(_aes_key() for _ in range(100000)))
-        cursor.copy_from(aes_keys, table, columns=['aes_key'])
+        statement = "COPY {}(aes_key) FROM STDIN".format(table)
+        cursor.copy_expert(statement, aes_keys)
     now = session.query(func.count(models.PaymentSystem.payment_id)).scalar()
     print('{} payment IDs in the system now.'.format(now))
 
