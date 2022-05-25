@@ -1,7 +1,7 @@
 asyncio-portier==0.3.0
 cryptography==3.4.7
 psycopg2-binary==2.9.1
-PyJWT==2.1.0
+PyJWT==2.4.0
 redis==3.5.3
 sockjs-tornado==1.0.7
 SQLAlchemy==1.4.22
